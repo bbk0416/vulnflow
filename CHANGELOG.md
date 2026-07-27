@@ -2,6 +2,18 @@
 
 This public changelog summarizes the portfolio-facing release line. It does not reproduce every internal verification iteration.
 
+## Public repository maintenance
+
+- made architecture and submission-readiness checks self-contained in a clean public clone;
+- added SHA-256 manifest verification to public CI;
+- added Python 3.12 and 3.13 CI coverage with minimal token permissions;
+- aligned helper-script Python requirements to 3.12;
+- added Dependabot, line-ending policy, and CI status badge;
+- shortened the public security-reporting policy and removed upload-only files.
+- made every `with connect(...)` transaction close its SQLite handle deterministically, preventing Windows temporary-file locks across recovery, validation and snapshot exports;
+- made the ClamAV adapter test cross-platform and converted executable-launch failures into explicit scanner errors;
+- expanded public CI to Ubuntu and Windows on Python 3.12 and 3.13.
+
 ## 72.0.11 — 2026-07-27
 
 Submission-stabilization release.

@@ -1,15 +1,41 @@
 name: public-ci
-on: [push, pull_request]
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: public-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   core-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ["3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
+          cache: pip
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements-dev.txt
-      - run: python scripts/run_public_tests.py
+      - name: Verify published file hashes
+        run: python scripts/verify_public_manifest.py
+      - name: Verify architecture boundaries
+        run: python scripts/architecture_review.py
+      - name: Verify public submission readiness
+        run: python scripts/submission_readiness_smoke.py --public
+      - name: Run public regression suite
+        run: python scripts/run_public_tests.py

@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 cd "$(dirname "$0")"
-command -v python3 >/dev/null 2>&1 || { echo "Python 3.11 or later is required." >&2; exit 1; }
+command -v python3 >/dev/null 2>&1 || { echo "Python 3.12 or later is required." >&2; exit 1; }
 [ -d .venv ] || python3 -m venv .venv
 . .venv/bin/activate
 python -m pip install --upgrade pip

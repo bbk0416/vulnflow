@@ -1,5 +1,8 @@
 # VulnFlow 72.0.11
 
+[![public-ci](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml/badge.svg)](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml)
+
+
 > FastAPI·SQLite 기반의 로컬 취약점 운영 플랫폼 — 스캐너 결과를 수집한 뒤 자산 식별, 우선순위, 조치, 승인, 증거, 감사와 복구까지 연결합니다.
 >
 > A local vulnerability-operations platform that connects scanner findings to prioritization, remediation, approval, evidence, audit and recovery.
@@ -85,7 +88,7 @@ python scripts_reset_demo.py
 
 ## 공개 검증 범위
 
-이 공개 저장소에는 핵심 업무 흐름을 검증하는 **230개 대표 시험**을 포함합니다.
+이 공개 저장소에는 핵심 업무 흐름을 검증하는 **236개 대표 시험**을 포함합니다.
 
 ```bash
 python scripts/run_public_tests.py
@@ -138,3 +141,7 @@ python scripts/run_public_tests.py
 ## License
 
 MIT License. 자세한 내용은 [LICENSE](LICENSE)를 확인하세요.
+
+## Version identifier
+
+`72.0.11` is an internal iteration identifier retained from the development process. It does not represent 72 public major releases. Public changes after this initial publication are tracked through normal issues, branches, pull requests, and commits.

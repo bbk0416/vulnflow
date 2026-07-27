@@ -2,12 +2,14 @@ from __future__ import annotations
 
 import os
 import sqlite3
+import subprocess
 from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
 import app.main as main
+import app.services.evidence as evidence_service
 from app.core.storage import (
     CURRENT_SCHEMA_VERSION,
     apply_import_batch,
@@ -172,22 +174,36 @@ def test_builtin_baseline_requires_explicit_waiver_for_approval(tmp_path: Path):
     assert decided["status"] == "APPROVED"
 
 
-def test_clamscan_adapter_clean_infected_error_and_missing(tmp_path: Path):
+def test_clamscan_adapter_clean_infected_error_and_missing(tmp_path: Path, monkeypatch):
     scanner = tmp_path / "fake-clamscan"
-    scanner.write_text(
-        "#!/bin/sh\ncase \"$3\" in *infected*) echo \"$3: Unit.Test FOUND\"; exit 1;; *error*) echo fail >&2; exit 2;; *) echo \"$3: OK\"; exit 0;; esac\n",
-        encoding="utf-8",
-    )
-    scanner.chmod(0o755)
+    scanner.write_text("test adapter placeholder", encoding="utf-8")
     clean = tmp_path / "clean.txt"; clean.write_text("ok")
     infected = tmp_path / "infected.txt"; infected.write_text("bad")
     error = tmp_path / "error.txt"; error.write_text("error")
+
+    def fake_run(command, **kwargs):
+        target = Path(command[-1])
+        if "infected" in target.name:
+            return subprocess.CompletedProcess(command, 1, stdout=f"{target}: Unit.Test FOUND\n", stderr="")
+        if "error" in target.name:
+            return subprocess.CompletedProcess(command, 2, stdout="", stderr="scanner failure")
+        return subprocess.CompletedProcess(command, 0, stdout=f"{target}: OK\n", stderr="")
+
+    monkeypatch.setattr(evidence_service.subprocess, "run", fake_run)
     assert scan_evidence_path(clean, mode="clamscan", clamscan_path=str(scanner))["scan_status"] == "CLEAN"
     infected_result = scan_evidence_path(infected, mode="clamscan", clamscan_path=str(scanner))
     assert infected_result["scan_status"] == "INFECTED"
     assert infected_result["scan_signature"] == "Unit.Test"
     assert scan_evidence_path(error, mode="clamscan", clamscan_path=str(scanner))["scan_status"] == "ERROR"
     assert scan_evidence_path(clean, mode="clamscan", clamscan_path=str(tmp_path / "missing"))["scan_status"] == "ERROR"
+
+    def launch_error(*args, **kwargs):
+        raise OSError("invalid executable")
+
+    monkeypatch.setattr(evidence_service.subprocess, "run", launch_error)
+    launch_result = scan_evidence_path(clean, mode="clamscan", clamscan_path=str(scanner))
+    assert launch_result["scan_status"] == "ERROR"
+    assert "launch failed" in launch_result["scan_error"]
 
 
 def test_web_eicar_is_quarantined_and_download_blocked(client: TestClient):

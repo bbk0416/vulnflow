@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
 if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
-    throw "Python을 찾을 수 없습니다. Python 3.11 이상을 설치한 뒤 다시 실행하세요."
+    throw "Python을 찾을 수 없습니다. Python 3.12 이상을 설치한 뒤 다시 실행하세요."
 }
 if (-not (Test-Path ".venv")) {
     python -m venv .venv

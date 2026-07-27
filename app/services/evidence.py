@@ -442,14 +442,21 @@ def scan_evidence_path(
         )
     except subprocess.TimeoutExpired:
         return _scan_result("ERROR", engine="clamscan", error="clamscan timeout")
+    except OSError as exc:
+        return _scan_result("ERROR", engine="clamscan", error=f"clamscan launch failed: {exc}")
     output = ((completed.stdout or "") + "\n" + (completed.stderr or "")).strip()
     if completed.returncode == 0:
         return _scan_result("CLEAN", engine="clamscan", details=output)
     if completed.returncode == 1:
         signature = ""
-        match = re.search(r":\s*(.+?)\s+FOUND(?:\s|$)", output)
-        if match:
-            signature = match.group(1)
+        for line in output.splitlines():
+            stripped = line.strip()
+            if not stripped.endswith(" FOUND") or ":" not in stripped:
+                continue
+            # Split on the final colon so Windows drive letters (for example C:)
+            # are not included in the malware signature.
+            signature = stripped[:-len(" FOUND")].rsplit(":", 1)[-1].strip()
+            break
         return _scan_result("INFECTED", engine="clamscan", signature=signature, details=output)
     return _scan_result("ERROR", engine="clamscan", details=output, error=f"clamscan exit code {completed.returncode}")
 

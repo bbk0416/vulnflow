@@ -225,4 +225,3 @@ POST /api/v1/sboms/{sbom_id}/osv-scan
 ```
 
 동일 principal·key·요청은 기존 결과를 replay합니다. 동일 key로 다른 요청을 보내면 HTTP 409입니다. key는 8~200자의 `[A-Za-z0-9._:-]` 형식이며 원문은 저장하지 않습니다.
-
