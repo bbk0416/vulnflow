@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}가져오기 이력 · VulnFlow{% endblock %}
+{% block content %}
+<h1>가져오기 이력</h1>
+<section class="panel"><p>스캐너·원천별 CSV 반영 이력과 전체 스냅샷 대조 결과를 기록합니다.</p><div class="table-wrap"><table><thead><tr><th>시각</th><th>배치</th><th>원천</th><th>파일</th><th>방식</th><th>행</th><th>신규</th><th>갱신</th><th>STALE</th><th>실행자</th></tr></thead><tbody>{% for b in batches %}<tr><td>{{ b.created_at }}</td><td><code>{{ b.batch_id }}</code></td><td>{{ b.scanner_source }}</td><td>{{ b.filename }}</td><td>{{ b.import_mode }}</td><td>{{ b.row_count }}</td><td>{{ b.inserted_count }}</td><td>{{ b.updated_count }}</td><td>{{ b.stale_count }}</td><td>{{ b.actor }}</td></tr>{% else %}<tr><td colspan="10">가져오기 이력이 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

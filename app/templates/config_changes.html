@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}구성 변경 통제 · VulnFlow{% endblock %}
+{% block content %}
+<h1>구성 변경 통제</h1>
+{% if notice_message %}<div class="notice">{{ notice_message }}</div>{% endif %}
+<section class="panel">
+  <h2>현재 구성 상태</h2>
+  <div class="cards">
+    <div class="card"><span>드리프트</span><strong>{{ config_drift.status }}</strong></div>
+    <div class="card"><span>변경 통제</span><strong>{{ config_drift.control_status }}</strong></div>
+    <div class="card"><span>변경 경로</span><strong>{{ config_drift.change_count }}</strong></div>
+    <div class="card"><span>최고 심각도</span><strong>{{ config_drift.severity }}</strong></div>
+  </div>
+  <p>애플리케이션은 환경변수나 비밀값을 직접 변경하지 않습니다. 현재의 비밀정보 제거 구성 또는 API로 제공한 목표 스냅샷을 승인 대상으로 기록합니다.</p>
+</section>
+
+{% if request.state.role in ['operator','approver','admin'] %}
+<section class="panel">
+  <h2>현재 구성을 변경안으로 요청</h2>
+  <form class="form" method="post" action="/config-changes/request">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+    <label>제목<input name="title" maxlength="200" required placeholder="예: 원격 웹훅 HTTPS 전환"></label>
+    <label>변경 사유<textarea name="reason" maxlength="1500" required></textarea></label>
+    <label>롤백 계획<textarea name="rollback_plan" maxlength="4000" required placeholder="실패 조건, 이전 환경변수 복원, 재시작 및 검증 절차"></textarea></label>
+    <div class="grid2">
+      <label>변경 창구 시작(UTC)<input type="datetime-local" name="window_start" required></label>
+      <label>변경 창구 종료(UTC)<input type="datetime-local" name="window_end" required></label>
+    </div>
+    <button>승인 요청 생성</button>
+  </form>
+</section>
+{% endif %}
+
+<section class="panel">
+  <h2>변경 요청</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>상태</th><th>제목·영향</th><th>창구</th><th>요청·결정</th><th>통제</th></tr></thead>
+    <tbody>
+    {% for item in change_requests %}
+      <tr>
+        <td><strong>{{ item.status }}</strong><br>{{ item.window_state }}</td>
+        <td>{{ item.title }}<br><small>{{ item.impact.change_count }}개 경로 · {{ item.impact.severity }}</small><br><code>{{ item.target_hash[:16] }}…</code></td>
+        <td>{{ item.window_start }}<br>~ {{ item.window_end }}</td>
+        <td>{{ item.requested_by }} · {{ item.requested_at }}{% if item.decided_by %}<br>{{ item.decided_by }} · {{ item.decided_at }}{% endif %}</td>
+        <td>
+          {% if item.status == 'PENDING' and request.state.role in ['approver','admin'] %}
+          <form class="form compact" method="post" action="/config-changes/{{ item.request_id }}/decision">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input name="decision_note" maxlength="1500" placeholder="결정 메모">
+            <button name="decision" value="APPROVE">승인</button><button name="decision" value="REJECT">반려</button>
+          </form>
+          {% elif item.status == 'APPROVED' and request.state.role in ['approver','admin'] %}
+          <form class="form compact" method="post" action="/config-changes/{{ item.request_id }}/apply">
+            <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+            <input name="note" maxlength="1000" placeholder="새 기준선 메모">
+            <button>현재 구성 일치 확인 후 기준선 승격</button>
+          </form>
+          {% else %}-{% endif %}
+        </td>
+      </tr>
+    {% else %}<tr><td colspan="5">구성 변경 요청이 없습니다.</td></tr>{% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}

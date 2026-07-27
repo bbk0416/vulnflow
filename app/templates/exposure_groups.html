@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}노출 군집 · VulnFlow{% endblock %}
+{% block content %}
+<section class="hero"><div><p class="eyebrow">Exposure groups</p><h1>동일 취약점이 여러 자산에 확산된 범위를 봅니다.</h1><p>CVE·구성요소별 자산 수, 활성 건수, KEV·인터넷 노출과 가장 빠른 목표일을 묶어 캠페인 후보를 찾습니다.</p></div></section>
+<section class="panel"><div class="table-wrap"><table><thead><tr><th>CVE·구성요소</th><th>자산 / finding</th><th>활성</th><th>KEV / 노출</th><th>최대 점수·EPSS</th><th>소유자·목표일</th><th>캠페인</th></tr></thead><tbody>{% for g in groups %}<tr><td><code>{{ g.cve_id }}</code><br><small>{{ g.component }} {{ g.component_version }}</small></td><td>{{ g.asset_count }} / {{ g.finding_count }}</td><td><strong>{{ g.active_count }}</strong></td><td>{{ g.kev_count }} / {{ g.exposed_count }}</td><td>{{ g.max_score or 0 }}<br><small>{{ '%.3f'|format(g.max_epss or 0) }}</small></td><td>{{ g.owner_count }}명<br><small>{{ g.earliest_due or '-' }}</small></td><td><a class="button-link" href="/campaigns?cve_id={{ g.cve_id }}">캠페인 생성</a></td></tr>{% else %}<tr><td colspan="7">군집 데이터가 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

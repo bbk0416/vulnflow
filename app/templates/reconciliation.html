@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}다중 스캐너 조정 · VulnFlow{% endblock %}
+{% block content %}
+<section class="hero compact"><div><p class="eyebrow">Canonical Finding Reconciliation</p><h1>다중 스캐너 조정</h1><p>scanner별 원본 관측을 하나의 canonical finding으로 합치고, 값 충돌을 검토합니다.</p></div><div><small>조정 대상</small><span class="score big">{{ items|length }}</span></div></section>
+<section class="panel"><form class="form inline" method="get"><label><input type="checkbox" name="unresolved_only" value="true" {% if unresolved_only %}checked{% endif %}> 미해결 충돌만</label><button>필터</button></form></section>
+<section class="panel"><div class="table-wrap"><table><thead><tr><th>Canonical finding</th><th>원천</th><th>충돌</th><th>상태</th></tr></thead><tbody>
+{% for item in items %}<tr><td><a href="/finding/{{ item.finding_id }}"><strong>{{ item.finding_id }}</strong></a><br>{{ item.asset_name }} · {{ item.cve_id }}<br><small>{{ item.component }} {{ item.component_version }}</small></td><td>{{ item.source_count }}개 scanner<br><small>{% for source in item.source_records %}{{ source.scanner_source }}:{{ source.source_finding_id }} ({{ source.observed_state }}){% if not loop.last %}<br>{% endif %}{% endfor %}</small></td><td><strong>{{ item.unresolved_count }}</strong> 미해결 / {{ item.conflicts|length }} 전체{% for conflict in item.conflicts %}<br><small>{{ conflict.field_name }}: {{ conflict['values']|join(' / ') }}{% if conflict.resolved %} · 조정됨{% endif %}</small>{% endfor %}</td><td>{{ item.record_state }} · {{ item.status }}<br><small>점수 {{ item.score }} · {{ item.decision_label }}</small></td></tr>{% else %}<tr><td colspan="4">조정 대상이 없습니다.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

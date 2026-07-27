@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}자산 인벤토리 · VulnFlow{% endblock %}
+{% block content %}
+{% if notice %}<div class="notice success">{{ notice }}</div>{% endif %}
+<section class="hero"><div><p class="eyebrow">Asset inventory</p><h1>자산 소유권과 취약점 노출을 함께 봅니다.</h1><p>스캐너 finding에서 파생한 자산과 별도 인벤토리를 연결해 서비스·부서·소유자·중요도를 관리합니다.</p></div></section>
+<section class="panel">
+  <form class="filters" method="get"><input name="query" value="{{ query }}" placeholder="자산·서비스·부서·소유자 검색"><select name="status"><option value="">전체 상태</option><option value="ACTIVE" {% if status=='ACTIVE' %}selected{% endif %}>ACTIVE</option><option value="RETIRED" {% if status=='RETIRED' %}selected{% endif %}>RETIRED</option></select><input name="owner" value="{{ owner }}" placeholder="소유자 정확히 일치"><button>필터</button><a class="button-link" href="/assets">초기화</a></form>
+  {% if request.state.role in ['operator','approver','admin'] %}<form method="post" action="/assets/upload" enctype="multipart/form-data" class="bulk-toolbar"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><strong>자산 CSV</strong><input type="file" name="file" accept=".csv,text/csv" required><button class="primary">인벤토리 반영</button><small>asset_id 또는 asset_name 필수 · 중요도 1~5</small></form>{% endif %}
+  <div class="table-wrap"><table><thead><tr><th>자산</th><th>서비스·부서</th><th>소유자</th><th>환경</th><th>중요도</th><th>노출 현황</th><th>상태·출처</th></tr></thead><tbody>
+  {% for a in assets %}<tr><td><a href="/asset/{{ a.asset_ref_id }}"><strong>{{ a.asset_name }}</strong></a><br><small>{{ a.external_asset_id or a.asset_ref_id }}</small></td><td>{{ a.service_name or '-' }}<br><small>{{ a.business_unit or '-' }}</small></td><td>{{ a.owner or '미지정' }}</td><td>{{ a.environment or '-' }}</td><td>C{{ a.criticality }} / D{{ a.data_sensitivity }}{% if a.internet_exposed %}<br><span class="tag red">인터넷 노출</span>{% endif %}</td><td>finding {{ a.finding_count }} · 활성 {{ a.active_finding_count }}<br><small>CVE {{ a.cve_count }} · KEV {{ a.kev_count }} · 최고점수 {{ a.max_score or 0 }}</small></td><td>{{ a.status }}<br><small>{{ a.source }}</small></td></tr>{% else %}<tr><td colspan="7">표시할 자산이 없습니다.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

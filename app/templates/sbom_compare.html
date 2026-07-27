@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}SBOM 비교 · VulnFlow{% endblock %}
+{% block content %}
+<h1>SBOM 구성요소 비교</h1><p class="notice">CVE 영향판정이 아니라 두 구성요소 인벤토리의 구조적 차이를 확인합니다.</p>
+<section class="kpis"><div class="card"><span>이전</span><strong class="small-strong">{{ before_filename }}</strong></div><div class="card"><span>이후</span><strong class="small-strong">{{ after_filename }}</strong></div><div class="card"><span>추가</span><strong>{{ result.added|length }}</strong></div><div class="card"><span>삭제</span><strong>{{ result.removed|length }}</strong></div><div class="card"><span>버전 변경</span><strong>{{ result.changed|length }}</strong></div></section>
+<section class="panel"><h2>버전 변경</h2><div class="table-wrap"><table><thead><tr><th>구성요소</th><th>이전 버전</th><th>이후 버전</th><th>PURL</th></tr></thead><tbody>{% for item in result.changed %}<tr><td>{{ item.after.group }} {{ item.after.name }}</td><td>{{ item.before.version }}</td><td>{{ item.after.version }}</td><td><code>{{ item.after.purl }}</code></td></tr>{% else %}<tr><td colspan="4">버전 변경 없음</td></tr>{% endfor %}</tbody></table></div></section>
+<div class="grid2"><section class="panel"><h2>추가 구성요소</h2><ul class="compact-list">{% for c in result.added %}<li><strong>{{ c.group }} {{ c.name }}</strong> {{ c.version }}</li>{% else %}<li>없음</li>{% endfor %}</ul></section><section class="panel"><h2>삭제 구성요소</h2><ul class="compact-list">{% for c in result.removed %}<li><strong>{{ c.group }} {{ c.name }}</strong> {{ c.version }}</li>{% else %}<li>없음</li>{% endfor %}</ul></section></div>
+<p class="meta">변경 없는 구성요소: {{ result.unchanged_count }}개</p>
+{% endblock %}

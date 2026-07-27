@@ -1,0 +1,51 @@
+name: Bug report
+description: Report a reproducible problem using public code and synthetic data.
+title: "[Bug] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include real vulnerability data, credentials, tokens, private keys, personal information, or sensitive logs. Security vulnerabilities in VulnFlow itself must follow SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: VulnFlow version
+      placeholder: 72.0.11
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system, Python version, and launch method.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Use synthetic data and provide the smallest reproducible sequence.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and sanitized logs
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Data-safety confirmation
+      options:
+        - label: I removed real vulnerability data, credentials, personal information, and private keys.
+          required: true
+        - label: This is not a confidential security vulnerability report about VulnFlow itself.
+          required: true

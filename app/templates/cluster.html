@@ -1,0 +1,48 @@
+{% extends "base.html" %}{% block title %}인스턴스 조정 · VulnFlow
+<section class="panel">
+  <h2>처리 중인 쓰기 요청</h2>
+  <p>복원 잠금은 이 목록이 0건일 때만 운영 DB를 교체합니다. 만료된 활동은 하트비트 유지관리에서 제거됩니다.</p>
+  <div class="table-wrap"><table><thead><tr><th>요청</th><th>인스턴스</th><th>사용자</th><th>메서드</th><th>경로</th><th>시작</th><th>만료</th></tr></thead><tbody>
+  {% for item in cluster.write_activities %}<tr><td><code>{{ item.activity_id }}</code></td><td><code>{{ item.instance_id }}</code></td><td>{{ item.actor }}</td><td>{{ item.method }}</td><td><code>{{ item.path }}</code></td><td>{{ item.started_at }}</td><td>{{ item.expires_at }}</td></tr>{% else %}<tr><td colspan="7">처리 중인 쓰기 요청이 없습니다.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}{% block content %}
+<h1>인스턴스 조정</h1>
+<section class="panel">
+  <h2>현재 인스턴스</h2>
+  <div class="cards">
+    <div class="card"><span>인스턴스 ID</span><strong class="small-code">{{ cluster.instance_id }}</strong></div>
+    <div class="card"><span>조정 기능</span><strong>{{ '활성' if cluster.coordination_enabled else '비활성' }}</strong></div>
+    <div class="card"><span>스케줄러 역할</span><strong>{{ 'LEADER' if cluster.is_scheduler_leader else 'FOLLOWER' }}</strong></div>
+    <div class="card"><span>Fencing token</span><strong>{{ cluster.scheduler_fencing_token or '-' }}</strong></div>
+  </div>
+  <p>동일 호스트에서 하나의 운영 DB와 coordination DB를 공유하는 다중 프로세스 구성을 위한 상태입니다. 네트워크 파일시스템의 SQLite 공유는 지원하지 않습니다.</p>
+</section>
+<section class="panel">
+  <h2>등록된 인스턴스</h2>
+  <div class="table-wrap"><table><thead><tr><th>상태</th><th>인스턴스</th><th>호스트·PID</th><th>버전</th><th>기능</th><th>시작</th><th>마지막 하트비트</th></tr></thead><tbody>
+  {% for item in cluster.instances %}<tr>
+    <td><strong>{{ item.status }}</strong></td><td><code>{{ item.instance_id }}</code></td>
+    <td>{{ item.hostname }} · {{ item.process_id }}</td><td>{{ item.app_version }}</td>
+    <td>{{ item.capabilities|join(', ') }}</td><td>{{ item.started_at }}</td><td>{{ item.last_heartbeat_at }}</td>
+  </tr>{% else %}<tr><td colspan="7">등록된 인스턴스가 없습니다.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+<section class="panel">
+  <h2>분산 임대</h2>
+  <div class="table-wrap"><table><thead><tr><th>임대</th><th>보유 인스턴스</th><th>Fencing token</th><th>목적</th><th>획득</th><th>갱신</th><th>만료</th></tr></thead><tbody>
+  {% for item in cluster.leases %}<tr>
+    <td><code>{{ item.lease_name }}</code></td><td><code>{{ item.holder_id }}</code></td><td>{{ item.fencing_token }}</td>
+    <td>{{ item.purpose or '-' }}</td><td>{{ item.acquired_at }}</td><td>{{ item.renewed_at }}</td><td>{{ item.lease_expires_at }}</td>
+  </tr>{% else %}<tr><td colspan="7">활성 또는 만료된 임대 기록이 없습니다.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+
+<section class="panel">
+  <h2>처리 중인 쓰기 요청</h2>
+  <p>복원 잠금은 이 목록이 0건일 때만 운영 DB를 교체합니다. 만료된 활동은 하트비트 유지관리에서 제거됩니다.</p>
+  <div class="table-wrap"><table><thead><tr><th>요청</th><th>인스턴스</th><th>사용자</th><th>메서드</th><th>경로</th><th>시작</th><th>만료</th></tr></thead><tbody>
+  {% for item in cluster.write_activities %}<tr><td><code>{{ item.activity_id }}</code></td><td><code>{{ item.instance_id }}</code></td><td>{{ item.actor }}</td><td>{{ item.method }}</td><td><code>{{ item.path }}</code></td><td>{{ item.started_at }}</td><td>{{ item.expires_at }}</td></tr>{% else %}<tr><td colspan="7">처리 중인 쓰기 요청이 없습니다.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

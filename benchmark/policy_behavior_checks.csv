@@ -1,0 +1,9 @@
+﻿check,passed,score,decision
+KEV+외부노출 즉시조치,1,96,immediate
+보완통제 점수 감소,1,33,monitor
+패치 없는 고우선 항목 완화 필요,1,86,immediate
+기한 초과 활성 항목 가점,1,56,scheduled
+종료 항목은 기한 초과 가점 제외,1,46,scheduled
+최초 평가일 기준 SLA 고정,1,46,scheduled
+외부노출 시 자산 맥락 증가,1,61,scheduled
+위협·자산·조치 하위점수 합계,1,46,scheduled

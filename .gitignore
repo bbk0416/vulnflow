@@ -1,0 +1,22 @@
+
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.db
+.env
+reports/runtime_*
+# Public repository privacy and generated artifacts
+*.zip
+*.tar.gz
+*.whl
+coverage.xml
+.coverage*
+htmlcov/
+data/evidence/
+data/exports/
+data/backups/
+INITIAL_CREDENTIALS.json
+*_PRIVATE_KEY*

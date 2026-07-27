@@ -1,0 +1,17 @@
+include LICENSE
+include README.md
+include SECURITY.md
+include VERSION
+include requirements.txt
+include requirements.lock
+include pyproject.toml
+recursive-include app/templates *.html
+recursive-include app/static *
+recursive-include app/resources *.yml
+recursive-include rules *.yml
+recursive-include docs *.md
+include .python-version
+include requirements-dev.txt
+include requirements-dev.lock
+recursive-include scripts *.py
+recursive-include tests *.py *.json *.gz

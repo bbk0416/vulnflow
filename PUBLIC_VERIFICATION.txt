@@ -1,0 +1,36 @@
+VulnFlow 72.0.11 GitHub-ready public repository verification
+Date: 2026-07-27
+
+Scope
+- Public portfolio/source repository package
+- Full application source retained
+- Synthetic sample data only
+- Generated release binaries, runtime dependency snapshot and internal release journals excluded
+- Repository governance files included: changelog, contributing guide, conduct policy, support policy, roadmap, citation metadata, issue templates and pull-request template
+
+Source-tree verification
+- Representative public tests: 230/230 PASS
+- GitHub Actions and issue-template YAML parsing: PASS
+- Relative Markdown link validation: PASS
+- Stale user-visible version scan: PASS
+- Runtime/cache residue scan: PASS
+- Sensitive-pattern scan: PASS
+- Non-example email-address scan: PASS
+
+Privacy and secret screening
+- Korean mobile phone patterns: 0
+- Korean resident-registration-number patterns: 0
+- Email addresses other than example.test/example.com fixtures: 0
+- Local developer paths: 0
+- PEM/private-key headers: 0
+- Uncompressed runtime SQLite databases: 0
+- Included compressed SQLite fixture: synthetic schema migration fixture only
+
+Internal package integrity
+- SHA-256 manifest target files: 333
+- SHA-256 manifest excludes itself
+
+Transparency
+- Internal 72.0.11 submission baseline: 555 automated tests and 79.96% application line coverage
+- Public package: 230 representative tests selected for the core operational workflow
+- Public package does not claim third-party certification, customer deployment, production SLA or autonomous vulnerability impact determination

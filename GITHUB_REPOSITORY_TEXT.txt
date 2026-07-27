@@ -1,0 +1,4 @@
+Repository name: vulnflow
+Description: FastAPI + SQLite vulnerability operations platform for prioritization, remediation, evidence, audit and recovery.
+Topics: vulnerability-management, security-engineering, security-automation, fastapi, sqlite, sbom, vex, osv, cybersecurity, python
+Pinned project summary: Built a local vulnerability-operations platform that connects scanner findings to asset normalization, prioritization, remediation, approval, evidence, audit and recovery. The public repository includes synthetic demo data and 230 representative tests.

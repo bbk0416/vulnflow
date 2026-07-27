@@ -1,0 +1,15 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:8730edb2-6f26-4d72-b8a3-0d4c8be12b91",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-07-20T00:00:00Z",
+    "component": {"type": "application", "name": "VulnFlow", "version": "1.1.0"}
+  },
+  "components": [
+    {"type": "library", "bom-ref": "pkg:pypi/fastapi@0.128.2", "name": "fastapi", "version": "0.128.2", "purl": "pkg:pypi/fastapi@0.128.2", "licenses": [{"license": {"id": "MIT"}}]},
+    {"type": "library", "bom-ref": "pkg:pypi/requests@2.32.5", "name": "requests", "version": "2.32.5", "purl": "pkg:pypi/requests@2.32.5", "licenses": [{"license": {"id": "Apache-2.0"}}]},
+    {"type": "library", "bom-ref": "pkg:pypi/PyYAML@6.0.3", "name": "PyYAML", "version": "6.0.3", "purl": "pkg:pypi/PyYAML@6.0.3", "licenses": [{"license": {"id": "MIT"}}]}
+  ]
+}

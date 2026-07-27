@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}SBOM 인벤토리 · VulnFlow{% endblock %}
+{% block content %}
+<h1>SBOM 인벤토리 결과</h1>
+<p class="notice">{{ result.scope_notice }}</p><section class="kpis six"><div class="card"><span>파일</span><strong class="small-strong">{{ filename }}</strong></div><div class="card"><span>표준 버전</span><strong>{{ result.spec_version }}</strong></div><div class="card"><span>대상 제품</span><strong class="small-strong">{{ result.target_name }} {{ result.target_version }}</strong></div><div class="card"><span>구성요소</span><strong>{{ result.components|length }}</strong></div><div class="card"><span>중복 식별자</span><strong>{{ result.duplicate_identities }}</strong></div><div class="card"><span>SHA-256</span><strong class="hash">{{ result.sha256[:12] }}…</strong></div></section>
+<section class="panel"><div class="table-wrap"><table><thead><tr><th>종류</th><th>구성요소</th><th>버전</th><th>PURL</th><th>라이선스</th><th>해시</th></tr></thead><tbody>{% for c in result.components %}<tr><td>{{ c.type }}</td><td>{{ c.group }} {{ c.name }}</td><td>{{ c.version }}</td><td><code>{{ c.purl }}</code></td><td>{{ c.licenses }}</td><td>{{ c.hash_count }}</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

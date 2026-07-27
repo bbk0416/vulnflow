@@ -1,0 +1,36 @@
+# Changelog
+
+This public changelog summarizes the portfolio-facing release line. It does not reproduce every internal verification iteration.
+
+## 72.0.11 — 2026-07-27
+
+Submission-stabilization release.
+
+- unified user-visible version strings with the application version source;
+- replaced the misleading built-in evidence result `CLEAN` with `BASELINE_ONLY`;
+- required an explicit administrative exception before baseline-only evidence can be approved or downloaded;
+- added submission-readiness checks and public CI maintenance paths;
+- measured application line coverage at 79.96% with a 75% release threshold;
+- excluded transient runtime databases and coverage data from source provenance fingerprints;
+- prepared the public repository with synthetic data and 230 representative tests.
+
+## 72.0.10 — 2026-07-26
+
+- hardened single-host leader election with database-holder and fencing-token checks;
+- changed cluster rehearsal to dynamic ports and verified process and instance identity;
+- prevented stale local leader state from authorizing scheduled work;
+- verified offline bootstrap, restart persistence, upgrade recovery, and cluster failover boundaries.
+
+## 72.0.9 — 2026-07-26
+
+- added a deterministic project ZIP and signed offline release-distribution index;
+- added an independent verifier for packaged artifacts and provenance linkage.
+
+## 72.0.8 — 2026-07-26
+
+- added in-toto/SLSA-style release provenance and DSSE Ed25519 rehearsal signing;
+- stabilized lifecycle soak cadence and bounded shutdown behavior.
+
+## Earlier development
+
+Earlier releases built the core finding, asset, prioritization, remediation, approval, evidence, audit, background-job, backup, recovery, SBOM, VEX, and OSV workflows. The public repository focuses on the current behavior rather than every historical internal package.

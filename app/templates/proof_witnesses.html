@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}Checkpoint Witnesses · VulnFlow{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Checkpoint Witnesses</h1>
+    <p>Recovery checkpoint, 독립 witness, transparency mirror, 교차-mirror consistency checkpoint를 관리합니다.</p>
+  </div>
+  <a class="button secondary" href="/audit">감사 화면</a>
+</div>
+{% if notice %}<div class="notice">{{ notice }}</div>{% endif %}
+
+<section class="panel">
+  <div class="panel-heading"><div>
+    <h2>Witness attestation</h2>
+    <p>현재 정책 quorum: {{ minimum_quorum }}. Witness 키는 proof·recovery 키와 분리해서 운영하십시오.</p>
+  </div></div>
+  {% if request.state.role == 'admin' %}
+  <form method="post" action="/audit/proof-checkpoint-witnesses" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Witness key
+      <select name="witness_key_id" required>
+        {% for key_id in witness_private_key_ids %}<option value="{{ key_id }}">{{ key_id }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Checkpoint
+      <select name="checkpoint_id">
+        <option value="">최신 checkpoint</option>
+        {% for item in checkpoints %}<option value="{{ item.checkpoint_id }}">#{{ item.sequence }} · {{ item.checkpoint_id }}</option>{% endfor %}
+      </select>
+    </label>
+    <button {% if witness_private_key_ids|length < 1 or checkpoints|length < 1 %}disabled{% endif %}>독립 witness 서명</button>
+  </form>
+  {% endif %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Witness</th><th>Checkpoint</th><th>공개키</th><th>관찰 시각</th><th>Digest</th></tr></thead>
+    <tbody>{% for item in witnesses %}<tr>
+      <td><code>{{ item.witness_key_id }}</code><br><small>{{ item.attestation_id }}</small></td>
+      <td>#{{ item.checkpoint_sequence }}<br><code>{{ item.checkpoint_id }}</code></td>
+      <td><small>{{ item.witness_public_key_sha256 }}</small></td>
+      <td>{{ item.observed_at }}</td><td><small>{{ item.document_sha256 }}</small></td>
+    </tr>{% else %}<tr><td colspan="5">등록된 checkpoint witness가 없습니다.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<section class="panel">
+  <div class="panel-heading"><div>
+    <h2>Transparency mirror gossip</h2>
+    <p>현재 mirror quorum: {{ minimum_mirror_quorum }}. Mirror 공개키와 과거 receipt digest는 별도 채널에 고정해야 합니다.</p>
+  </div></div>
+  {% if request.state.role == 'admin' %}
+  <form method="post" action="/audit/proof-transparency-mirror-receipts" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Mirror key
+      <select name="mirror_key_id" required>
+        {% for key_id in mirror_private_key_ids %}<option value="{{ key_id }}">{{ key_id }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Transparency head
+      <select name="head_id">
+        <option value="">최신 signed head</option>
+        {% for item in transparency_heads %}<option value="{{ item.head_id }}">#{{ item.tree_size }} · {{ item.head_id }}</option>{% endfor %}
+      </select>
+    </label>
+    <button {% if mirror_private_key_ids|length < 1 or transparency_heads|length < 1 %}disabled{% endif %}>Mirror receipt 서명</button>
+  </form>
+  {% endif %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Mirror</th><th>Head</th><th>이전 관찰</th><th>관찰 시각</th><th>Receipt digest</th></tr></thead>
+    <tbody>{% for item in mirror_receipts %}<tr>
+      <td><code>{{ item.mirror_key_id }}</code><br><small>{{ item.mirror_public_key_sha256 }}</small></td>
+      <td>#{{ item.tree_size }}<br><code>{{ item.head_id }}</code></td>
+      <td>#{{ item.previous_tree_size }}<br><small>{{ item.previous_receipt_sha256 or '-' }}</small></td>
+      <td>{{ item.observed_at }}</td><td><small>{{ item.document_sha256 }}</small></td>
+    </tr>{% else %}<tr><td colspan="5">등록된 transparency mirror receipt가 없습니다.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+<section class="panel">
+  <div class="panel-heading"><div>
+    <h2>Cross-mirror consistency checkpoint</h2>
+    <p>동일 signed head를 관찰한 mirror 집합과 공동서명을 불변 checkpoint로 고정합니다. 필수 정책: {{ '활성' if require_mirror_consistency else '비활성' }}.</p>
+  </div></div>
+  {% if request.state.role == 'admin' %}
+  <form method="post" action="/audit/proof-mirror-consistency-checkpoints" class="form-grid">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Mirror key IDs
+      <input name="mirror_key_ids" required placeholder="mirror-a, mirror-b" value="{{ mirror_private_key_ids|join(', ') }}">
+    </label>
+    <label>Minimum quorum
+      <input name="minimum_quorum" type="number" min="1" max="32" value="{{ minimum_mirror_quorum }}" required>
+    </label>
+    <label>Transparency head
+      <select name="head_id">
+        <option value="">최신 signed head</option>
+        {% for item in transparency_heads %}<option value="{{ item.head_id }}">#{{ item.tree_size }} · {{ item.head_id }}</option>{% endfor %}
+      </select>
+    </label>
+    <button {% if mirror_private_key_ids|length < minimum_mirror_quorum or mirror_receipts|length < minimum_mirror_quorum %}disabled{% endif %}>Consistency checkpoint 생성</button>
+  </form>
+  {% endif %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Sequence</th><th>Head</th><th>Mirror quorum</th><th>이전 checkpoint</th><th>Digest</th></tr></thead>
+    <tbody>{% for item in mirror_consistency_checkpoints %}<tr>
+      <td>#{{ item.sequence }}<br><code>{{ item.checkpoint_id }}</code></td>
+      <td>#{{ item.tree_size }}<br><code>{{ item.head_id }}</code></td>
+      <td>{{ item.mirror_count }} / {{ item.mirror_quorum }}</td>
+      <td><small>{{ item.previous_checkpoint_sha256 }}</small></td>
+      <td><small>{{ item.document_sha256 }}</small></td>
+    </tr>{% else %}<tr><td colspan="5">등록된 mirror consistency checkpoint가 없습니다.</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+{% endblock %}

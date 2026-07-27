@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}대시보드 · VulnFlow{% endblock %}
+{% block content %}
+{% if notice_message %}<div class="notice success">{{ notice_message }}</div>{% endif %}
+<section class="hero">
+  <div><p class="eyebrow">정책 {{ policy_version }} · 맥락 기반 조치 우선순위</p><h1>취약점 목록을 조치 검토 순서와 이행 기록으로 연결합니다.</h1><p>CVSS, KEV, EPSS, 노출, 자산 맥락, 패치와 보완통제를 함께 보고 담당자·기한·예외·감사 이력을 관리합니다.</p></div>
+  {% if request.state.role in ['operator','approver','admin'] %}<div class="button-stack">
+    <form method="post" action="/refresh-intel"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button class="primary">KEV·EPSS 갱신</button></form>
+    <form method="post" action="/rescore"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>정책 재평가</button></form>
+  </div>{% endif %}
+</section>
+<section class="kpis">
+  <div class="card"><span>전체 항목</span><strong>{{ kpis.total }}</strong></div>
+  <div class="card"><span>활성 조치 대상</span><strong>{{ kpis.active }}</strong></div>
+  <div class="card danger"><span>활성 즉시 조치</span><strong>{{ kpis.immediate }}</strong></div>
+  <div class="card warning"><span>기한 초과</span><strong>{{ kpis.overdue }}</strong></div>
+  <div class="card"><span>종료·수용</span><strong>{{ kpis.closed }}</strong></div>
+  <div class="card warning"><span>예외 만료 / 임박</span><strong>{{ kpis.exception_expired }} / {{ kpis.exception_expiring }}</strong></div>
+  <div class="card warning"><span>STALE</span><strong>{{ kpis.stale }}</strong></div>
+  <div class="card"><span>ARCHIVED</span><strong>{{ kpis.archived }}</strong></div>
+  <div class="card"><span>조치 검증 완료</span><strong>{{ kpis.verified_closed }}</strong></div>
+  <div class="card warning"><span>검증 대기 / 가능</span><strong>{{ kpis.verification_pending }} / {{ kpis.verification_ready }}</strong></div>
+  <div class="card danger"><span>재발 누계</span><strong>{{ kpis.reopened }}</strong></div>
+  <div class="card"><span>자산</span><strong>{{ kpis.assets }}</strong></div>
+  <div class="card"><span>노출 군집</span><strong>{{ kpis.exposure_groups }}</strong></div>
+  <div class="card"><span>진행 캠페인</span><strong>{{ kpis.campaigns_active }}</strong></div>
+</section>
+<section class="panel">
+  <form class="filters" method="get">
+    <input type="search" name="query" value="{{ query }}" placeholder="ID, 제품, 자산, CVE, 담당자 검색">
+    <select name="decision"><option value="">전체 판정</option><option value="immediate" {% if decision=='immediate' %}selected{% endif %}>즉시 조치</option><option value="urgent_review" {% if decision=='urgent_review' %}selected{% endif %}>긴급 검토</option><option value="scheduled" {% if decision=='scheduled' %}selected{% endif %}>예정 조치</option><option value="monitor" {% if decision=='monitor' %}selected{% endif %}>관찰</option></select>
+    <select name="status"><option value="">전체 상태</option>{% for s in ['OPEN','IN_PROGRESS','MITIGATED','RISK_ACCEPTED','CLOSED'] %}<option value="{{ s }}" {% if status==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+    <select name="record_state"><option value="CURRENT" {% if record_state=='CURRENT' %}selected{% endif %}>현재 항목(ACTIVE+STALE)</option><option value="ACTIVE" {% if record_state=='ACTIVE' %}selected{% endif %}>ACTIVE</option><option value="STALE" {% if record_state=='STALE' %}selected{% endif %}>STALE</option><option value="ARCHIVED" {% if record_state=='ARCHIVED' %}selected{% endif %}>ARCHIVED</option><option value="ALL" {% if record_state=='ALL' %}selected{% endif %}>전체 포함</option></select>
+    <select name="scanner_source"><option value="">원천 전체</option>{% for src in scanner_sources %}<option value="{{ src }}" {% if scanner_source==src %}selected{% endif %}>{{ src }}</option>{% endfor %}</select>
+    <select name="exception"><option value="">예외 전체</option><option value="active" {% if exception=='active' %}selected{% endif %}>예외 유효</option><option value="expiring" {% if exception=='expiring' %}selected{% endif %}>14일 내 만료</option><option value="expired" {% if exception=='expired' %}selected{% endif %}>만료</option></select>
+    <label class="check"><input type="checkbox" name="overdue" value="true" {% if overdue %}checked{% endif %}>기한 초과만</label>
+    <select name="page_size"><option {% if page_size==25 %}selected{% endif %}>25</option><option {% if page_size==50 %}selected{% endif %}>50</option><option {% if page_size==100 %}selected{% endif %}>100</option><option {% if page_size==200 %}selected{% endif %}>200</option></select>
+    <button>필터 적용</button><a class="button-link" href="/">초기화</a>
+  </form>
+  <p class="meta">검색 결과 {{ total_filtered }}건 · {{ page }}/{{ total_pages }}페이지</p>
+  {% if request.state.role in ['operator','approver','admin'] %}<form method="post" action="/bulk-update" id="bulk-form">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+    <div class="bulk-toolbar">
+      <strong>선택 항목 일괄 처리</strong>
+      <select name="bulk_status"><option value="">상태 유지</option><option>OPEN</option><option>IN_PROGRESS</option><option>MITIGATED</option></select>
+      <select name="owner_mode"><option value="keep">담당자 유지</option><option value="set">담당자 설정</option><option value="clear">담당자 해제</option></select>
+      <input name="bulk_owner" maxlength="500" placeholder="담당자">
+      <select name="due_date_mode"><option value="keep">목표일 유지</option><option value="set">목표일 설정</option><option value="clear">목표일 해제</option></select>
+      <input type="date" name="bulk_due_date">
+      <input class="bulk-note" name="bulk_notes" maxlength="1000" placeholder="일괄 처리 근거·메모">
+      <button class="primary">선택 항목 반영</button>
+    </div>
+    <p class="meta">위험수용은 승인자·사유·만료일이 필요하므로 개별 상세화면에서 처리합니다. MITIGATED 일괄 변경에는 메모가 필요하며, CLOSED는 조치 검증 승인으로만 전환됩니다.</p>
+    <div class="table-wrap"><table><thead><tr><th class="select-col">선택</th><th>우선순위</th><th>판정</th><th>제품·자산</th><th>CVE·구성요소</th><th>KEV / EPSS</th><th>담당·상태</th><th>원천·레코드</th><th>목표·근거</th></tr></thead><tbody>
+    {% for row in findings %}<tr class="{% if row.record_state=='ARCHIVED' %}archived-row{% elif row.status not in ['OPEN','IN_PROGRESS'] %}resolved-row{% endif %}"><td class="select-col"><input type="checkbox" name="finding_ids" value="{{ row.finding_id }}" aria-label="{{ row.finding_id }} 선택"></td><td><span class="score score-{{ row.decision }}">{{ row.score }}</span><br><small>T{{ row.threat_score }} / A{{ row.asset_context_score }} / R{{ row.remediation_urgency_score }}</small></td><td><strong>{{ row.decision_label }}</strong>{% if row.mitigation_required %}<small class="tag">완화 필요</small>{% endif %}</td><td><a href="/finding/{{ row.finding_id }}"><strong>{{ row.product }}</strong></a><br><small>{{ row.finding_id }} · {{ row.asset_name }} · {{ row.environment }}</small></td><td><code>{{ row.cve_id }}</code><br><small>{{ row.component }} {{ row.component_version }}</small></td><td>{% if row.kev %}<span class="tag red">KEV</span>{% endif %} {{ '%.3f'|format(row.epss or 0) }}<br><small>{{ row.intel_source }}{% if row.intel_updated_at %} · {{ row.intel_updated_at[:10] }}{% endif %}</small></td><td>{{ row.owner or '미지정' }}<br><small>{{ row.status }}</small></td><td>{{ row.scanner_source or 'manual' }}<br><small>{{ row.record_state or 'ACTIVE' }}{% if row.source_last_seen_at %} · {{ row.source_last_seen_at[:10] }}{% endif %}</small></td><td><strong>{{ row.due_date or row.target_date }}</strong><br><small>{{ row.reasons }}</small></td></tr>{% else %}<tr><td colspan="9">표시할 항목이 없습니다.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </form>{% else %}<div class="table-wrap"><table><thead><tr><th>우선순위</th><th>판정</th><th>제품·자산</th><th>CVE·구성요소</th><th>KEV / EPSS</th><th>담당·상태</th><th>원천·레코드</th><th>목표·근거</th></tr></thead><tbody>{% for row in findings %}<tr><td><span class="score score-{{ row.decision }}">{{ row.score }}</span></td><td>{{ row.decision_label }}</td><td><a href="/finding/{{ row.finding_id }}"><strong>{{ row.product }}</strong></a><br><small>{{ row.asset_name }}</small></td><td><code>{{ row.cve_id }}</code><br><small>{{ row.component }} {{ row.component_version }}</small></td><td>{% if row.kev %}<span class="tag red">KEV</span>{% endif %} {{ '%.3f'|format(row.epss or 0) }}</td><td>{{ row.owner or '미지정' }}<br><small>{{ row.status }}</small></td><td>{{ row.scanner_source or 'manual' }}<br><small>{{ row.record_state or 'ACTIVE' }}</small></td><td>{{ row.due_date or row.target_date }}<br><small>{{ row.reasons }}</small></td></tr>{% else %}<tr><td colspan="8">표시할 항목이 없습니다.</td></tr>{% endfor %}</tbody></table></div>{% endif %}
+  <div class="pagination">{% if page > 1 %}<a class="button-link" href="?query={{ query|urlencode }}&decision={{ decision }}&status={{ status }}&exception={{ exception }}&record_state={{ record_state }}&scanner_source={{ scanner_source|urlencode }}&overdue={{ 'true' if overdue else 'false' }}&page_size={{ page_size }}&page={{ page-1 }}">이전</a>{% endif %}<span>{{ page }} / {{ total_pages }}</span>{% if page < total_pages %}<a class="button-link" href="?query={{ query|urlencode }}&decision={{ decision }}&status={{ status }}&exception={{ exception }}&record_state={{ record_state }}&scanner_source={{ scanner_source|urlencode }}&overdue={{ 'true' if overdue else 'false' }}&page_size={{ page_size }}&page={{ page+1 }}">다음</a>{% endif %}</div>
+</section>
+{% endblock %}

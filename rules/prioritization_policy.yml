@@ -1,0 +1,55 @@
+version: 2.0.0
+name: VulnFlow transparent remediation prioritization policy
+score_cap: 140
+weights:
+  kev: 35
+  internet_exposed: 15
+  patch_available: 3
+  no_compensating_control: 5
+  overdue: 10
+  asset_criticality_per_level: 4
+  data_sensitivity_per_level: 2
+cvss_bands:
+- min: 9.0
+  points: 15
+- min: 7.0
+  points: 10
+- min: 4.0
+  points: 5
+- min: 0.0
+  points: 1
+epss_bands:
+- min: 0.5
+  points: 25
+- min: 0.1
+  points: 18
+- min: 0.01
+  points: 10
+- min: 0.0
+  points: 2
+compensating_control_discount: 8
+decisions:
+  immediate:
+    min_score: 80
+    sla_days: 1
+    label: 즉시 조치
+  urgent_review:
+    min_score: 65
+    sla_days: 7
+    label: 긴급 검토
+  scheduled:
+    min_score: 45
+    sla_days: 30
+    label: 예정 조치
+  monitor:
+    min_score: 0
+    sla_days: 90
+    label: 관찰
+special_rules:
+  kev_and_internet_exposed:
+    enabled: true
+    decision: immediate
+  mitigation_without_patch:
+    enabled: true
+    min_score: 65
+    include_kev: true

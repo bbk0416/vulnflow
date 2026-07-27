@@ -1,0 +1,16 @@
+{
+  "compressed_database": "v48_schema35.sqlite3.gz",
+  "compressed_database_sha256": "32ce31b7fdbca52b8f01e2bf8015c73b8a00af7538342fb3351ae425421d9fb4",
+  "contains": {
+    "background_jobs": 1,
+    "campaigns": 1,
+    "findings": 2
+  },
+  "fixture_format": "vulnflow-legacy-sqlite-gzip-fixture/1",
+  "privacy": "synthetic test data only",
+  "source_archive": "BBK_VULNFLOW_PROJECT_V48_0_20260723.zip",
+  "source_archive_sha256": "74ffe6aa64680235bd8b5dcd9bf039e9732f7c3de9ea9e9b52bc18a00dedd98c",
+  "source_release": "48.0.0",
+  "source_schema_version": 35,
+  "uncompressed_database_sha256": "903451412998572a6fcc34d3f2393e52e1bb2db582bb57f923cc885d72bdd2f2"
+}

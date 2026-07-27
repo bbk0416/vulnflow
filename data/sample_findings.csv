@@ -1,0 +1,11 @@
+﻿finding_id,product,product_version,asset_id,asset_name,environment,cve_id,component,component_version,cvss,epss,epss_percentile,kev,internet_exposed,asset_criticality,data_sensitivity,patch_available,compensating_control,status,owner,due_date,exception_expiry,risk_acceptance_reason,risk_acceptance_approver,notes,intel_source
+F-0001,EdgeConnect Gateway,3.2,A-EXT-01,외부 원격접속 게이트웨이,production,CVE-2024-3400,PAN-OS,10.2,10.0,0.94,0.99,1,1,5,4,1,0,OPEN,네트워크팀,2026-07-20,,,,인터넷 경계 장비 데모,CACHED DEMO - REFRESH REQUIRED
+F-0002,Customer Portal,5.8,A-WEB-02,고객 포털 웹서버,production,CVE-2021-44228,log4j-core,2.14.1,10.0,0.97,0.99,1,1,5,5,1,0,IN_PROGRESS,개발1팀,2026-07-21,,,,가상 고객 서비스,CACHED DEMO - REFRESH REQUIRED
+F-0003,File Transfer Service,2.1,A-MFT-01,대외 파일전송 서버,production,CVE-2023-34362,MOVEit Transfer,2023.0,9.8,0.89,0.99,1,1,5,5,1,1,MITIGATED,인프라팀,2026-07-19,,,,WAF 임시차단 적용,CACHED DEMO - REFRESH REQUIRED
+F-0004,Internal HR,4.0,A-HR-01,내부 인사시스템,intranet,CVE-2022-22965,Spring Framework,5.3.17,9.8,0.42,0.97,1,0,4,5,1,1,OPEN,업무개발팀,2026-07-26,,,,외부 미노출,CACHED DEMO - REFRESH REQUIRED
+F-0005,Factory Monitor,1.4,A-OT-11,생산설비 모니터링,ot,CVE-2023-4966,NetScaler ADC,13.1,9.4,0.76,0.99,1,0,5,3,1,0,OPEN,OT보안팀,2026-07-22,,,,서비스 중단 제약 존재,CACHED DEMO - REFRESH REQUIRED
+F-0006,Developer Workstation,2026.1,A-DEV-07,개발자 테스트 PC,development,CVE-2024-3094,xz-utils,5.6.1,10.0,0.02,0.75,0,0,2,2,1,0,OPEN,개발지원팀,2026-08-10,,,,테스트용 합성 데이터,CACHED DEMO - REFRESH REQUIRED
+F-0007,Analytics Batch,7.3,A-DATA-03,배치 분석 서버,intranet,CVE-2023-44487,HTTP/2 stack,unknown,7.5,0.08,0.88,1,0,3,4,1,1,RISK_ACCEPTED,데이터팀,2026-08-01,2026-09-30,외부 미노출 및 트래픽 제한 보완통제를 근거로 한시 수용,데모 CISO,트래픽 제한 적용,CACHED DEMO - REFRESH REQUIRED
+F-0008,Training Lab,1.0,A-LAB-04,교육용 실습 서버,lab,CVE-2020-1472,Windows Server,2019,10.0,0.55,0.98,1,0,1,1,1,0,OPEN,교육담당,2026-08-15,,,,격리망 교육장비,CACHED DEMO - REFRESH REQUIRED
+F-0009,Medical Device Console,6.2,A-MED-08,의료기기 관리콘솔,production,CVE-2021-26855,Exchange Server,2016,9.8,0.91,0.99,1,1,5,5,0,0,OPEN,제품보안팀,2026-07-20,,,,패치 검증 전 완화조치 필요,CACHED DEMO - REFRESH REQUIRED
+F-0010,Public API,2.9,A-API-01,외부 파트너 API,production,CVE-2023-22515,Confluence Data Center,8.4.1,10.0,0.82,0.99,1,1,4,4,1,0,OPEN,플랫폼팀,2026-07-20,,,,외부 공개 API와 동일 네트워크,CACHED DEMO - REFRESH REQUIRED

@@ -1,0 +1,41 @@
+{% extends "base.html" %}{% block title %}내보내기 · VulnFlow{% endblock %}{% block content %}
+<h1>스냅샷 내보내기</h1>
+{% if notice_message %}<div class="notice">{{ notice_message }}</div>{% endif %}
+<section class="kpis">
+  <div class="card"><span>관리 용량</span><strong>{{ storage.managed_bytes }} bytes</strong></div>
+  <div class="card"><span>Quota</span><strong>{{ storage.quota_bytes or '무제한' }}</strong></div>
+  <div class="card"><span>디스크 여유</span><strong>{{ storage.disk_free_bytes }} bytes</strong></div>
+  <div class="card"><span>보호 산출물</span><strong>{{ storage.pinned_count }}</strong></div>
+  <div class="card {% if storage.pressure %}danger{% endif %}"><span>저장소 상태</span><strong>{{ 'PRESSURE' if storage.pressure else 'NORMAL' }}</strong></div>
+</section>
+<section class="panel"><h2>취약점 CSV 생성</h2><p>비동기 작업은 SQLite 백업 스냅샷을 사용해 일관된 CSV를 생성합니다. Quota 또는 최소 디스크 여유가 부족하면 보호되지 않은 오래된 산출물을 자동 퇴거합니다.</p>
+  {% if request.state.role in ['operator','approver','admin'] %}
+  <form class="form" method="post" action="/exports/findings">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+    <input name="query" maxlength="500" placeholder="FTS 검색어">
+    <select name="record_state"><option value="ALL">전체 레코드</option><option value="CURRENT">현재 항목</option><option value="ACTIVE">ACTIVE</option><option value="STALE">STALE</option><option value="ARCHIVED">ARCHIVED</option></select>
+    <input name="status" maxlength="40" placeholder="상태">
+    <input name="decision" maxlength="80" placeholder="판정 코드">
+    <input name="scanner_source" maxlength="120" placeholder="스캐너 원천">
+    <select name="exception"><option value="">전체 예외</option><option value="expired">만료</option><option value="expiring">만료 임박</option><option value="active">유효</option></select>
+    <label><input type="checkbox" name="overdue" value="1"> 기한 초과만</label>
+    <button class="primary">비동기 CSV 생성</button>
+  </form>
+  {% endif %}
+  <p><a class="button-link" href="/export/findings.csv">전체 CSV 즉시 스트리밍</a> <small>대규모·복합 필터는 위 비동기 작업을 권장합니다.</small></p>
+  {% if request.state.role=='admin' %}<form method="post" action="/exports/storage/cleanup"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>Quota·디스크 여유 정리 실행</button></form>{% endif %}
+</section>
+<section class="panel"><h2>산출물</h2>
+<form class="filters" method="get"><select name="status"><option value="">전체 상태</option>{% for value in ['READY','EXPIRED','CORRUPT','EVICTED'] %}<option value="{{ value }}" {% if status==value %}selected{% endif %}>{{ value }}</option>{% endfor %}</select><button>필터</button></form>
+<div class="table-wrap"><table><thead><tr><th>산출물</th><th>상태·보호</th><th>행·크기</th><th>스냅샷</th><th>만료·퇴거</th><th>무결성</th><th>작업</th></tr></thead><tbody>
+{% for item in artifacts %}<tr>
+<td><code>{{ item.artifact_id }}</code><br>{{ item.download_filename }}<br><small>요청자 {{ item.created_by }} · 다운로드 {{ item.downloaded_count }}회</small></td>
+<td><strong>{{ item.status }}</strong><br>{{ 'PINNED' if item.pinned else 'evictable' }}{% if item.pinned_by %}<br><small>{{ item.pinned_by }} · {{ item.pinned_at }}</small>{% endif %}</td>
+<td>{{ item.row_count }}행<br>{{ item.size_bytes }} bytes</td>
+<td>{{ item.snapshot_at }}<br><small>{{ item.filters }}</small></td>
+<td>{{ item.expires_at or '보존' }}{% if item.evicted_at %}<br><small>{{ item.evicted_at }} · {{ item.eviction_reason }}</small>{% endif %}</td>
+<td><code>{{ item.sha256[:16] }}…</code></td>
+<td>{% if item.status=='READY' %}<a class="button-link" href="/exports/{{ item.artifact_id }}/download">검증 후 다운로드</a>{% if request.state.role=='admin' %}<form method="post" action="/exports/{{ item.artifact_id }}/pin"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="hidden" name="pinned" value="{{ 'false' if item.pinned else 'true' }}"><button>{{ '보호 해제' if item.pinned else '보호' }}</button></form><form method="post" action="/exports/{{ item.artifact_id }}/expire"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button class="danger-button">만료</button></form>{% endif %}{% endif %}</td>
+</tr>{% else %}<tr><td colspan="7">내보내기 산출물이 없습니다.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

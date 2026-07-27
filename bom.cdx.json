@@ -1,0 +1,573 @@
+{
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "bom-ref": "pkg:pypi/annotated-doc@0.0.4",
+      "name": "annotated-doc",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/annotated-doc@0.0.4",
+      "type": "library",
+      "version": "0.0.4"
+    },
+    {
+      "bom-ref": "pkg:pypi/annotated-types@0.7.0",
+      "name": "annotated-types",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/annotated-types@0.7.0",
+      "type": "library",
+      "version": "0.7.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/anyio@4.13.0",
+      "name": "anyio",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/anyio@4.13.0",
+      "type": "library",
+      "version": "4.13.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/certifi@2026.5.20",
+      "name": "certifi",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/certifi@2026.5.20",
+      "type": "library",
+      "version": "2026.5.20"
+    },
+    {
+      "bom-ref": "pkg:pypi/cffi@2.0.0",
+      "name": "cffi",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/cffi@2.0.0",
+      "type": "library",
+      "version": "2.0.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/charset-normalizer@3.4.7",
+      "name": "charset-normalizer",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/charset-normalizer@3.4.7",
+      "type": "library",
+      "version": "3.4.7"
+    },
+    {
+      "bom-ref": "pkg:pypi/click@8.1.8",
+      "name": "click",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/click@8.1.8",
+      "type": "library",
+      "version": "8.1.8"
+    },
+    {
+      "bom-ref": "pkg:pypi/colorama@0.4.6",
+      "name": "colorama",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        },
+        {
+          "name": "vulnflow:environment-marker",
+          "value": "sys_platform == \"win32\""
+        }
+      ],
+      "purl": "pkg:pypi/colorama@0.4.6",
+      "type": "library",
+      "version": "0.4.6"
+    },
+    {
+      "bom-ref": "pkg:pypi/cryptography@46.0.4",
+      "name": "cryptography",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/cryptography@46.0.4",
+      "type": "library",
+      "version": "46.0.4"
+    },
+    {
+      "bom-ref": "pkg:pypi/fastapi@0.128.2",
+      "name": "fastapi",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/fastapi@0.128.2",
+      "type": "library",
+      "version": "0.128.2"
+    },
+    {
+      "bom-ref": "pkg:pypi/h11@0.16.0",
+      "name": "h11",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/h11@0.16.0",
+      "type": "library",
+      "version": "0.16.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/httptools@0.8.0",
+      "name": "httptools",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/httptools@0.8.0",
+      "type": "library",
+      "version": "0.8.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/idna@3.17",
+      "name": "idna",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/idna@3.17",
+      "type": "library",
+      "version": "3.17"
+    },
+    {
+      "bom-ref": "pkg:pypi/jinja2@3.1.6",
+      "name": "Jinja2",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/jinja2@3.1.6",
+      "type": "library",
+      "version": "3.1.6"
+    },
+    {
+      "bom-ref": "pkg:pypi/markupsafe@3.0.3",
+      "name": "MarkupSafe",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/markupsafe@3.0.3",
+      "type": "library",
+      "version": "3.0.3"
+    },
+    {
+      "bom-ref": "pkg:pypi/pycparser@3.0",
+      "name": "pycparser",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/pycparser@3.0",
+      "type": "library",
+      "version": "3.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/pydantic@2.13.4",
+      "name": "pydantic",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/pydantic@2.13.4",
+      "type": "library",
+      "version": "2.13.4"
+    },
+    {
+      "bom-ref": "pkg:pypi/pydantic-core@2.46.4",
+      "name": "pydantic_core",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/pydantic-core@2.46.4",
+      "type": "library",
+      "version": "2.46.4"
+    },
+    {
+      "bom-ref": "pkg:pypi/python-dotenv@1.2.2",
+      "name": "python-dotenv",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/python-dotenv@1.2.2",
+      "type": "library",
+      "version": "1.2.2"
+    },
+    {
+      "bom-ref": "pkg:pypi/python-multipart@0.0.29",
+      "name": "python-multipart",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/python-multipart@0.0.29",
+      "type": "library",
+      "version": "0.0.29"
+    },
+    {
+      "bom-ref": "pkg:pypi/pyyaml@6.0.3",
+      "name": "PyYAML",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/pyyaml@6.0.3",
+      "type": "library",
+      "version": "6.0.3"
+    },
+    {
+      "bom-ref": "pkg:pypi/requests@2.32.5",
+      "name": "requests",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/requests@2.32.5",
+      "type": "library",
+      "version": "2.32.5"
+    },
+    {
+      "bom-ref": "pkg:pypi/starlette@0.50.0",
+      "name": "starlette",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/starlette@0.50.0",
+      "type": "library",
+      "version": "0.50.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/typing-extensions@4.15.0",
+      "name": "typing_extensions",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/typing-extensions@4.15.0",
+      "type": "library",
+      "version": "4.15.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/typing-inspection@0.4.2",
+      "name": "typing-inspection",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/typing-inspection@0.4.2",
+      "type": "library",
+      "version": "0.4.2"
+    },
+    {
+      "bom-ref": "pkg:pypi/urllib3@2.7.0",
+      "name": "urllib3",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/urllib3@2.7.0",
+      "type": "library",
+      "version": "2.7.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/uvicorn@0.48.0",
+      "name": "uvicorn",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/uvicorn@0.48.0",
+      "type": "library",
+      "version": "0.48.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/uvloop@0.22.1",
+      "name": "uvloop",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        },
+        {
+          "name": "vulnflow:environment-marker",
+          "value": "sys_platform != \"win32\" and platform_python_implementation == \"CPython\""
+        }
+      ],
+      "purl": "pkg:pypi/uvloop@0.22.1",
+      "type": "library",
+      "version": "0.22.1"
+    },
+    {
+      "bom-ref": "pkg:pypi/watchfiles@1.2.0",
+      "name": "watchfiles",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/watchfiles@1.2.0",
+      "type": "library",
+      "version": "1.2.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/websockets@16.0",
+      "name": "websockets",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/websockets@16.0",
+      "type": "library",
+      "version": "16.0"
+    }
+  ],
+  "dependencies": [
+    {
+      "dependsOn": [
+        "pkg:pypi/annotated-doc@0.0.4",
+        "pkg:pypi/annotated-types@0.7.0",
+        "pkg:pypi/anyio@4.13.0",
+        "pkg:pypi/certifi@2026.5.20",
+        "pkg:pypi/cffi@2.0.0",
+        "pkg:pypi/charset-normalizer@3.4.7",
+        "pkg:pypi/click@8.1.8",
+        "pkg:pypi/colorama@0.4.6",
+        "pkg:pypi/cryptography@46.0.4",
+        "pkg:pypi/fastapi@0.128.2",
+        "pkg:pypi/h11@0.16.0",
+        "pkg:pypi/httptools@0.8.0",
+        "pkg:pypi/idna@3.17",
+        "pkg:pypi/jinja2@3.1.6",
+        "pkg:pypi/markupsafe@3.0.3",
+        "pkg:pypi/pycparser@3.0",
+        "pkg:pypi/pydantic@2.13.4",
+        "pkg:pypi/pydantic-core@2.46.4",
+        "pkg:pypi/python-dotenv@1.2.2",
+        "pkg:pypi/python-multipart@0.0.29",
+        "pkg:pypi/pyyaml@6.0.3",
+        "pkg:pypi/requests@2.32.5",
+        "pkg:pypi/starlette@0.50.0",
+        "pkg:pypi/typing-extensions@4.15.0",
+        "pkg:pypi/typing-inspection@0.4.2",
+        "pkg:pypi/urllib3@2.7.0",
+        "pkg:pypi/uvicorn@0.48.0",
+        "pkg:pypi/uvloop@0.22.1",
+        "pkg:pypi/watchfiles@1.2.0",
+        "pkg:pypi/websockets@16.0"
+      ],
+      "ref": "pkg:generic/vulnflow@72.0.8"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/annotated-doc@0.0.4"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/annotated-types@0.7.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/anyio@4.13.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/certifi@2026.5.20"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/cffi@2.0.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/charset-normalizer@3.4.7"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/click@8.1.8"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/colorama@0.4.6"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/cryptography@46.0.4"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/fastapi@0.128.2"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/h11@0.16.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/httptools@0.8.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/idna@3.17"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/jinja2@3.1.6"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/markupsafe@3.0.3"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/pycparser@3.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/pydantic@2.13.4"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/pydantic-core@2.46.4"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/python-dotenv@1.2.2"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/python-multipart@0.0.29"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/pyyaml@6.0.3"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/requests@2.32.5"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/starlette@0.50.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/typing-extensions@4.15.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/typing-inspection@0.4.2"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/urllib3@2.7.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/uvicorn@0.48.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/uvloop@0.22.1"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/watchfiles@1.2.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/websockets@16.0"
+    }
+  ],
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:generic/vulnflow@72.0.11",
+      "description": "Local vulnerability operations with append-only public integrity-proof transparency logs, signed revocation checkpoints, independent witness quorum, multi-scanner reconciliation, governed VEX, evidence-backed remediation verification, policy governance, RBAC approvals, durable automation, audit integrity, backup and restore",
+      "name": "VulnFlow",
+      "type": "application",
+      "version": "72.0.11"
+    },
+    "timestamp": "2026-07-24T02:43:09Z"
+  },
+  "serialNumber": "urn:uuid:08e1e6a9-9239-4fdc-b49a-02ef8d555720",
+  "specVersion": "1.6",
+  "version": 1
+}

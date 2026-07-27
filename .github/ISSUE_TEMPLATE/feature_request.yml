@@ -1,0 +1,31 @@
+name: Feature request
+description: Propose a focused improvement to the vulnerability-operations workflow.
+title: "[Feature] "
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Operational problem
+      description: Describe the vulnerability-management problem, not only the desired UI or implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and tradeoffs
+  - type: checkboxes
+    id: scope
+    attributes:
+      label: Scope confirmation
+      options:
+        - label: The proposal can be demonstrated with synthetic or authorized data.
+          required: true
+        - label: The proposal does not require publishing sensitive vulnerability information.
+          required: true
