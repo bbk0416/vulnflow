@@ -88,13 +88,16 @@ python scripts_reset_demo.py
 
 ## 공개 검증 범위
 
-이 공개 저장소에는 핵심 업무 흐름을 검증하는 **238개 대표 시험**을 포함합니다.
+이 공개 저장소에는 **240개 핵심 회귀시험**과 **Chromium 브라우저 E2E 3개**를 포함합니다.
 
 ```bash
 python scripts/run_public_tests.py
+pip install -r requirements-e2e.txt
+python -m playwright install chromium
+python scripts/run_browser_e2e.py
 ```
 
-공개 시험 범위는 인증, 수집, 우선순위, 조치·승인, 자산 병합, 증거, SBOM·OSV, 백업·복구와 동일 호스트 coordination을 포함합니다.
+핵심 회귀시험은 인증, 수집, 우선순위, 조치·승인, 자산 병합, 증거, SBOM·OSV, 백업·복구와 동일 호스트 coordination을 검증합니다. 브라우저 E2E는 대시보드에서 조치 상태 변경, CSV 가져오기 후 검색, operator 위험수용 요청과 approver 승인을 실제 Chromium 동선으로 검증합니다. GitHub Actions에서는 E2E를 Ubuntu/Python 3.13 단일 job으로 실행해 4개 핵심 회귀 행렬과 중복되지 않게 구성했습니다.
 
 내부 제출 기준본 72.0.11에서는 전체 자동시험 555개와 애플리케이션 line coverage 79.96%를 확인했습니다. 공개 저장소에서는 채용 검토에 필요한 핵심 코드와 시험을 우선하며, 결정적 wheel/sdist, runtime snapshot, DSSE provenance 및 전체 릴리스 리허설 산출물은 저장소 용량과 가독성을 위해 제외했습니다.
 
@@ -105,7 +108,7 @@ python scripts/run_public_tests.py
 - Jinja2 server-rendered UI
 - Background jobs and webhook outbox
 - CycloneDX SBOM / VEX / OSV
-- Pytest
+- Pytest / Playwright Chromium E2E
 
 ## 문서 읽는 순서
 

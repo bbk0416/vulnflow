@@ -39,6 +39,7 @@ def _public_checks(version: str) -> list[tuple[str, bool]]:
         ("public_ci_windows", "windows-latest" in workflow_text),
         ("public_ci_architecture", "architecture_review.py" in workflow_text),
         ("public_ci_manifest", "verify_public_manifest.py" in workflow_text),
+        ("public_ci_browser_e2e", "browser-e2e" in workflow_text and "run_browser_e2e.py" in workflow_text and "playwright install --with-deps chromium" in workflow_text),
         ("python_floor_windows_ps1", "Python 3.12" in (ROOT / "run_windows.ps1").read_text(encoding="utf-8")),
         ("python_floor_windows_bat", "Python 3.12" in (ROOT / "run_windows.bat").read_text(encoding="utf-8")),
         ("python_floor_linux", "Python 3.12" in (ROOT / "run_linux.sh").read_text(encoding="utf-8")),

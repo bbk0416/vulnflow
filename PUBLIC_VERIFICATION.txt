@@ -9,8 +9,9 @@ Scope
 - Repository governance files included: changelog, contributing guide, conduct policy, support policy, roadmap, citation metadata, issue templates and pull-request template
 
 Source-tree verification
-- Representative public tests: 238/238 PASS
-- GitHub Actions Ubuntu/Windows matrix and issue-template YAML parsing: PASS
+- Representative core regression tests: 240/240 PASS
+- Chromium browser workflow E2E: 3/3 PASS
+- GitHub Actions Ubuntu/Windows core matrix, Chromium E2E job and issue-template YAML parsing: PASS
 - Relative Markdown link validation: PASS
 - Stale user-visible version scan: PASS
 - Runtime/cache residue scan: PASS
@@ -27,10 +28,10 @@ Privacy and secret screening
 - Included compressed SQLite fixture: synthetic schema migration fixture only
 
 Internal package integrity
-- SHA-256 manifest target files: 335
+- SHA-256 manifest target files: 338
 - SHA-256 manifest excludes itself
 
 Transparency
 - Internal 72.0.11 submission baseline: 555 automated tests and 79.96% application line coverage
-- Public package: 238 representative tests, including connection-lifecycle and cross-platform scanner regression checks
+- Public package: 240 core regression tests plus 3 Chromium workflow E2E tests, including connection-lifecycle and cross-platform scanner regression checks
 - Public package does not claim third-party certification, customer deployment, production SLA or autonomous vulnerability impact determination

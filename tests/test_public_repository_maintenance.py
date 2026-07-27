@@ -131,3 +131,21 @@ def test_dashboard_prioritizes_action_queue_and_progressive_filters(client) -> N
     filtered = client.get("/?record_state=ALL&page_size=50")
     assert filtered.status_code == 200
     assert '<details class="advanced-filters" open>' in filtered.text
+
+def test_public_ci_runs_one_chromium_browser_workflow_job() -> None:
+    workflow = (ROOT / ".github/workflows/public-ci.yml").read_text(encoding="utf-8")
+    assert "browser-e2e:" in workflow
+    assert 'python-version: "3.13"' in workflow
+    assert "requirements-e2e.txt" in workflow
+    assert "python -m playwright install --with-deps chromium" in workflow
+    assert "python scripts/run_browser_e2e.py" in workflow
+
+
+def test_browser_e2e_covers_three_primary_vm_flows() -> None:
+    browser_test = (ROOT / "tests/e2e/test_vm_workflows.py").read_text(encoding="utf-8")
+    for test_name in (
+        "test_dashboard_to_finding_workflow_update",
+        "test_csv_import_creates_searchable_finding",
+        "test_operator_risk_acceptance_requires_approver",
+    ):
+        assert f"def {test_name}(" in browser_test

@@ -39,3 +39,20 @@ jobs:
         run: python scripts/submission_readiness_smoke.py --public
       - name: Run public regression suite
         run: python scripts/run_public_tests.py
+  browser-e2e:
+    name: browser-e2e / Chromium
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-e2e.txt
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements-e2e.txt
+      - name: Install Chromium
+        run: python -m playwright install --with-deps chromium
+      - name: Run browser workflow E2E
+        run: python scripts/run_browser_e2e.py
