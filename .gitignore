@@ -20,3 +20,4 @@ data/exports/
 data/backups/
 INITIAL_CREDENTIALS.json
 *_PRIVATE_KEY*
+reports/

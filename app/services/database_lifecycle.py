@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -30,7 +31,7 @@ def validate_database_file(source: str | Path) -> dict[str, Any]:
     if not source_path.is_file() or source_path.stat().st_size == 0:
         raise ValueError("복원 파일이 비어 있거나 존재하지 않습니다.")
     try:
-        with sqlite3.connect(f"file:{source_path.as_posix()}?mode=ro", uri=True) as conn:
+        with closing(sqlite3.connect(f"file:{source_path.as_posix()}?mode=ro", uri=True)) as conn:
             conn.execute("PRAGMA trusted_schema=OFF")
             integrity = conn.execute("PRAGMA integrity_check").fetchone()
             if not integrity or str(integrity[0]).lower() != "ok":
@@ -445,7 +446,7 @@ def restore_database(
 
     # SQLite backup API replaces the live database transactionally without trusting file copy semantics.
     try:
-        with sqlite3.connect(source) as source_conn, sqlite3.connect(db_path) as target_conn:
+        with closing(sqlite3.connect(source)) as source_conn, closing(sqlite3.connect(db_path)) as target_conn:
             source_conn.backup(target_conn)
             target_conn.commit()
         init_db(db_path)  # Apply backward-compatible schema migrations if required.
@@ -467,7 +468,7 @@ def restore_database(
     except Exception:
         # Best effort rollback from the safety backup.
         if safety_backup.exists():
-            with sqlite3.connect(safety_backup) as source_conn, sqlite3.connect(db_path) as target_conn:
+            with closing(sqlite3.connect(safety_backup)) as source_conn, closing(sqlite3.connect(db_path)) as target_conn:
                 source_conn.backup(target_conn)
                 target_conn.commit()
         raise
@@ -475,7 +476,7 @@ def restore_database(
 
 def list_maintenance_runs(db_path: str | Path, *, limit: int = 100) -> list[dict[str, Any]]:
     limit = max(1, min(int(limit), 1000))
-    with connect(db_path) as conn:
+    with closing(connect(db_path)) as conn:
         rows = conn.execute(
             "SELECT * FROM maintenance_runs ORDER BY started_at DESC LIMIT ?", (limit,)
         ).fetchall()

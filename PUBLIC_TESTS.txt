@@ -23,3 +23,4 @@ tests/test_snapshot_exports_v26.py
 tests/test_config_drift_v29.py
 tests/test_config_change_control_v30.py
 tests/test_safe_auth_defaults_v72_0_1.py
+tests/test_public_repository_maintenance.py

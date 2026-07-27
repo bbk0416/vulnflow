@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d %~dp0
-where python >nul 2>nul || (echo Python 3.11 or later is required. & exit /b 1)
+where python >nul 2>nul || (echo Python 3.12 or later is required. & exit /b 1)
 if not exist .venv python -m venv .venv
 call .venv\Scripts\activate
 python -m pip install --upgrade pip || exit /b 1

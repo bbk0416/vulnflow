@@ -255,5 +255,3 @@ def validate_transition_document(document: Mapping[str, Any]) -> dict[str, Any]:
         "effective_at": effective,
         "created_at": created,
     }
-
-

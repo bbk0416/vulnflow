@@ -834,6 +834,10 @@ def render_architecture_report(report: dict[str, Any]) -> str:
 
 def write_architecture_report(root: str | Path, text_path: str | Path, json_path: str | Path) -> dict[str, Any]:
     report = build_architecture_report(root)
-    Path(text_path).write_text(render_architecture_report(report), encoding="utf-8")
-    Path(json_path).write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    text_output = Path(text_path)
+    json_output = Path(json_path)
+    text_output.parent.mkdir(parents=True, exist_ok=True)
+    json_output.parent.mkdir(parents=True, exist_ok=True)
+    text_output.write_text(render_architecture_report(report), encoding="utf-8")
+    json_output.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return report

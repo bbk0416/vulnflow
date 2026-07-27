@@ -435,4 +435,3 @@ def create_app(
 
 app = create_app(context=APPLICATION_CONTEXT)
 _ROUTE_EXPORTS = APPLICATION_CONTEXT.route_exports
-
