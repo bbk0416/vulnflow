@@ -2,6 +2,12 @@
 
 This public changelog summarizes the portfolio-facing release line. It does not reproduce every internal verification iteration.
 
+## Public browser workflow maintenance
+
+- Added three Chromium E2E flows for finding workflow updates, CSV ingestion, and separated operator/approver risk acceptance.
+- Added a dedicated Ubuntu/Python 3.13 Playwright CI job instead of multiplying browser downloads across the core OS/Python matrix.
+- Added public readiness and regression checks that keep the browser workflow job present.
+
 ## Public UI focus maintenance
 
 - Reduced the header to five primary navigation entry points while retaining all existing routes in grouped menus.

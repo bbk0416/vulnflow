@@ -13,5 +13,6 @@ recursive-include docs *.md
 include .python-version
 include requirements-dev.txt
 include requirements-dev.lock
+include requirements-e2e.txt
 recursive-include scripts *.py
 recursive-include tests *.py *.json *.gz
