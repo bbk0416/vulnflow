@@ -2,6 +2,13 @@
 
 This public changelog summarizes the portfolio-facing release line. It does not reproduce every internal verification iteration.
 
+## Public UI focus maintenance
+
+- Reduced the header to five primary navigation entry points while retaining all existing routes in grouped menus.
+- Added a task-first dashboard for immediate findings, overdue work, verification, and active campaigns.
+- Moved secondary metrics and advanced filters behind progressive disclosure to reduce first-screen density.
+- Added public regression checks for the focused navigation and dashboard workflow.
+
 ## Public repository maintenance
 
 - made architecture and submission-readiness checks self-contained in a clean public clone;
