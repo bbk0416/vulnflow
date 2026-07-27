@@ -9,7 +9,7 @@ Scope
 - Repository governance files included: changelog, contributing guide, conduct policy, support policy, roadmap, citation metadata, issue templates and pull-request template
 
 Source-tree verification
-- Representative public tests: 236/236 PASS
+- Representative public tests: 238/238 PASS
 - GitHub Actions Ubuntu/Windows matrix and issue-template YAML parsing: PASS
 - Relative Markdown link validation: PASS
 - Stale user-visible version scan: PASS
@@ -32,5 +32,5 @@ Internal package integrity
 
 Transparency
 - Internal 72.0.11 submission baseline: 555 automated tests and 79.96% application line coverage
-- Public package: 236 representative tests, including connection-lifecycle and cross-platform scanner regression checks
+- Public package: 238 representative tests, including connection-lifecycle and cross-platform scanner regression checks
 - Public package does not claim third-party certification, customer deployment, production SLA or autonomous vulnerability impact determination

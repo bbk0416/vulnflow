@@ -100,3 +100,34 @@ def test_clamscan_signature_parser_ignores_windows_drive_colon(tmp_path: Path, m
     )
     assert result["scan_status"] == "INFECTED"
     assert result["scan_signature"] == "Unit.Test"
+
+
+def test_dashboard_uses_five_primary_navigation_entry_points(client) -> None:
+    response = client.get("/")
+    assert response.status_code == 200
+    html = response.text
+    assert html.count('class="nav-link') == 2
+    assert html.count('class="nav-group') == 3
+    for label in ("대시보드", "자산", "조치·승인", "데이터", "운영·설정"):
+        assert label in html
+    assert 'href="/export/findings.csv"' not in html
+    assert 'href="/export/recovery-bundle.zip"' not in html
+
+
+def test_dashboard_prioritizes_action_queue_and_progressive_filters(client) -> None:
+    response = client.get("/")
+    assert response.status_code == 200
+    html = response.text
+    assert 'aria-label="오늘의 작업 바로가기"' in html
+    assert "오늘 처리할 취약점부터 확인합니다." in html
+    assert "즉시 조치" in html
+    assert "기한 초과" in html
+    assert "조치 검증" in html
+    assert "진행 캠페인" in html
+    assert '<details class="secondary-metrics">' in html
+    assert '<details class="advanced-filters"' in html
+    assert '<section class="panel" id="findings">' in html
+
+    filtered = client.get("/?record_state=ALL&page_size=50")
+    assert filtered.status_code == 200
+    assert '<details class="advanced-filters" open>' in filtered.text

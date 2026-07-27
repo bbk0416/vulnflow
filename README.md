@@ -88,7 +88,7 @@ python scripts_reset_demo.py
 
 ## 공개 검증 범위
 
-이 공개 저장소에는 핵심 업무 흐름을 검증하는 **236개 대표 시험**을 포함합니다.
+이 공개 저장소에는 핵심 업무 흐름을 검증하는 **238개 대표 시험**을 포함합니다.
 
 ```bash
 python scripts/run_public_tests.py

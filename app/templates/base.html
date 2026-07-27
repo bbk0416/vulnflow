@@ -6,12 +6,44 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header>
-  <div class="brand"><a href="/">VulnFlow</a><span>{{ app_version }}</span></div>
-  <nav>
-    <a href="/">대시보드</a><a href="/assets">자산</a><a href="/asset-identities">자산 식별</a><a href="/sboms">SBOM·VEX</a><a href="/exposure-groups">노출 군집</a><a href="/campaigns">조치 캠페인</a>{% if request.state.role in ['operator','approver','admin'] %}<a href="/upload">가져오기·복원</a>{% endif %}<a href="/imports">가져오기 이력</a><a href="/reconciliation">스캐너 조정</a><a href="/jobs">작업 큐</a><a href="/exports">내보내기</a><a href="/audit">감사 이력</a>{% if request.state.role in ['operator','approver','admin'] %}<a href="/approvals">위험수용 승인</a><a href="/verifications">조치 검증</a><a href="/config-changes">구성 변경</a>{% endif %}<a href="/policies">정책 관리</a>{% if request.state.role=='admin' %}<a href="/maintenance">유지관리</a><a href="/webhooks">웹훅</a><a href="/execution-receipts">실행 영수증</a><a href="/system">시스템·복구</a><a href="/cluster">인스턴스</a>{% endif %}
-    <a href="/export/findings.csv">취약점 CSV</a><a href="/export/assets.csv">자산 CSV</a><a href="/export/campaigns.csv">캠페인 CSV</a><a href="/export/audit.csv">감사 CSV</a><a href="/export/report.html">HTML 보고서</a>{% if request.state.role=='admin' %}<a href="/export/backup.sqlite3">DB 백업</a><a href="/export/recovery-bundle.zip">복구 번들</a>{% endif %}
-  </nav><div class="session-user">{{ request.state.actor }} · {{ request.state.role }}</div>
+{% set current_path = request.url.path if request.url is defined else '' %}
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand"><a href="/">VulnFlow</a><span>{{ app_version }}</span></div>
+    <nav class="primary-nav" aria-label="주요 메뉴">
+      <a class="nav-link {% if current_path == '/' %}active{% endif %}" href="/">대시보드</a>
+      <a class="nav-link {% if current_path.startswith('/assets') or current_path.startswith('/asset-identities') %}active{% endif %}" href="/assets">자산</a>
+      <details class="nav-group {% if current_path.startswith('/campaign') or current_path.startswith('/approval') or current_path.startswith('/verification') or current_path.startswith('/exposure-groups') %}active{% endif %}">
+        <summary>조치·승인</summary>
+        <div class="nav-menu">
+          <a href="/campaigns">조치 캠페인</a>
+          {% if request.state.role in ['operator','approver','admin'] %}<a href="/approvals">위험수용 승인</a><a href="/verifications">조치 검증</a>{% endif %}
+          <a href="/exposure-groups">노출 군집</a>
+        </div>
+      </details>
+      <details class="nav-group {% if current_path.startswith('/upload') or current_path.startswith('/imports') or current_path.startswith('/reconciliation') or current_path.startswith('/sbom') or current_path.startswith('/exports') %}active{% endif %}">
+        <summary>데이터</summary>
+        <div class="nav-menu">
+          {% if request.state.role in ['operator','approver','admin'] %}<a href="/upload">가져오기·복원</a>{% endif %}
+          <a href="/imports">가져오기 이력</a>
+          <a href="/reconciliation">스캐너 조정</a>
+          <a href="/sboms">SBOM·VEX</a>
+          <a href="/exports">내보내기</a>
+        </div>
+      </details>
+      <details class="nav-group {% if current_path.startswith('/audit') or current_path.startswith('/policies') or current_path.startswith('/config-changes') or current_path.startswith('/jobs') or current_path.startswith('/maintenance') or current_path.startswith('/webhooks') or current_path.startswith('/execution-receipts') or current_path.startswith('/system') or current_path.startswith('/cluster') %}active{% endif %}">
+        <summary>운영·설정</summary>
+        <div class="nav-menu nav-menu-wide">
+          <a href="/audit">감사 이력</a>
+          <a href="/policies">정책 관리</a>
+          <a href="/jobs">작업 큐</a>
+          {% if request.state.role in ['operator','approver','admin'] %}<a href="/config-changes">구성 변경</a>{% endif %}
+          {% if request.state.role=='admin' %}<a href="/maintenance">유지관리</a><a href="/webhooks">웹훅</a><a href="/execution-receipts">실행 영수증</a><a href="/system">시스템·복구</a><a href="/cluster">인스턴스</a>{% endif %}
+        </div>
+      </details>
+    </nav>
+    <div class="session-user">{{ request.state.actor }} · {{ request.state.role }}</div>
+  </div>
 </header>
 <main>{% block content %}{% endblock %}</main>
 <footer>로컬 취약점 조치 운영 도구 · 조치 우선순위 점수는 공격 예측 확률이나 자동 승인 결과가 아닙니다.</footer>
