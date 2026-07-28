@@ -149,3 +149,42 @@ def test_browser_e2e_covers_three_primary_vm_flows() -> None:
         "test_operator_risk_acceptance_requires_approver",
     ):
         assert f"def {test_name}(" in browser_test
+
+
+def test_readme_presents_three_step_scenario_with_five_screenshots() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "## 3단계 시연 시나리오" in readme
+    for filename in (
+        "dashboard.png",
+        "finding-detail.png",
+        "asset-inventory.png",
+        "data-import.png",
+        "risk-approvals.png",
+    ):
+        assert f"assets/screenshots/{filename}" in readme
+        assert (ROOT / "assets/screenshots" / filename).is_file()
+    capture = (ROOT / "scripts/capture_public_screenshots.py").read_text(encoding="utf-8")
+    assert "public screenshot capture: PASS" in capture
+    assert "TemporaryDirectory" in capture
+
+
+def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
+    workflow = (ROOT / ".github/workflows/public-ci.yml").read_text(encoding="utf-8")
+    requirements = (ROOT / "requirements-quality.txt").read_text(encoding="utf-8")
+    runner = (ROOT / "scripts/run_quality_gates.py").read_text(encoding="utf-8")
+    assert "quality-gates:" in workflow
+    assert "python scripts/run_quality_gates.py" in workflow
+    for package in ("ruff==", "bandit==", "pip-audit=="):
+        assert package in requirements
+    for marker in ("ruff-fatal", "bandit-high", "pip-audit"):
+        assert marker in runner
+
+
+def test_database_restore_validation_is_split_into_bounded_helpers() -> None:
+    lifecycle = (ROOT / "app/services/database_lifecycle.py").read_text(encoding="utf-8")
+    validation = (ROOT / "app/services/database_validation.py").read_text(encoding="utf-8")
+    assert "validate_schema_contents" in lifecycle
+    assert "def _validate_schema_v18_to_v31" in validation
+    assert "def _validate_schema_v39_to_v40" in validation
+    assert lifecycle.count("if schema_version >=") == 1
+

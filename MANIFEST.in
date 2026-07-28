@@ -14,5 +14,7 @@ include .python-version
 include requirements-dev.txt
 include requirements-dev.lock
 include requirements-e2e.txt
+include requirements-quality.txt
 recursive-include scripts *.py
 recursive-include tests *.py *.json *.gz
+recursive-include assets *.png

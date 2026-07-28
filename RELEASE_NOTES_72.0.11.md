@@ -5,16 +5,16 @@ VulnFlow is a local FastAPI and SQLite vulnerability-operations project. It conn
 ## Public release contents
 
 - complete application source and synthetic demo data;
-- representative dashboard, finding-detail, and asset-inventory screenshots;
+- five repeatable synthetic-data screenshots covering dashboard, finding, asset, import, and approval views;
 - architecture and operating documentation;
-- 230 public representative tests;
+- 243 public representative tests plus three Chromium workflow E2E tests;
 - Docker and local Python launch configuration;
 - CycloneDX SBOM;
 - explicit scope, security, support, and contribution policies.
 
 ## Verification summary
 
-The public package was independently extracted and checked for safe ZIP paths, CRC integrity, internal hashes, prohibited runtime data, and obvious personal or secret values. The included representative suite passed 230 tests.
+The public package was independently extracted and checked for safe ZIP paths, CRC integrity, internal hashes, prohibited runtime data, and obvious personal or secret values. The current public maintenance suite passes 243 core tests. Chromium workflow E2E remains a separate GitHub Actions job.
 
 The separately maintained internal submission baseline reported 555 automated tests and 79.96% application line coverage. Full release rehearsal artifacts, runtime snapshots, DSSE envelopes, and internal journals are intentionally excluded from the public repository.
 

@@ -1,37 +1,40 @@
-VulnFlow 72.0.11 GitHub-ready public repository verification
-Date: 2026-07-27
+VulnFlow 72.0.11 final public-quality maintenance verification
+Date: 2026-07-29
 
 Scope
-- Public portfolio/source repository package
+- Public portfolio/source repository maintenance package
 - Full application source retained
 - Synthetic sample data only
-- Generated release binaries, runtime dependency snapshot and internal release journals excluded
-- Repository governance files included: changelog, contributing guide, conduct policy, support policy, roadmap, citation metadata, issue templates and pull-request template
+- Five repeatable UI screenshots generated from a temporary SQLite database
+- Static quality gate configured for GitHub Actions
 
-Source-tree verification
-- Representative core regression tests: 240/240 PASS
-- Chromium browser workflow E2E: 3/3 PASS
-- GitHub Actions Ubuntu/Windows core matrix, Chromium E2E job and issue-template YAML parsing: PASS
-- Relative Markdown link validation: PASS
-- Stale user-visible version scan: PASS
-- Runtime/cache residue scan: PASS
-- Sensitive-pattern scan: PASS
-- Non-example email-address scan: PASS
+Locally reproduced in this packaging environment
+- Representative core regression tests: 243/243 PASS
+- Screenshot capture workflow: 5/5 PASS
+- Database restore validation regression subset: 26/26 PASS
+- Architecture boundary review: PASS
+- Public submission readiness: PASS
+- Python compilation: PASS
 
-Privacy and secret screening
-- Korean mobile phone patterns: 0
-- Korean resident-registration-number patterns: 0
-- Email addresses other than example.test/example.com fixtures: 0
-- Local developer paths: 0
-- PEM/private-key headers: 0
-- Uncompressed runtime SQLite databases: 0
-- Included compressed SQLite fixture: synthetic schema migration fixture only
+Browser and security-tool execution boundary
+- The managed Chromium binary in this packaging environment has an administrator URL blocklist, so the three live-navigation Playwright E2E tests could not be rerun locally.
+- The uploaded baseline already contained the same three E2E flows and recorded them as passing before this maintenance change.
+- GitHub Actions remains the acceptance environment for the Chromium E2E job.
+- The first PR quality run reached Ruff and reported 143 F821 findings: nine type-boundary names and 134 intentional runtime-injected trust-router globals.
+- The hotfix uses local structural Protocols for the type boundary and scopes F821 exceptions only to the two dependency-injected trust routers.
+- FastAPI, Starlette, python-multipart, cryptography, and Requests pins were raised to patched audit baselines; the final Requests pin is 2.33.0 after PYSEC-2026-2275 was reported against 2.32.5. GitHub Actions remains the final Ruff, Bandit, pip-audit, browser, and OS-matrix acceptance environment.
 
-Internal package integrity
-- SHA-256 manifest target files: 338
-- SHA-256 manifest excludes itself
+Code-structure maintenance
+- validate_database_file reduced from 397 lines to 41 lines
+- schema validation moved to five bounded helpers plus trigger and count helpers
+- restore behavior retained by the public recovery and integration regression tests
+
+Privacy and generated-artifact handling
+- Screenshots use synthetic data and temporary runtime storage
+- No runtime SQLite database, account secret, API token, private key, phone number, or personal email is intentionally included
+- Generated reports and bytecode are excluded from SHA-256 manifest and release ZIP
 
 Transparency
-- Internal 72.0.11 submission baseline: 555 automated tests and 79.96% application line coverage
-- Public package: 240 core regression tests plus 3 Chromium workflow E2E tests, including connection-lifecycle and cross-platform scanner regression checks
-- Public package does not claim third-party certification, customer deployment, production SLA or autonomous vulnerability impact determination
+- This package is PR-ready, not claimed as merged.
+- Final acceptance requires the GitHub core matrix, Chromium E2E, and static quality job to pass on the pull request.
+- The project does not claim third-party certification, customer deployment, production SLA, or autonomous vulnerability impact determination.

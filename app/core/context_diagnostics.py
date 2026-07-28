@@ -2,7 +2,20 @@ from __future__ import annotations
 
 """Non-secret structural diagnostics for an application context."""
 
-from typing import Any
+from typing import Any, Protocol
+
+class ApplicationContext(Protocol):
+    """Structural context view used by diagnostics without a cyclic import."""
+
+    created_at: str
+    settings: Any
+    services: Any
+    lifecycle_resources: Any
+    transaction_registry: Any
+    route_exports: dict[str, Any]
+
+    def mutable_dependency_overrides(self) -> dict[str, Any]: ...
+
 
 _DEFAULT_LIFECYCLE = {
     "state": "NEW",

@@ -39,6 +39,22 @@ jobs:
         run: python scripts/submission_readiness_smoke.py --public
       - name: Run public regression suite
         run: python scripts/run_public_tests.py
+  quality-gates:
+    name: static-quality / Python 3.13
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-quality.txt
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements-quality.txt
+      - name: Run static quality and dependency gates
+        run: python scripts/run_quality_gates.py
+
   browser-e2e:
     name: browser-e2e / Chromium
     runs-on: ubuntu-latest

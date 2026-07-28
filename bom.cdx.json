@@ -110,7 +110,7 @@
       "version": "0.4.6"
     },
     {
-      "bom-ref": "pkg:pypi/cryptography@46.0.4",
+      "bom-ref": "pkg:pypi/cryptography@48.0.1",
       "name": "cryptography",
       "properties": [
         {
@@ -118,12 +118,12 @@
           "value": "requirements.lock"
         }
       ],
-      "purl": "pkg:pypi/cryptography@46.0.4",
+      "purl": "pkg:pypi/cryptography@48.0.1",
       "type": "library",
-      "version": "46.0.4"
+      "version": "48.0.1"
     },
     {
-      "bom-ref": "pkg:pypi/fastapi@0.128.2",
+      "bom-ref": "pkg:pypi/fastapi@0.140.9",
       "name": "fastapi",
       "properties": [
         {
@@ -131,9 +131,9 @@
           "value": "requirements.lock"
         }
       ],
-      "purl": "pkg:pypi/fastapi@0.128.2",
+      "purl": "pkg:pypi/fastapi@0.140.9",
       "type": "library",
-      "version": "0.128.2"
+      "version": "0.140.9"
     },
     {
       "bom-ref": "pkg:pypi/h11@0.16.0",
@@ -253,7 +253,7 @@
       "version": "1.2.2"
     },
     {
-      "bom-ref": "pkg:pypi/python-multipart@0.0.29",
+      "bom-ref": "pkg:pypi/python-multipart@0.0.31",
       "name": "python-multipart",
       "properties": [
         {
@@ -261,9 +261,9 @@
           "value": "requirements.lock"
         }
       ],
-      "purl": "pkg:pypi/python-multipart@0.0.29",
+      "purl": "pkg:pypi/python-multipart@0.0.31",
       "type": "library",
-      "version": "0.0.29"
+      "version": "0.0.31"
     },
     {
       "bom-ref": "pkg:pypi/pyyaml@6.0.3",
@@ -279,7 +279,7 @@
       "version": "6.0.3"
     },
     {
-      "bom-ref": "pkg:pypi/requests@2.32.5",
+      "bom-ref": "pkg:pypi/requests@2.33.0",
       "name": "requests",
       "properties": [
         {
@@ -287,12 +287,12 @@
           "value": "requirements.lock"
         }
       ],
-      "purl": "pkg:pypi/requests@2.32.5",
+      "purl": "pkg:pypi/requests@2.33.0",
       "type": "library",
-      "version": "2.32.5"
+      "version": "2.33.0"
     },
     {
-      "bom-ref": "pkg:pypi/starlette@0.50.0",
+      "bom-ref": "pkg:pypi/starlette@1.3.1",
       "name": "starlette",
       "properties": [
         {
@@ -300,9 +300,9 @@
           "value": "requirements.lock"
         }
       ],
-      "purl": "pkg:pypi/starlette@0.50.0",
+      "purl": "pkg:pypi/starlette@1.3.1",
       "type": "library",
-      "version": "0.50.0"
+      "version": "1.3.1"
     },
     {
       "bom-ref": "pkg:pypi/typing-extensions@4.15.0",
@@ -411,8 +411,8 @@
         "pkg:pypi/charset-normalizer@3.4.7",
         "pkg:pypi/click@8.1.8",
         "pkg:pypi/colorama@0.4.6",
-        "pkg:pypi/cryptography@46.0.4",
-        "pkg:pypi/fastapi@0.128.2",
+        "pkg:pypi/cryptography@48.0.1",
+        "pkg:pypi/fastapi@0.140.9",
         "pkg:pypi/h11@0.16.0",
         "pkg:pypi/httptools@0.8.0",
         "pkg:pypi/idna@3.17",
@@ -422,10 +422,10 @@
         "pkg:pypi/pydantic@2.13.4",
         "pkg:pypi/pydantic-core@2.46.4",
         "pkg:pypi/python-dotenv@1.2.2",
-        "pkg:pypi/python-multipart@0.0.29",
+        "pkg:pypi/python-multipart@0.0.31",
         "pkg:pypi/pyyaml@6.0.3",
-        "pkg:pypi/requests@2.32.5",
-        "pkg:pypi/starlette@0.50.0",
+        "pkg:pypi/requests@2.33.0",
+        "pkg:pypi/starlette@1.3.1",
         "pkg:pypi/typing-extensions@4.15.0",
         "pkg:pypi/typing-inspection@0.4.2",
         "pkg:pypi/urllib3@2.7.0",
@@ -470,11 +470,11 @@
     },
     {
       "dependsOn": [],
-      "ref": "pkg:pypi/cryptography@46.0.4"
+      "ref": "pkg:pypi/cryptography@48.0.1"
     },
     {
       "dependsOn": [],
-      "ref": "pkg:pypi/fastapi@0.128.2"
+      "ref": "pkg:pypi/fastapi@0.140.9"
     },
     {
       "dependsOn": [],
@@ -514,7 +514,7 @@
     },
     {
       "dependsOn": [],
-      "ref": "pkg:pypi/python-multipart@0.0.29"
+      "ref": "pkg:pypi/python-multipart@0.0.31"
     },
     {
       "dependsOn": [],
@@ -522,11 +522,11 @@
     },
     {
       "dependsOn": [],
-      "ref": "pkg:pypi/requests@2.32.5"
+      "ref": "pkg:pypi/requests@2.33.0"
     },
     {
       "dependsOn": [],
-      "ref": "pkg:pypi/starlette@0.50.0"
+      "ref": "pkg:pypi/starlette@1.3.1"
     },
     {
       "dependsOn": [],
@@ -565,7 +565,7 @@
       "type": "application",
       "version": "72.0.11"
     },
-    "timestamp": "2026-07-24T02:43:09Z"
+    "timestamp": "2026-07-29T00:00:00Z"
   },
   "serialNumber": "urn:uuid:08e1e6a9-9239-4fdc-b49a-02ef8d555720",
   "specVersion": "1.6",
