@@ -20,7 +20,9 @@ Browser and security-tool execution boundary
 - The managed Chromium binary in this packaging environment has an administrator URL blocklist, so the three live-navigation Playwright E2E tests could not be rerun locally.
 - The uploaded baseline already contained the same three E2E flows and recorded them as passing before this maintenance change.
 - GitHub Actions remains the acceptance environment for the Chromium E2E job.
-- Ruff, Bandit, and pip-audit were not installed in the isolated packaging environment. Their pinned versions, runner, and CI job are included, but the quality job must pass remotely before merge.
+- The first PR quality run reached Ruff and reported 143 F821 findings: nine type-boundary names and 134 intentional runtime-injected trust-router globals.
+- The hotfix uses local structural Protocols for the type boundary and scopes F821 exceptions only to the two dependency-injected trust routers.
+- FastAPI, Starlette, python-multipart, cryptography, and Requests pins were raised to patched audit baselines; the final Requests pin is 2.33.0 after PYSEC-2026-2275 was reported against 2.32.5. GitHub Actions remains the final Ruff, Bandit, pip-audit, browser, and OS-matrix acceptance environment.
 
 Code-structure maintenance
 - validate_database_file reduced from 397 lines to 41 lines

@@ -7,10 +7,24 @@ namespace overlays, route dependency mapping, and isolated context cloning.
 It intentionally avoids importing :mod:`app.main`.
 """
 
-from typing import Any, Mapping, MutableMapping
+from typing import Any, Mapping, MutableMapping, Protocol
 
 from app.core.runtime import RuntimeSettings, ServiceContainer
 from app.core.transactions import SQLiteTransactionRegistry
+
+class ApplicationContext(Protocol):
+    """Structural context type without importing the concrete cyclic boundary."""
+
+    namespace: MutableMapping[str, Any]
+    templates: Any
+    metrics: Any
+    logger: Any
+    coordination_state: MutableMapping[str, Any]
+    settings: RuntimeSettings | None
+    services: ServiceContainer | None
+    transaction_registry: SQLiteTransactionRegistry | None
+    operation_guard: Any | None
+
 
 LEGACY_SERVICE_OVERRIDES = frozenset({"fetch_kev_catalog", "fetch_epss"})
 

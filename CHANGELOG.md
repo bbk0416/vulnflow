@@ -9,6 +9,9 @@ This public changelog summarizes the portfolio-facing release line. It does not 
 - added a dedicated CI quality job for Python compilation, Ruff fatal rules, Bandit high/high findings, and pip-audit;
 - split the 397-line restore validation function into bounded schema-validation helpers without changing restore behavior;
 - expanded the public regression suite from 240 to 243 tests.
+- fixed the first PR quality run by adding structural context protocols and narrowly scoping Ruff F821 exceptions to the two runtime-injected trust routers;
+- raised FastAPI, Starlette, python-multipart, and cryptography to patched dependency baselines before rerunning pip-audit.
+- raised Requests from 2.32.5 to 2.33.0 after pip-audit identified PYSEC-2026-2275 in the prior runtime pin.
 
 ## Public browser workflow maintenance
 
