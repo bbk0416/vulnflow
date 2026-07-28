@@ -31,19 +31,31 @@ Risk acceptance·evidence·audit
 Backup·restore·operational verification
 ```
 
-## 대표 화면
+## 3단계 시연 시나리오
 
-### Dashboard
+### 1. 대시보드에서 우선순위와 조치 대상을 확인
+
+합성 취약점 데이터를 기준으로 즉시 조치, 기한 초과, 검증 대기 항목을 먼저 확인하고 상세 화면으로 이동합니다.
 
 ![Dashboard](assets/screenshots/dashboard.png)
 
-### Finding detail
+### 2. 취약점·자산 맥락을 확인하고 조치 상태를 갱신
+
+CVSS·KEV·EPSS·외부 노출·자산 중요도와 담당자, 목표일, 조치 메모를 한 흐름에서 확인합니다.
 
 ![Finding detail](assets/screenshots/finding-detail.png)
 
-### Asset inventory
-
 ![Asset inventory](assets/screenshots/asset-inventory.png)
+
+### 3. 데이터를 반영하고 위험수용을 승인 흐름으로 분리
+
+CSV 또는 SBOM을 반영한 뒤 operator의 위험수용 요청을 approver가 별도로 검토하도록 구성했습니다.
+
+![Data import](assets/screenshots/data-import.png)
+
+![Risk acceptance approvals](assets/screenshots/risk-approvals.png)
+
+화면은 합성 데이터와 임시 SQLite 데이터베이스를 이용해 `scripts/capture_public_screenshots.py`로 반복 생성할 수 있습니다. 생성 시각이나 런타임 식별자가 표시되는 영역 때문에 PNG 바이트가 매번 동일하다고 주장하지는 않습니다.
 
 ## 구현 범위
 
@@ -88,16 +100,19 @@ python scripts_reset_demo.py
 
 ## 공개 검증 범위
 
-이 공개 저장소에는 **240개 핵심 회귀시험**과 **Chromium 브라우저 E2E 3개**를 포함합니다.
+이 공개 저장소에는 **243개 핵심 회귀시험**과 **Chromium 브라우저 E2E 3개**를 포함합니다.
 
 ```bash
 python scripts/run_public_tests.py
 pip install -r requirements-e2e.txt
 python -m playwright install chromium
 python scripts/run_browser_e2e.py
+pip install -r requirements-quality.txt
+python scripts/run_quality_gates.py
 ```
 
 핵심 회귀시험은 인증, 수집, 우선순위, 조치·승인, 자산 병합, 증거, SBOM·OSV, 백업·복구와 동일 호스트 coordination을 검증합니다. 브라우저 E2E는 대시보드에서 조치 상태 변경, CSV 가져오기 후 검색, operator 위험수용 요청과 approver 승인을 실제 Chromium 동선으로 검증합니다. GitHub Actions에서는 E2E를 Ubuntu/Python 3.13 단일 job으로 실행해 4개 핵심 회귀 행렬과 중복되지 않게 구성했습니다.
+정적 품질 job은 Python 구문 컴파일, Ruff의 치명적 오류 규칙, Bandit의 high-severity/high-confidence 결과와 pip-audit 의존성 취약점 검사를 별도로 실행합니다. pip-audit은 외부 advisory 서비스에 의존하므로 네트워크가 차단된 로컬 환경에서는 `--skip-dependency-audit` 옵션으로 나머지 게이트만 실행할 수 있습니다.
 
 내부 제출 기준본 72.0.11에서는 전체 자동시험 555개와 애플리케이션 line coverage 79.96%를 확인했습니다. 공개 저장소에서는 채용 검토에 필요한 핵심 코드와 시험을 우선하며, 결정적 wheel/sdist, runtime snapshot, DSSE provenance 및 전체 릴리스 리허설 산출물은 저장소 용량과 가독성을 위해 제외했습니다.
 
@@ -118,6 +133,7 @@ python scripts/run_browser_e2e.py
 4. [운영 가이드](docs/05_OPERATIONS_GUIDE.md)
 5. [보안·개인정보 경계](docs/07_SECURITY_PRIVACY.md)
 6. [API와 운영](docs/10_API_AND_OPERATIONS.md)
+7. [공개 정적 품질 게이트](docs/93_PUBLIC_QUALITY_GATES.md)
 
 ## 저장소 참여와 지원
 

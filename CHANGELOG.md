@@ -2,6 +2,14 @@
 
 This public changelog summarizes the portfolio-facing release line. It does not reproduce every internal verification iteration.
 
+## Final public quality maintenance
+
+- expanded the README into a three-step VM demonstration scenario with five repeatable synthetic-data screenshots;
+- added a screenshot capture script that uses a temporary SQLite database and does not retain runtime data;
+- added a dedicated CI quality job for Python compilation, Ruff fatal rules, Bandit high/high findings, and pip-audit;
+- split the 397-line restore validation function into bounded schema-validation helpers without changing restore behavior;
+- expanded the public regression suite from 240 to 243 tests.
+
 ## Public browser workflow maintenance
 
 - Added three Chromium E2E flows for finding workflow updates, CSV ingestion, and separated operator/approver risk acceptance.

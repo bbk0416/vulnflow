@@ -40,6 +40,22 @@ def _public_checks(version: str) -> list[tuple[str, bool]]:
         ("public_ci_architecture", "architecture_review.py" in workflow_text),
         ("public_ci_manifest", "verify_public_manifest.py" in workflow_text),
         ("public_ci_browser_e2e", "browser-e2e" in workflow_text and "run_browser_e2e.py" in workflow_text and "playwright install --with-deps chromium" in workflow_text),
+        ("public_ci_quality_gates", "quality-gates" in workflow_text and "run_quality_gates.py" in workflow_text),
+        ("quality_requirements", (ROOT / "requirements-quality.txt").exists()),
+        ("repeatable_screenshot_capture", (ROOT / "scripts/capture_public_screenshots.py").exists()),
+        (
+            "five_public_screenshots",
+            all(
+                (ROOT / "assets/screenshots" / name).is_file()
+                for name in (
+                    "dashboard.png",
+                    "finding-detail.png",
+                    "asset-inventory.png",
+                    "data-import.png",
+                    "risk-approvals.png",
+                )
+            ),
+        ),
         ("python_floor_windows_ps1", "Python 3.12" in (ROOT / "run_windows.ps1").read_text(encoding="utf-8")),
         ("python_floor_windows_bat", "Python 3.12" in (ROOT / "run_windows.bat").read_text(encoding="utf-8")),
         ("python_floor_linux", "Python 3.12" in (ROOT / "run_linux.sh").read_text(encoding="utf-8")),
