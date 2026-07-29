@@ -39,7 +39,7 @@ def main_smoke() -> None:
         stopped = context.runtime_snapshot()
 
     checks = {
-        "version_72_0_6": main.CURRENT_APP_VERSION == "72.0.11",
+        "version_72_0_6": main.CURRENT_APP_VERSION == "72.0.12",
         "schema_40": main.CURRENT_SCHEMA_VERSION == 40,
         "architecture_pass": architecture["status"] == "PASS",
         "main_budget": by_path["app/main.py"]["lines"] <= 500,
@@ -51,7 +51,7 @@ def main_smoke() -> None:
         "lifecycle_stopped": stopped.get("lifecycle_state") == "STOPPED" and stopped.get("lifecycle_shutdown_timed_out") is False,
     }
     payload = {
-        "title": "VulnFlow 72.0.11 endpoint workflow boundary verification",
+        "title": "VulnFlow 72.0.12 endpoint workflow boundary verification",
         "version": main.CURRENT_APP_VERSION,
         "checks": [{"name": name, "passed": passed} for name, passed in checks.items()],
         "result": f"{sum(checks.values())}/{len(checks)}",

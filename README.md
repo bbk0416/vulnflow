@@ -1,4 +1,4 @@
-# VulnFlow 72.0.11
+# VulnFlow 72.0.12
 
 [![public-ci](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml/badge.svg)](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml)
 
@@ -114,6 +114,9 @@ python scripts/run_quality_gates.py
 핵심 회귀시험은 인증, 수집, 우선순위, 조치·승인, 자산 병합, 증거, SBOM·OSV, 백업·복구와 동일 호스트 coordination을 검증합니다. 브라우저 E2E는 대시보드에서 조치 상태 변경, CSV 가져오기 후 검색, operator 위험수용 요청과 approver 승인을 실제 Chromium 동선으로 검증합니다. GitHub Actions에서는 E2E를 Ubuntu/Python 3.13 단일 job으로 실행해 4개 핵심 회귀 행렬과 중복되지 않게 구성했습니다.
 정적 품질 job은 Python 구문 컴파일, Ruff의 치명적 오류 규칙, Bandit의 high-severity/high-confidence 결과와 pip-audit 의존성 취약점 검사를 별도로 실행합니다. pip-audit은 외부 advisory 서비스에 의존하므로 네트워크가 차단된 로컬 환경에서는 `--skip-dependency-audit` 옵션으로 나머지 게이트만 실행할 수 있습니다.
 
+
+2026년 7월 29일 Windows Docker Desktop에서 배포본 `Dockerfile`과 `docker-compose.yml`을 이용해 image build, readiness, 비루트 UID 10001, SQLite schema 40, 합성 finding API import, restart·컨테이너 재생성 후 named-volume 영속성, SQLite 백업과 새 volume 복원을 실제로 확인했습니다. 이는 단일 실기동 검증이며 24시간 endurance, 고객 배포 또는 운영 SLA를 입증하지 않습니다. 자세한 범위는 [Docker runtime 검증](docs/94_DOCKER_RUNTIME_VALIDATION.md)을 확인하세요.
+
 내부 제출 기준본 72.0.11에서는 전체 자동시험 555개와 애플리케이션 line coverage 79.96%를 확인했습니다. 공개 저장소에서는 채용 검토에 필요한 핵심 코드와 시험을 우선하며, 결정적 wheel/sdist, runtime snapshot, DSSE provenance 및 전체 릴리스 리허설 산출물은 저장소 용량과 가독성을 위해 제외했습니다.
 
 ## 기술 구성
@@ -134,6 +137,7 @@ python scripts/run_quality_gates.py
 5. [보안·개인정보 경계](docs/07_SECURITY_PRIVACY.md)
 6. [API와 운영](docs/10_API_AND_OPERATIONS.md)
 7. [공개 정적 품질 게이트](docs/93_PUBLIC_QUALITY_GATES.md)
+8. [Docker runtime 검증](docs/94_DOCKER_RUNTIME_VALIDATION.md)
 
 ## 저장소 참여와 지원
 
@@ -142,13 +146,13 @@ python scripts/run_quality_gates.py
 - 일반 지원 범위: [SUPPORT.md](SUPPORT.md)
 - 공개 로드맵: [ROADMAP.md](ROADMAP.md)
 - 변경 이력: [CHANGELOG.md](CHANGELOG.md)
-- 72.0.11 공개 릴리스 노트: [RELEASE_NOTES_72.0.11.md](RELEASE_NOTES_72.0.11.md)
+- 72.0.12 유지보수 릴리스 노트: [RELEASE_NOTES_72.0.12.md](RELEASE_NOTES_72.0.12.md)
 
 ## 확인된 한계
 
 - SQLite·단일 호스트 중심이며 다중 서버 분산제품이 아닙니다.
 - OIDC·SAML·MFA와 PostgreSQL을 지원하지 않습니다.
-- 실제 Docker 엔진, Windows runtime snapshot, 24시간 endurance는 이 공개본의 검증 범위가 아닙니다.
+- Windows Docker Desktop 단일 실기동은 검증했지만 Windows runtime snapshot과 24시간 endurance는 검증하지 않았습니다.
 - 공개 OSV·KEV·EPSS 운영 endpoint의 지속적 가용성을 보장하지 않습니다.
 - 합성 데이터 성능 수치는 운영 SLA가 아닙니다.
 - 실제 사용자 파일럿과 업무시간 절감 효과는 아직 측정하지 않았습니다.
@@ -163,4 +167,4 @@ MIT License. 자세한 내용은 [LICENSE](LICENSE)를 확인하세요.
 
 ## Version identifier
 
-`72.0.11` is an internal iteration identifier retained from the development process. It does not represent 72 public major releases. Public changes after this initial publication are tracked through normal issues, branches, pull requests, and commits.
+`72.0.12` is an internal iteration identifier retained from the development process. It does not represent 72 public major releases. Public changes after this initial publication are tracked through normal issues, branches, pull requests, and commits.

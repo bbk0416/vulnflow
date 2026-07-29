@@ -1,40 +1,40 @@
-VulnFlow 72.0.11 final public-quality maintenance verification
+VulnFlow 72.0.12 public release verification
 Date: 2026-07-29
 
 Scope
-- Public portfolio/source repository maintenance package
+- Maintenance release after the final public-quality merge
 - Full application source retained
-- Synthetic sample data only
-- Five repeatable UI screenshots generated from a temporary SQLite database
-- Static quality gate configured for GitHub Actions
+- Synthetic sample and Docker-validation data only
+- Runtime behavior unchanged after the Docker validation; release metadata and documentation updated
 
-Locally reproduced in this packaging environment
-- Representative core regression tests: 243/243 PASS
-- Screenshot capture workflow: 5/5 PASS
-- Database restore validation regression subset: 26/26 PASS
-- Architecture boundary review: PASS
-- Public submission readiness: PASS
-- Python compilation: PASS
+GitHub acceptance baseline
+- Representative core regression tests: 243
+- Chromium workflow E2E tests: 3
+- Ubuntu and Windows matrix on Python 3.12 and 3.13
+- Architecture boundary review
+- SHA-256 public manifest verification
+- Python compilation, Ruff fatal rules, Bandit high/high, and pip-audit
 
-Browser and security-tool execution boundary
-- The managed Chromium binary in this packaging environment has an administrator URL blocklist, so the three live-navigation Playwright E2E tests could not be rerun locally.
-- The uploaded baseline already contained the same three E2E flows and recorded them as passing before this maintenance change.
-- GitHub Actions remains the acceptance environment for the Chromium E2E job.
-- The first PR quality run reached Ruff and reported 143 F821 findings: nine type-boundary names and 134 intentional runtime-injected trust-router globals.
-- The hotfix uses local structural Protocols for the type boundary and scopes F821 exceptions only to the two dependency-injected trust routers.
-- FastAPI, Starlette, python-multipart, cryptography, and Requests pins were raised to patched audit baselines; the final Requests pin is 2.33.0 after PYSEC-2026-2275 was reported against 2.32.5. GitHub Actions remains the final Ruff, Bandit, pip-audit, browser, and OS-matrix acceptance environment.
+Actual Docker runtime validation
+- Validation target main commit: 91da24eb6f09ab1b187afeae6092fd68ca59114a
+- Docker Server: 29.1.3
+- Docker Compose: 2.40.3-desktop.1
+- docker compose build --pull: PASS
+- readiness endpoint: PASS
+- image non-root user and runtime UID 10001: PASS
+- SQLite schema version 40: PASS
+- synthetic finding API import: PASS
+- restart persistence: PASS
+- container recreation with the same named volume: PASS
+- transactional SQLite backup: PASS
+- restore into a new named volume and readiness: PASS
 
-Code-structure maintenance
-- validate_database_file reduced from 397 lines to 41 lines
-- schema validation moved to five bounded helpers plus trigger and count helpers
-- restore behavior retained by the public recovery and integration regression tests
-
-Privacy and generated-artifact handling
-- Screenshots use synthetic data and temporary runtime storage
-- No runtime SQLite database, account secret, API token, private key, phone number, or personal email is intentionally included
-- Generated reports and bytecode are excluded from SHA-256 manifest and release ZIP
+Privacy and evidence handling
+- The repository records a sanitized validation summary only
+- Local paths, temporary credentials, API tokens, and the raw SQLite backup are not committed
+- No military, customer, company, phone, email, address, private-key, or operational vulnerability data is included
 
 Transparency
-- This package is PR-ready, not claimed as merged.
-- Final acceptance requires the GitHub core matrix, Chromium E2E, and static quality job to pass on the pull request.
-- The project does not claim third-party certification, customer deployment, production SLA, or autonomous vulnerability impact determination.
+- This is a single Docker Desktop validation, not a production deployment or customer pilot
+- Linux Docker hosts, 24-hour endurance, Windows runtime snapshots, and production SLA remain unverified
+- The release is created only after the pull-request checks pass and the exact reviewed HEAD is merged

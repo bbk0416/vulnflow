@@ -170,7 +170,7 @@ def main() -> None:
         report = ROOT / "reports" / "asset_identity_verification.txt"
         report.parent.mkdir(parents=True, exist_ok=True)
         report.write_text(
-            "VulnFlow 72.0.11 governed asset merge smoke\n"
+            "VulnFlow 72.0.12 governed asset merge smoke\n"
             "weak identifier creates candidate without silent merge: PASS\n"
             "dry-run impact analysis: PASS\n"
             "operator request leaves assets unchanged: PASS\n"
