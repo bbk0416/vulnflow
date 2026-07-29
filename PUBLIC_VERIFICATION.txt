@@ -1,11 +1,11 @@
-VulnFlow 72.0.12 public release verification
+VulnFlow 72.0.13 public release verification
 Date: 2026-07-29
 
 Scope
 - Maintenance release after the final public-quality merge
 - Full application source retained
 - Synthetic sample and Docker-validation data only
-- Runtime behavior unchanged after the Docker validation; release metadata and documentation updated
+- Runtime behavior unchanged after the Docker validation; the SBOM root correction, version-consistency gate, and release metadata are included
 
 GitHub acceptance baseline
 - Representative core regression tests: 243

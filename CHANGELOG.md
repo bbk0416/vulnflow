@@ -1,6 +1,16 @@
 # Changelog
 
 This public changelog summarizes the portfolio-facing release line. It does not reproduce every internal verification iteration.
+## 72.0.13 — 2026-07-29
+
+Tag-alignment and metadata-consistency patch release.
+
+- includes the CycloneDX dependency-root correction merged after `v72.0.12`;
+- retains the 11/11 release-metadata consistency gate in public CI;
+- aligns the repository version, package metadata, application version, Docker tag, citation, lock headers, and CycloneDX application references at `72.0.13`;
+- changes no vulnerability-management workflow, database schema, authentication behavior, or Docker runtime behavior;
+- keeps the original Windows Docker Desktop validation and its stated limitations as historical evidence.
+
 ## 72.0.12 — 2026-07-29
 
 Docker-runtime and public-release maintenance.
