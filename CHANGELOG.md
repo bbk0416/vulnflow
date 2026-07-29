@@ -96,3 +96,11 @@ Earlier releases built the core finding, asset, prioritization, remediation, app
 - corrected the CycloneDX dependency root from `pkg:generic/vulnflow@72.0.8` to `pkg:generic/vulnflow@72.0.12`;
 - added a release-metadata consistency gate for version, package, Docker, citation, lock-header, and SBOM references;
 - retained application behavior and version `72.0.12`.
+
+### Repository operations policy — 2026-07-30
+
+- changed Dependabot version updates from ungrouped weekly pull requests to grouped monthly minor and patch updates;
+- stopped automatic major-version proposals while preserving separate handling for security updates;
+- aligned the support document with the repository's restricted public-support model;
+- documented the frozen portfolio maintenance and release boundary;
+- changed no application version, runtime dependency or VM workflow.

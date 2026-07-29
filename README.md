@@ -138,6 +138,7 @@ python scripts/run_quality_gates.py
 6. [API와 운영](docs/10_API_AND_OPERATIONS.md)
 7. [공개 정적 품질 게이트](docs/93_PUBLIC_QUALITY_GATES.md)
 8. [Docker runtime 검증](docs/94_DOCKER_RUNTIME_VALIDATION.md)
+9. [저장소 유지보수 정책](docs/95_REPOSITORY_MAINTENANCE_POLICY.md)
 
 ## 저장소 참여와 지원
 
