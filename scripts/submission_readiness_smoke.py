@@ -38,6 +38,8 @@ def _public_checks(version: str) -> list[tuple[str, bool]]:
         ("public_ci_python_313", '"3.13"' in workflow_text),
         ("public_ci_windows", "windows-latest" in workflow_text),
         ("public_ci_architecture", "architecture_review.py" in workflow_text),
+        ("version_consistency_script", (ROOT / "scripts/version_consistency_smoke.py").is_file()),
+        ("public_ci_version_consistency", "version_consistency_smoke.py" in workflow_text),
         ("public_ci_manifest", "verify_public_manifest.py" in workflow_text),
         ("public_ci_browser_e2e", "browser-e2e" in workflow_text and "run_browser_e2e.py" in workflow_text and "playwright install --with-deps chromium" in workflow_text),
         ("public_ci_quality_gates", "quality-gates" in workflow_text and "run_quality_gates.py" in workflow_text),

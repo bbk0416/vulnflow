@@ -80,3 +80,9 @@ Submission-stabilization release.
 ## Earlier development
 
 Earlier releases built the core finding, asset, prioritization, remediation, approval, evidence, audit, background-job, backup, recovery, SBOM, VEX, and OSV workflows. The public repository focuses on the current behavior rather than every historical internal package.
+
+### Post-release metadata correction — 2026-07-29
+
+- corrected the CycloneDX dependency root from `pkg:generic/vulnflow@72.0.8` to `pkg:generic/vulnflow@72.0.12`;
+- added a release-metadata consistency gate for version, package, Docker, citation, lock-header, and SBOM references;
+- retained application behavior and version `72.0.12`.
