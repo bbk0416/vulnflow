@@ -9,7 +9,7 @@ from typing import Any, Iterable
 from app.core.db import ConcurrencyError, utc_now
 from app.core.transactions import read_connection, write_transaction
 
-CURRENT_APP_VERSION = "72.0.12"
+CURRENT_APP_VERSION = "72.0.13"
 
 def _json_dict(value: Any) -> dict[str, Any]:
     try:

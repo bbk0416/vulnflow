@@ -1,4 +1,4 @@
-# 72.0.12 Submission Stabilization
+# 72.0.13 Submission Stabilization
 
 This release adds no new vulnerability-management domain capability. It corrects submission-facing consistency and quality gaps found during an independent whole-project review.
 

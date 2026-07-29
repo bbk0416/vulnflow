@@ -1,6 +1,6 @@
 # Roadmap
 
-72.0.12 기준 핵심 기능, 안전 기본값, 릴리스 메타데이터, 의존성 버전 잠금, schema 35→40 업그레이드·복구 리허설, 반복 runtime soak, container-equivalent 비루트 배포 리허설, 재현 가능한 wheel·sdist 빌드, Linux CPython 런타임 dependency snapshot, 호스트 site-packages 연결 없는 설치본 실행은 완료 단계입니다. 다음 우선순위는 신규 proof 계층이나 줄 수 중심 리팩터링이 아니라 **실제 Docker 엔진 배포와 장시간 운영 검증**입니다.
+72.0.13 기준 핵심 기능, 안전 기본값, 릴리스 메타데이터, 의존성 버전 잠금, schema 35→40 업그레이드·복구 리허설, 반복 runtime soak, container-equivalent 비루트 배포 리허설, 재현 가능한 wheel·sdist 빌드, Linux CPython 런타임 dependency snapshot, 호스트 site-packages 연결 없는 설치본 실행은 완료 단계입니다. 다음 우선순위는 신규 proof 계층이나 줄 수 중심 리팩터링이 아니라 **실제 Docker 엔진 배포와 장시간 운영 검증**입니다.
 
 ## Release Candidate 진입 전
 

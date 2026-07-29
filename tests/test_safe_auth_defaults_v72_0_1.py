@@ -94,7 +94,7 @@ def test_container_and_local_launch_defaults_are_explicit():
     dockerfile = (root / "Dockerfile").read_text(encoding="utf-8")
     linux = (root / "run_linux.sh").read_text(encoding="utf-8")
     windows = (root / "run_windows.ps1").read_text(encoding="utf-8")
-    assert 'vulnflow:72.0.12' in compose
+    assert 'vulnflow:72.0.13' in compose
     assert 'VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK:-0' in compose
     assert 'VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK=0' in dockerfile
     assert 'VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK:=1' in linux

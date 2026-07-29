@@ -1,4 +1,4 @@
-# VulnFlow 72.0.12
+# VulnFlow 72.0.13
 
 [![public-ci](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml/badge.svg)](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml)
 
@@ -146,7 +146,7 @@ python scripts/run_quality_gates.py
 - 일반 지원 범위: [SUPPORT.md](SUPPORT.md)
 - 공개 로드맵: [ROADMAP.md](ROADMAP.md)
 - 변경 이력: [CHANGELOG.md](CHANGELOG.md)
-- 72.0.12 유지보수 릴리스 노트: [RELEASE_NOTES_72.0.12.md](RELEASE_NOTES_72.0.12.md)
+- 72.0.13 정합성 패치 릴리스 노트: [RELEASE_NOTES_72.0.13.md](RELEASE_NOTES_72.0.13.md)
 
 ## 확인된 한계
 
@@ -167,4 +167,4 @@ MIT License. 자세한 내용은 [LICENSE](LICENSE)를 확인하세요.
 
 ## Version identifier
 
-`72.0.12` is an internal iteration identifier retained from the development process. It does not represent 72 public major releases. Public changes after this initial publication are tracked through normal issues, branches, pull requests, and commits.
+`72.0.13` is an internal iteration identifier retained from the development process. It does not represent 72 public major releases. Public changes after this initial publication are tracked through normal issues, branches, pull requests, and commits.
