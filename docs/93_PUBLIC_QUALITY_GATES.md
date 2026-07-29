@@ -50,3 +50,7 @@ python scripts/capture_public_screenshots.py
 ```
 
 The capture is repeatable in workflow and content, but image bytes are not claimed to be deterministic because timestamps and runtime identifiers can be rendered by the application.
+
+## Release metadata consistency
+
+`python scripts/version_consistency_smoke.py` verifies that `VERSION`, `pyproject.toml`, `CURRENT_APP_VERSION`, `CITATION.cff`, the default Docker image tag, lock headers, and both CycloneDX application references use the same version. Public CI runs this check before manifest verification.

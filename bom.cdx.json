@@ -434,7 +434,7 @@
         "pkg:pypi/watchfiles@1.2.0",
         "pkg:pypi/websockets@16.0"
       ],
-      "ref": "pkg:generic/vulnflow@72.0.8"
+      "ref": "pkg:generic/vulnflow@72.0.12"
     },
     {
       "dependsOn": [],

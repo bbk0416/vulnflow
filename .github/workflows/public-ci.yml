@@ -31,6 +31,8 @@ jobs:
           cache: pip
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements-dev.txt
+      - name: Verify release metadata consistency
+        run: python scripts/version_consistency_smoke.py
       - name: Verify published file hashes
         run: python scripts/verify_public_manifest.py
       - name: Verify architecture boundaries
