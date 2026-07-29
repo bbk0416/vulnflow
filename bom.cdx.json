@@ -559,11 +559,11 @@
   ],
   "metadata": {
     "component": {
-      "bom-ref": "pkg:generic/vulnflow@72.0.11",
+      "bom-ref": "pkg:generic/vulnflow@72.0.12",
       "description": "Local vulnerability operations with append-only public integrity-proof transparency logs, signed revocation checkpoints, independent witness quorum, multi-scanner reconciliation, governed VEX, evidence-backed remediation verification, policy governance, RBAC approvals, durable automation, audit integrity, backup and restore",
       "name": "VulnFlow",
       "type": "application",
-      "version": "72.0.11"
+      "version": "72.0.12"
     },
     "timestamp": "2026-07-29T00:00:00Z"
   },

@@ -94,7 +94,7 @@ def main_smoke() -> dict[str, object]:
         }
         snapshots = [context.get("LIFECYCLE_SHUTDOWN_SNAPSHOT") for context in contexts]
         checks = [
-            {"name": "version_72_0_6", "passed": main.CURRENT_APP_VERSION == "72.0.11"},
+            {"name": "version_72_0_6", "passed": main.CURRENT_APP_VERSION == "72.0.12"},
             {"name": "schema_40", "passed": main.CURRENT_SCHEMA_VERSION == 40},
             {"name": "three_named_tasks", "passed": direct["running"]["started_task_names"] == ["backup", "maintenance", "webhook"]},
             {"name": "running_state", "passed": direct["running"]["state"] == "RUNNING"},
@@ -110,7 +110,7 @@ def main_smoke() -> dict[str, object]:
         if not all(item["passed"] for item in checks):
             raise AssertionError(checks)
         return {
-            "title": "VulnFlow 72.0.11 deterministic lifecycle resource verification",
+            "title": "VulnFlow 72.0.12 deterministic lifecycle resource verification",
             "version": main.CURRENT_APP_VERSION,
             "checks": checks,
             "shutdown_elapsed_ms": round(float(direct["elapsed_seconds"]) * 1000.0, 3),

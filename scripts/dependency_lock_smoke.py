@@ -28,8 +28,8 @@ def main() -> None:
         "artifact_hash_limit_disclosed": payload["artifact_hashes"] is False,
     }
     report = {
-        "title": "VulnFlow 72.0.11 dependency lock verification",
-        "version": "72.0.11",
+        "title": "VulnFlow 72.0.12 dependency lock verification",
+        "version": "72.0.12",
         "checks": [{"name": key, "passed": value} for key, value in checks.items()],
         "summary": payload,
     }

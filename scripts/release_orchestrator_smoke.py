@@ -25,7 +25,7 @@ def main() -> None:
         root = Path(directory) / "project"
         for name in ("app", "scripts", "tests", "reports"):
             (root / name).mkdir(parents=True, exist_ok=True)
-        (root / "VERSION").write_text("72.0.11\n", encoding="utf-8")
+        (root / "VERSION").write_text("72.0.12\n", encoding="utf-8")
         (root / "requirements.txt").write_text("pytest\n", encoding="utf-8")
         source = root / "app" / "source.py"
         source.write_text("VALUE = 1\n", encoding="utf-8")
@@ -110,7 +110,7 @@ def main() -> None:
 
     passed = sum(ok for _, ok in checks)
     report = {
-        "application_version": "72.0.11",
+        "application_version": "72.0.12",
         "checks": len(checks),
         "passed": passed,
         "results": [{"name": name, "passed": ok} for name, ok in checks],

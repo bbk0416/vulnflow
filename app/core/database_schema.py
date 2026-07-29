@@ -17,7 +17,7 @@ from app.repositories.reconciliation import (
 from app.services.asset_identity import append_identifier as _append_identifier, extract_asset_identifiers
 
 CURRENT_SCHEMA_VERSION = 40
-CURRENT_APP_VERSION = "72.0.11"
+CURRENT_APP_VERSION = "72.0.12"
 
 def init_coordination_db(db_path: str | Path) -> None:
     path = Path(db_path)

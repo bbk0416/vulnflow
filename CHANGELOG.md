@@ -1,6 +1,16 @@
 # Changelog
 
 This public changelog summarizes the portfolio-facing release line. It does not reproduce every internal verification iteration.
+## 72.0.12 — 2026-07-29
+
+Docker-runtime and public-release maintenance.
+
+- verified the shipped Dockerfile and docker-compose.yml on Windows Docker Desktop;
+- confirmed readiness, non-root UID 10001, SQLite schema 40, synthetic API import, restart persistence, container recreation persistence, transactional SQLite backup, and restore into a new named volume;
+- retained the 243-test public regression suite, three Chromium E2E flows, cross-platform CI matrix, Ruff fatal checks, Bandit high/high checks, and pip-audit gate;
+- documented the validation boundary without claiming customer deployment, production SLA, 24-hour endurance, or Windows runtime-snapshot verification;
+- changed only release metadata and public verification documentation after the runtime validation.
+
 
 ## Final public quality maintenance
 

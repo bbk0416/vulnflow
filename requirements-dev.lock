@@ -1,4 +1,4 @@
-# VulnFlow 72.0.11 development dependency lock.
+# VulnFlow 72.0.12 development dependency lock.
 -r requirements.lock
 httpcore==1.0.9
 httpx==0.28.1
