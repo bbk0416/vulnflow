@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.dependency_lock import consistency_issues, summary
+from scripts.dependency_lock import PUBLIC_CI_WORKFLOW, consistency_issues, summary
 
 
 def main() -> None:
@@ -22,7 +22,8 @@ def main() -> None:
         "development_lock_present": (ROOT / "requirements-dev.lock").is_file(),
         "python_version_present": (ROOT / ".python-version").is_file(),
         "docker_uses_runtime_lock": "requirements.lock" in (ROOT / "Dockerfile").read_text(encoding="utf-8"),
-        "ci_uses_development_lock": "requirements-dev.lock" in (ROOT / ".github/workflows/tests.yml").read_text(encoding="utf-8"),
+        "ci_uses_development_lock": PUBLIC_CI_WORKFLOW.is_file()
+        and "requirements-dev.lock" in PUBLIC_CI_WORKFLOW.read_text(encoding="utf-8"),
         "runtime_closure_nontrivial": int(payload["runtime_locked_packages"]) >= 25,
         "development_extends_runtime": int(payload["development_locked_packages"]) > int(payload["runtime_locked_packages"]),
         "artifact_hash_limit_disclosed": payload["artifact_hashes"] is False,

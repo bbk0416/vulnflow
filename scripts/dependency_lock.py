@@ -21,6 +21,7 @@ DEV_INPUT = ROOT / "requirements-dev.txt"
 RUNTIME_LOCK = ROOT / "requirements.lock"
 DEV_LOCK = ROOT / "requirements-dev.lock"
 PYTHON_VERSION_FILE = ROOT / ".python-version"
+PUBLIC_CI_WORKFLOW = ROOT / ".github/workflows/public-ci.yml"
 
 
 def _lines(path: Path) -> list[str]:
@@ -169,15 +170,20 @@ def consistency_issues(*, check_installed: bool = False) -> list[str]:
     if not re.search(r"pip install .*requirements\.lock", dockerfile):
         issues.append("Dockerfile does not install requirements.lock")
 
-    workflow = (ROOT / ".github/workflows/tests.yml").read_text(encoding="utf-8")
+    if not PUBLIC_CI_WORKFLOW.is_file():
+        issues.append("public CI workflow is missing: .github/workflows/public-ci.yml")
+        workflow = ""
+    else:
+        workflow = PUBLIC_CI_WORKFLOW.read_text(encoding="utf-8")
     if "requirements-dev.lock" not in workflow:
         issues.append("CI does not install requirements-dev.lock")
 
     python_minor = PYTHON_VERSION_FILE.read_text(encoding="utf-8").strip()
     if not re.fullmatch(r"3\.\d+", python_minor):
         issues.append(".python-version must pin Python major.minor")
-    if f"python-version: '{python_minor}'" not in workflow:
-        issues.append("CI Python version does not match .python-version")
+    ci_python_versions = set(re.findall(r"[\'\"](3\.\d+)[\'\"]", workflow))
+    if python_minor not in ci_python_versions:
+        issues.append("CI Python version does not include .python-version")
     if f"FROM python:{python_minor}-slim" not in dockerfile:
         issues.append("Docker Python version does not match .python-version")
 

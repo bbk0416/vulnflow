@@ -9,6 +9,7 @@ import pytest
 from pathlib import Path
 
 import app.services.database_lifecycle as database_lifecycle
+from scripts import release_metadata
 from app.core.db import connect
 from app.core.storage import init_db
 
@@ -32,6 +33,29 @@ def test_public_submission_readiness_is_self_contained() -> None:
     result = _run("scripts/submission_readiness_smoke.py", "--public")
     assert result.returncode == 0, result.stdout + result.stderr
     assert "public submission readiness verification" in result.stdout
+
+    dependency_lock = _run("scripts/dependency_lock.py")
+    assert dependency_lock.returncode == 0, dependency_lock.stdout + dependency_lock.stderr
+    assert "dependency lock consistency passed" in dependency_lock.stdout
+
+    release_metadata = _run("scripts/release_metadata.py", "--check", "--public")
+    assert release_metadata.returncode == 0, release_metadata.stdout + release_metadata.stderr
+    assert "release metadata consistency passed" in release_metadata.stdout
+
+
+def test_release_metadata_missing_manifest_respects_collect_tests_flag(
+    tmp_path: Path, monkeypatch
+) -> None:
+    observed: list[bool] = []
+
+    def fake_default_manifest(root: Path, *, collect_tests: bool = True):
+        observed.append(collect_tests)
+        return {"tests": {"passed": 0, "files": 0}}
+
+    monkeypatch.setattr(release_metadata, "default_manifest", fake_default_manifest)
+    manifest = release_metadata.load_manifest(tmp_path, collect_tests=False)
+    assert manifest["tests"] == {"passed": 0, "files": 0}
+    assert observed == [False]
 
 
 def test_public_manifest_verifier_accepts_repository_manifest() -> None:
@@ -172,8 +196,16 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     workflow = (ROOT / ".github/workflows/public-ci.yml").read_text(encoding="utf-8")
     requirements = (ROOT / "requirements-quality.txt").read_text(encoding="utf-8")
     runner = (ROOT / "scripts/run_quality_gates.py").read_text(encoding="utf-8")
+    dependency_lock = (ROOT / "scripts/dependency_lock.py").read_text(encoding="utf-8")
+    dependency_smoke = (ROOT / "scripts/dependency_lock_smoke.py").read_text(encoding="utf-8")
     assert "quality-gates:" in workflow
     assert "python scripts/run_quality_gates.py" in workflow
+    assert "pip install -r requirements-dev.lock" in workflow
+    assert "python scripts/dependency_lock_smoke.py" in workflow
+    assert "python scripts/release_metadata.py --check --public" in workflow
+    assert ".github/workflows/public-ci.yml" in dependency_lock
+    assert "tests.yml" not in dependency_lock
+    assert "tests.yml" not in dependency_smoke
     for package in ("ruff==", "bandit==", "pip-audit=="):
         assert package in requirements
     for marker in ("ruff-fatal", "bandit-high", "pip-audit"):

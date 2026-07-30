@@ -30,9 +30,13 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install --upgrade pip
-      - run: pip install -r requirements-dev.txt
-      - name: Verify release metadata consistency
+      - run: pip install -r requirements-dev.lock
+      - name: Verify release version consistency
         run: python scripts/version_consistency_smoke.py
+      - name: Verify dependency lock consistency
+        run: python scripts/dependency_lock_smoke.py
+      - name: Verify generated release metadata
+        run: python scripts/release_metadata.py --check --public
       - name: Verify published file hashes
         run: python scripts/verify_public_manifest.py
       - name: Verify architecture boundaries

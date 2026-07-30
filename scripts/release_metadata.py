@@ -273,7 +273,13 @@ def _sbom_version(root: Path) -> str:
     return str(((payload.get("metadata") or {}).get("component") or {}).get("version") or "")
 
 
-def consistency_issues(root: Path, manifest: dict[str, Any], *, collect_tests: bool) -> list[str]:
+def consistency_issues(
+    root: Path,
+    manifest: dict[str, Any],
+    *,
+    collect_tests: bool,
+    check_generated_files: bool = True,
+) -> list[str]:
     issues: list[str] = []
     actual = actual_state(root, collect_tests=collect_tests)
     for key in ("version", "schema_version", "proof_format", "architecture"):
@@ -296,24 +302,25 @@ def consistency_issues(root: Path, manifest: dict[str, Any], *, collect_tests: b
     readme = (root / "README.md").read_text(encoding="utf-8")
     if version not in readme:
         issues.append("README version does not match VERSION")
-    expected = rendered_files(manifest)
-    for relative, content in expected.items():
-        for base in (root, root / "reports"):
-            path = base / relative
-            if not path.is_file():
-                issues.append(f"generated release file missing: {path.relative_to(root)}")
-            elif path.read_text(encoding="utf-8") != content:
-                issues.append(f"generated release file is stale: {path.relative_to(root)}")
+    if check_generated_files:
+        expected = rendered_files(manifest)
+        for relative, content in expected.items():
+            for base in (root, root / "reports"):
+                path = base / relative
+                if not path.is_file():
+                    issues.append(f"generated release file missing: {path.relative_to(root)}")
+                elif path.read_text(encoding="utf-8") != content:
+                    issues.append(f"generated release file is stale: {path.relative_to(root)}")
     groups = [int(item) for item in manifest.get("test_groups") or []]
     if groups and sum(groups) != int(manifest["tests"]["passed"]):
         issues.append("test group total does not match passed tests")
     return issues
 
 
-def load_manifest(root: Path) -> dict[str, Any]:
+def load_manifest(root: Path, *, collect_tests: bool) -> dict[str, Any]:
     path = root / MANIFEST_PATH
     if not path.is_file():
-        return default_manifest(root)
+        return default_manifest(root, collect_tests=collect_tests)
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -329,8 +336,13 @@ def main() -> None:
     parser.add_argument("--render", action="store_true")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--collect-tests", action="store_true")
+    parser.add_argument(
+        "--public",
+        action="store_true",
+        help="Check public-repository metadata without requiring excluded generated release artifacts.",
+    )
     args = parser.parse_args()
-    manifest = load_manifest(ROOT)
+    manifest = load_manifest(ROOT, collect_tests=args.collect_tests)
     if args.refresh:
         manifest = refresh_manifest(ROOT, manifest)
         save_manifest(ROOT, manifest)
@@ -338,7 +350,12 @@ def main() -> None:
     elif args.render:
         write_generated(ROOT, manifest)
     if args.check:
-        issues = consistency_issues(ROOT, manifest, collect_tests=args.collect_tests)
+        issues = consistency_issues(
+            ROOT,
+            manifest,
+            collect_tests=args.collect_tests,
+            check_generated_files=not args.public,
+        )
         if issues:
             raise SystemExit("release metadata consistency failed:\n- " + "\n- ".join(issues))
         print("release metadata consistency passed")
