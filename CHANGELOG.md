@@ -1,6 +1,15 @@
 # Changelog
 
 This public changelog summarizes the portfolio-facing release line. It does not reproduce every internal verification iteration.
+
+## Unreleased maintenance — 2026-07-30
+
+- replaces stale `.github/workflows/tests.yml` references with the actual public workflow path;
+- makes the dependency-lock validator report a missing public workflow as a consistency issue instead of crashing;
+- installs `requirements-dev.lock` in the core CI matrix and runs the dependency-lock smoke check;
+- adds a public-scoped release-metadata check that respects the artifacts intentionally excluded from the public repository;
+- adds regression coverage without changing application behavior, schema, or the 243-test public suite size.
+
 ## 72.0.13 — 2026-07-29
 
 Tag-alignment and metadata-consistency patch release.
@@ -104,3 +113,9 @@ Earlier releases built the core finding, asset, prioritization, remediation, app
 - aligned the support document with the repository's restricted public-support model;
 - documented the frozen portfolio maintenance and release boundary;
 - changed no application version, runtime dependency or VM workflow.
+
+### Public maintenance hotfix follow-up — 2026-07-30
+
+- made the public release-metadata check skip optional browser-test collection when the public release manifest is absent and `--collect-tests` was not requested;
+- added regression coverage for forwarding the explicit collection flag into fallback manifest generation;
+- changed no application behavior, database schema, VM workflow, or release version.
