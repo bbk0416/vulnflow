@@ -8,7 +8,7 @@ This public changelog summarizes the portfolio-facing release line. It does not 
 - makes the dependency-lock validator report a missing public workflow as a consistency issue instead of crashing;
 - installs `requirements-dev.lock` in the core CI matrix and runs the dependency-lock smoke check;
 - adds a public-scoped release-metadata check that respects the artifacts intentionally excluded from the public repository;
-- adds regression coverage without changing application behavior, schema, or the 243-test public suite size.
+- adds regression coverage without changing application behavior or database schema; the public regression suite increases from 243 to 244 tests.
 
 ## 72.0.13 — 2026-07-29
 
