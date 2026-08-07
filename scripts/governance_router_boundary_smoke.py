@@ -25,7 +25,7 @@ def main_smoke() -> int:
     architecture = build_architecture_report(ROOT)
     module_map = {item["path"]: item for item in architecture["modules"]}
     checks = {
-        "version_72_0_6": CURRENT_APP_VERSION == "72.0.13",
+        "version_72_0_7": CURRENT_APP_VERSION == "72.0.72",
         "policy_routes_9": len(route_sets["policy"]) == 9,
         "audit_routes_11": len(route_sets["audit"]) == 11,
         "controls_routes_21": len(route_sets["controls"]) == 21,
@@ -44,14 +44,14 @@ def main_smoke() -> int:
             for route_name in module.ROUTE_NAMES
         ),
         "governance_routes_41": sum(len(routes) for routes in route_sets.values()) == 41,
-        "route_count_241": architecture["route_count"] == 241,
+        "route_count_261": architecture["route_count"] == 261,
         "architecture_pass": architecture["status"] == "PASS"
             and module_map["app/routers/governance_policy.py"]["lines"] <= 320
             and module_map["app/routers/governance.py"]["lines"] <= 280
             and module_map["app/routers/governance_controls.py"]["lines"] <= 520,
     }
     report = {
-        "title": "VulnFlow 72.0.13 governance router boundary verification",
+        "title": "VulnFlow 72.0.72 governance router boundary verification",
         "version": CURRENT_APP_VERSION,
         "checks": checks,
         "passed": sum(checks.values()),

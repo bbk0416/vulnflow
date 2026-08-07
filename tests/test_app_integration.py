@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from fastapi.testclient import TestClient
 import app.main as main
 
@@ -93,13 +95,26 @@ def test_backup_and_reset(client: TestClient):
     assert ok.status_code == 303
 
 
-def test_optional_basic_auth(tmp_path: Path, monkeypatch):
-    monkeypatch.setattr(main, "DB_PATH", tmp_path / "auth.db")
-    monkeypatch.setattr(main, "AUTH_USER", "demo")
-    monkeypatch.setattr(main, "AUTH_PASSWORD", "secret")
-    with TestClient(main.app) as protected:
-        assert protected.get("/").status_code == 401
-        assert protected.get("/", auth=("demo", "secret")).status_code == 200
+def test_plaintext_basic_auth_configuration_is_rejected(tmp_path: Path):
+    application = main.create_app(
+        setting_overrides={
+            "DB_PATH": tmp_path / "auth.db",
+            "EVIDENCE_DIR": tmp_path / "evidence",
+            "EXPORT_DIR": tmp_path / "exports",
+            "RECOVERY_DIR": tmp_path / "recovery",
+            "AUTH_USERS_JSON": "",
+            "AUTH_API_TOKENS_JSON": "",
+            "AUTH_USER": "demo",
+            "AUTH_PASSWORD": "secret",
+            "DEMO_MODE": False,
+            "ALLOW_LOCAL_ADMIN_FALLBACK": False,
+            "JOB_WORKER_ENABLED": False,
+            "CLUSTER_COORDINATION_ENABLED": False,
+        }
+    )
+    with pytest.raises(RuntimeError, match="평문 환경변수 사용자 인증은 제거"):
+        with TestClient(application):
+            pass
 
 
 def test_sbom_compare_route(client: TestClient):

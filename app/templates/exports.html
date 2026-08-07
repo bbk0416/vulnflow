@@ -22,7 +22,7 @@
     <button class="primary">비동기 CSV 생성</button>
   </form>
   {% endif %}
-  <p><a class="button-link" href="/export/findings.csv">전체 CSV 즉시 스트리밍</a> <small>대규모·복합 필터는 위 비동기 작업을 권장합니다.</small></p>
+  <p><a class="button-link" href="/export/findings.csv">전체 CSV 즉시 스트리밍</a> <a class="button-link primary" href="/export/executive-report.html">고객용 경영진 보고서</a> <small>대규모·복합 필터는 위 비동기 작업을 권장합니다.</small></p>
   {% if request.state.role=='admin' %}<form method="post" action="/exports/storage/cleanup"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>Quota·디스크 여유 정리 실행</button></form>{% endif %}
 </section>
 <section class="panel"><h2>산출물</h2>

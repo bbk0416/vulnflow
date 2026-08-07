@@ -8,7 +8,6 @@ clean virtual environment without a host ``site-packages`` bridge.
 """
 
 import argparse
-import base64
 import gzip
 import hashlib
 from importlib import metadata
@@ -37,6 +36,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from app.core.schema_versions import CURRENT_SCHEMA_VERSION
 from scripts.distribution_artifact_rehearsal import SOURCE_DATE_EPOCH, sha256_file
 
 SNAPSHOT_FORMAT = "vulnflow-runtime-dependency-snapshot/1"
@@ -44,7 +44,6 @@ REPORT_JSON = ROOT / "reports" / "runtime_dependency_snapshot_verification.json"
 REPORT_TEXT = ROOT / "reports" / "runtime_dependency_snapshot_verification.txt"
 DIST_DIR = ROOT / "dist"
 LOCK_PATH = ROOT / "requirements.lock"
-EXPECTED_SCHEMA_VERSION = 40
 ARCHIVE_PREFIX = "vulnflow-runtime-snapshot"
 
 
@@ -303,11 +302,6 @@ def _free_port() -> int:
         return int(sock.getsockname()[1])
 
 
-def _basic(username: str, password: str) -> dict[str, str]:
-    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
-    return {"Authorization": f"Basic {token}"}
-
-
 def _wait_ready(base_url: str, process: subprocess.Popen[Any], log_path: Path) -> None:
     deadline = time.monotonic() + 35
     last_error = ""
@@ -427,8 +421,9 @@ def _restore_install_and_run(snapshot: Path, wheel: Path, workspace: Path) -> di
     probe = _probe_isolated_environment(venv_python, run_dir, restored["manifest"], purelib)
 
     data = run_dir / "data"
-    for relative in ("", "evidence", "recovery", "exports"):
-        (data / relative).mkdir(parents=True, exist_ok=True)
+    default_project = data / "projects" / "default"
+    for path in (data, default_project / "evidence", default_project / "backups" / "recovery", default_project / "exports"):
+        path.mkdir(parents=True, exist_ok=True)
     username = "snapshot-admin"
     password = f"snapshot-admin-pass-{version}"
     env = {
@@ -441,13 +436,19 @@ def _restore_install_and_run(snapshot: Path, wheel: Path, workspace: Path) -> di
         "PYTHONUNBUFFERED": "1",
         "VULNFLOW_HOST": "127.0.0.1",
         "VULNFLOW_PORT": str(_free_port()),
-        "VULNFLOW_DB": str(data / "vulnflow.db"),
+        "VULNFLOW_BASE_DIR": str(run_dir),
+        "VULNFLOW_DATA_DIR": str(data),
+        "VULNFLOW_DB": str(data / "legacy-vulnflow.db"),
+        "VULNFLOW_CONTROL_DB": str(data / "control.db"),
+        "VULNFLOW_PROJECTS_DIR": str(data / "projects"),
+        "VULNFLOW_DEFAULT_PROJECT_ROOT": str(default_project),
+        "VULNFLOW_DEFAULT_PROJECT_DB": str(default_project / "vulnflow.db"),
         "VULNFLOW_COORDINATION_DB": str(data / "coordination.db"),
-        "VULNFLOW_EVIDENCE_DIR": str(data / "evidence"),
-        "VULNFLOW_RECOVERY_DIR": str(data / "recovery"),
-        "VULNFLOW_EXPORT_DIR": str(data / "exports"),
+        "VULNFLOW_EVIDENCE_DIR": str(default_project / "evidence"),
+        "VULNFLOW_RECOVERY_DIR": str(default_project / "backups" / "recovery"),
+        "VULNFLOW_EXPORT_DIR": str(default_project / "exports"),
         "VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK": "0",
-        "VULNFLOW_USERS_JSON": json.dumps({username: {"password": password, "role": "admin"}}),
+        "VULNFLOW_API_TOKENS_JSON": json.dumps({username: {"token": password, "role": "admin", "projects": "*"}}),
         "VULNFLOW_CLUSTER_COORDINATION_ENABLED": "0",
         "VULNFLOW_JOB_WORKER_ENABLED": "0",
         "VULNFLOW_COOKIE_SECURE": "0",
@@ -474,10 +475,10 @@ def _restore_install_and_run(snapshot: Path, wheel: Path, workspace: Path) -> di
         live = requests.get(base_url + "/health/live", timeout=3).status_code
         ready = requests.get(base_url + "/health/ready", timeout=3).status_code
         anonymous = requests.get(base_url + "/", timeout=3).status_code
-        authenticated = requests.get(base_url + "/", headers=_basic(username, password), timeout=5).status_code
+        authenticated = requests.get(base_url + "/", headers={"Authorization": f"Bearer {password}"}, timeout=5).status_code
     finally:
         shutdown_ms = _terminate(process) if process.poll() is None else 0
-    database = data / "vulnflow.db"
+    database = default_project / "vulnflow.db"
     with sqlite3.connect(database) as connection:
         schema = int(connection.execute("PRAGMA user_version").fetchone()[0])
         integrity = str(connection.execute("PRAGMA integrity_check").fetchone()[0])
@@ -548,7 +549,7 @@ def run_rehearsal(*, keep_workspace: bool = False) -> dict[str, Any]:
             "installed_auth_default_closed": restored["anonymous_root_status"] == 401,
             "installed_authenticated_root": restored["authenticated_root_status"] == 200,
             "installed_sigterm_bounded": restored["shutdown_ms"] <= 12_000,
-            "installed_database_schema": restored["schema_version"] == EXPECTED_SCHEMA_VERSION,
+            "installed_database_schema": restored["schema_version"] == CURRENT_SCHEMA_VERSION,
             "installed_database_integrity": restored["sqlite_integrity"] == "ok",
             "no_user_site_dependency": restored["probe"]["user_site_enabled"] is False,
         }

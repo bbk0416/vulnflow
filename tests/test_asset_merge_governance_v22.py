@@ -95,7 +95,7 @@ def test_schema_v22_has_merge_governance_table_and_triggers(tmp_path: Path):
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         triggers = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='trigger'")}
         version = int(conn.execute("PRAGMA user_version").fetchone()[0])
-    assert version == CURRENT_SCHEMA_VERSION == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert "asset_merge_requests" in tables
     assert {"asset_merge_requests_core_immutable", "asset_merge_requests_no_delete"} <= triggers
 
@@ -280,6 +280,6 @@ def test_schema_21_database_migrates_to_asset_merge_governance(tmp_path: Path):
         migration = conn.execute(
             "SELECT name,app_version FROM schema_migrations WHERE version=23"
         ).fetchone()
-    assert version == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert table is not None
     assert migration == ("asset_merge_scoped_rollback", "23.0.0")

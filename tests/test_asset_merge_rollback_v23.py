@@ -98,7 +98,7 @@ def test_schema_v23_has_scoped_rollback_tables_and_triggers(tmp_path: Path):
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         triggers = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='trigger'")}
         version = int(conn.execute("PRAGMA user_version").fetchone()[0])
-    assert version == CURRENT_SCHEMA_VERSION == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert {"asset_merge_rollback_journals", "asset_merge_rollback_requests"} <= tables
     assert {
         "asset_merge_rollback_journals_immutable_update",
@@ -196,7 +196,7 @@ def test_schema_22_database_migrates_but_old_merge_has_no_scoped_journal(tmp_pat
         migration = conn.execute(
             "SELECT name,app_version FROM schema_migrations WHERE version=23"
         ).fetchone()
-    assert version == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert migration == ("asset_merge_scoped_rollback", "23.0.0")
     impact = analyze_asset_merge_rollback(db, merge["merge_id"])
     assert impact["can_request"] is False

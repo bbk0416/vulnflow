@@ -23,8 +23,8 @@ def main() -> None:
         report = build_architecture_report(ROOT)
         by_path = {item["path"]: item for item in report["modules"]}
         checks = [
-            ("version_72_0_6", storage.CURRENT_APP_VERSION == "72.0.13"),
-            ("schema_40", storage.CURRENT_SCHEMA_VERSION == 40),
+            ("version_72_0_7", storage.CURRENT_APP_VERSION == "72.0.72"),
+            ("schema_42", storage.CURRENT_SCHEMA_VERSION == 46),
             ("init_owned", storage.init_db is database_schema.init_db),
             ("campaign_owned", storage.create_campaign is campaigns.create_campaign),
             ("restore_owned", storage.restore_database is database_lifecycle.restore_database),
@@ -35,7 +35,7 @@ def main() -> None:
             ("architecture_pass", report["status"] == "PASS" and not report["cycles"]),
         ]
     payload = {
-        "title": "VulnFlow 72.0.13 storage orchestration modularization verification",
+        "title": "VulnFlow 72.0.72 storage orchestration modularization verification",
         "checks": [{"name": name, "passed": passed} for name, passed in checks],
         "result": f"{sum(p for _, p in checks)}/{len(checks)}",
     }

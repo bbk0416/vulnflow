@@ -76,6 +76,11 @@ def dashboard(
         "assets": counts["asset_count"],
         "exposure_groups": counts["exposure_group_count"],
         "campaigns_active": counts["active_campaign_count"],
+        "open": summary.get("statuses", {}).get("OPEN", 0),
+        "in_progress": summary.get("statuses", {}).get("IN_PROGRESS", 0),
+        "mitigated": summary.get("statuses", {}).get("MITIGATED", 0),
+        "risk_accepted": summary.get("statuses", {}).get("RISK_ACCEPTED", 0),
+        "closed_only": summary.get("statuses", {}).get("CLOSED", 0),
     }
     return templates.TemplateResponse(
         request=request,
@@ -105,7 +110,12 @@ def dashboard(
 @router.get("/upload", response_class=HTMLResponse)
 def upload_page(request: Request):
     _require_role(request, "operator")
-    return templates.TemplateResponse(request=request, name="upload.html", context={})
+    return templates.TemplateResponse(
+        request=request, name="upload.html", context={
+            "demo_mode": bool(DEMO_MODE),
+            "import_max_mb": MAX_IMPORT_UPLOAD_BYTES // (1024 * 1024),
+        }
+    )
 
 @router.post("/upload/findings")
 async def upload_findings(
@@ -236,6 +246,8 @@ def finding_detail(request: Request, finding_id: str, notice: str = ""):
             "observations": list_finding_observations(DB_PATH, finding_id, limit=50),
             "evidence_artifacts": _evidence_with_custody(finding_id=finding_id),
             "source_reconciliation": get_source_reconciliation(DB_PATH, finding_id),
+            "jira_link": get_finding_external_link(DB_PATH, finding_id, provider="JIRA"),
+            "jira_enabled": bool((get_integration(DB_PATH, "JIRA") or {}).get("enabled")),
             "verification_absence_scans": VERIFICATION_ABSENCE_SCANS,
             "notice_message": NOTICE_MESSAGES.get(notice, ""),
         },

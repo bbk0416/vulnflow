@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<get_reports_response>
+  <report><report><results>
+    <result id="synthetic-ref-r1">
+      <name>Synthetic attribute reference issue</name>
+      <host>198.51.100.20<hostname>refs.example.test</hostname></host>
+      <port>443/tcp</port>
+      <severity>8.1</severity>
+      <nvt oid="1.3.6.1.4.1.synthetic.refs">
+        <name>Synthetic attribute reference issue</name>
+        <refs>
+          <ref type="cve" id="CVE-2026-96002"/>
+          <ref type="url" id="https://example.test/advisory"/>
+        </refs>
+        <solution type="VendorFix">Upgrade the affected component.</solution>
+      </nvt>
+      <description>The CVE exists only in a ref attribute.</description>
+    </result>
+  </results></report></report>
+</get_reports_response>

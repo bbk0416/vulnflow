@@ -1,0 +1,150 @@
+{
+  "application_version": "72.0.72",
+  "format": "vulnflow-runtime-dependency-lock/1",
+  "packages": [
+    {
+      "condition": "always",
+      "name": "annotated-doc",
+      "version": "0.0.4"
+    },
+    {
+      "condition": "always",
+      "name": "annotated-types",
+      "version": "0.7.0"
+    },
+    {
+      "condition": "always",
+      "name": "anyio",
+      "version": "4.13.0"
+    },
+    {
+      "condition": "always",
+      "name": "cffi",
+      "version": "2.0.0"
+    },
+    {
+      "condition": "always",
+      "name": "click",
+      "version": "8.1.8"
+    },
+    {
+      "condition": "windows",
+      "name": "colorama",
+      "version": "0.4.6"
+    },
+    {
+      "condition": "always",
+      "name": "cryptography",
+      "version": "48.0.1"
+    },
+    {
+      "condition": "always",
+      "name": "et-xmlfile",
+      "version": "2.0.0"
+    },
+    {
+      "condition": "always",
+      "name": "fastapi",
+      "version": "0.140.9"
+    },
+    {
+      "condition": "always",
+      "name": "h11",
+      "version": "0.16.0"
+    },
+    {
+      "condition": "always",
+      "name": "httptools",
+      "version": "0.8.0"
+    },
+    {
+      "condition": "always",
+      "name": "idna",
+      "version": "3.17"
+    },
+    {
+      "condition": "always",
+      "name": "jinja2",
+      "version": "3.1.6"
+    },
+    {
+      "condition": "always",
+      "name": "markupsafe",
+      "version": "3.0.3"
+    },
+    {
+      "condition": "always",
+      "name": "openpyxl",
+      "version": "3.1.5"
+    },
+    {
+      "condition": "always",
+      "name": "pycparser",
+      "version": "3.0"
+    },
+    {
+      "condition": "always",
+      "name": "pydantic",
+      "version": "2.13.4"
+    },
+    {
+      "condition": "always",
+      "name": "pydantic-core",
+      "version": "2.46.4"
+    },
+    {
+      "condition": "always",
+      "name": "python-dotenv",
+      "version": "1.2.2"
+    },
+    {
+      "condition": "always",
+      "name": "python-multipart",
+      "version": "0.0.31"
+    },
+    {
+      "condition": "always",
+      "name": "pyyaml",
+      "version": "6.0.3"
+    },
+    {
+      "condition": "always",
+      "name": "starlette",
+      "version": "1.3.1"
+    },
+    {
+      "condition": "always",
+      "name": "typing-extensions",
+      "version": "4.15.0"
+    },
+    {
+      "condition": "always",
+      "name": "typing-inspection",
+      "version": "0.4.2"
+    },
+    {
+      "condition": "always",
+      "name": "uvicorn",
+      "version": "0.48.0"
+    },
+    {
+      "condition": "cpython-non-windows",
+      "name": "uvloop",
+      "version": "0.22.1"
+    },
+    {
+      "condition": "always",
+      "name": "watchfiles",
+      "version": "1.2.0"
+    },
+    {
+      "condition": "always",
+      "name": "websockets",
+      "version": "16.0"
+    }
+  ],
+  "python": {
+    "maximum_exclusive": "3.14",
+    "minimum": "3.12"
+  }
+}

@@ -64,6 +64,7 @@ def _severity(path: str, before: Any, current: Any) -> str:
     high_paths = {
         "settings.authentication.local_fallback_enabled",
         "settings.webhooks.allow_insecure_http",
+        "settings.outbound_http.private_networks_allowed",
         "settings.evidence_store.clean_required",
         "settings.recovery.restore_signature_required",
         "settings.audit_integrity.signature_required",
@@ -77,6 +78,7 @@ def _severity(path: str, before: Any, current: Any) -> str:
         "settings.integrity_proof_public_signing.",
         "settings.recovery.",
         "settings.webhooks.",
+        "settings.outbound_http.",
         "settings.evidence_store.",
         "settings.workers.",
         "settings.cluster_coordination.",

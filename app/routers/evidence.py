@@ -37,13 +37,25 @@ ROUTE_NAMES = ('verifications_page', 'remediation_verification_request', 'remedi
 def verifications_page(request: Request, status: str = "", notice: str = ""):
     _require_role(request, "operator")
     normalized = str(status or "").strip().upper()
-    if normalized and normalized not in {"PENDING", "APPROVED", "REJECTED", "CANCELLED"}:
+    allowed_statuses = {"PENDING", "APPROVED", "REJECTED", "CANCELLED"}
+    if normalized and normalized not in allowed_statuses:
         raise HTTPException(400, "허용되지 않은 검증 상태입니다.")
+    all_requests = list_remediation_verification_requests(DB_PATH, limit=1000)
+    counts = {key: 0 for key in allowed_statuses}
+    for item in all_requests:
+        item_status = str(item.get("status") or "").upper()
+        if item_status in counts:
+            counts[item_status] += 1
+    visible_requests = (
+        [item for item in all_requests if str(item.get("status") or "").upper() == normalized]
+        if normalized else all_requests
+    )
     return templates.TemplateResponse(
         request=request, name="verifications.html",
         context={
-            "requests": list_remediation_verification_requests(DB_PATH, status=normalized, limit=500),
+            "requests": visible_requests[:500],
             "status_filter": normalized,
+            "verification_counts": counts,
             "notice_message": NOTICE_MESSAGES.get(notice, ""),
         },
     )

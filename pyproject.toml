@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bbk-vulnflow"
-version = "72.0.13"
+version = "72.0.72"
 description = "Single-host vulnerability management and integrity verification project"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -28,8 +28,8 @@ dependencies = [
   "jinja2==3.1.6",
   "python-multipart==0.0.31",
   "PyYAML==6.0.3",
-  "requests==2.33.0",
   "cryptography==48.0.1",
+  "openpyxl==3.1.5",
 ]
 
 [project.scripts]
@@ -46,6 +46,7 @@ app = [
   "templates/*.html",
   "static/*",
   "resources/*.yml",
+  "resources/*.json",
 ]
 
 [tool.ruff]

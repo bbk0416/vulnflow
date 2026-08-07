@@ -41,19 +41,6 @@
       "version": "4.13.0"
     },
     {
-      "bom-ref": "pkg:pypi/certifi@2026.5.20",
-      "name": "certifi",
-      "properties": [
-        {
-          "name": "vulnflow:dependency-lock",
-          "value": "requirements.lock"
-        }
-      ],
-      "purl": "pkg:pypi/certifi@2026.5.20",
-      "type": "library",
-      "version": "2026.5.20"
-    },
-    {
       "bom-ref": "pkg:pypi/cffi@2.0.0",
       "name": "cffi",
       "properties": [
@@ -65,19 +52,6 @@
       "purl": "pkg:pypi/cffi@2.0.0",
       "type": "library",
       "version": "2.0.0"
-    },
-    {
-      "bom-ref": "pkg:pypi/charset-normalizer@3.4.7",
-      "name": "charset-normalizer",
-      "properties": [
-        {
-          "name": "vulnflow:dependency-lock",
-          "value": "requirements.lock"
-        }
-      ],
-      "purl": "pkg:pypi/charset-normalizer@3.4.7",
-      "type": "library",
-      "version": "3.4.7"
     },
     {
       "bom-ref": "pkg:pypi/click@8.1.8",
@@ -121,6 +95,19 @@
       "purl": "pkg:pypi/cryptography@48.0.1",
       "type": "library",
       "version": "48.0.1"
+    },
+    {
+      "bom-ref": "pkg:pypi/et-xmlfile@2.0.0",
+      "name": "et_xmlfile",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/et-xmlfile@2.0.0",
+      "type": "library",
+      "version": "2.0.0"
     },
     {
       "bom-ref": "pkg:pypi/fastapi@0.140.9",
@@ -201,6 +188,19 @@
       "version": "3.0.3"
     },
     {
+      "bom-ref": "pkg:pypi/openpyxl@3.1.5",
+      "name": "openpyxl",
+      "properties": [
+        {
+          "name": "vulnflow:dependency-lock",
+          "value": "requirements.lock"
+        }
+      ],
+      "purl": "pkg:pypi/openpyxl@3.1.5",
+      "type": "library",
+      "version": "3.1.5"
+    },
+    {
       "bom-ref": "pkg:pypi/pycparser@3.0",
       "name": "pycparser",
       "properties": [
@@ -279,19 +279,6 @@
       "version": "6.0.3"
     },
     {
-      "bom-ref": "pkg:pypi/requests@2.33.0",
-      "name": "requests",
-      "properties": [
-        {
-          "name": "vulnflow:dependency-lock",
-          "value": "requirements.lock"
-        }
-      ],
-      "purl": "pkg:pypi/requests@2.33.0",
-      "type": "library",
-      "version": "2.33.0"
-    },
-    {
       "bom-ref": "pkg:pypi/starlette@1.3.1",
       "name": "starlette",
       "properties": [
@@ -303,19 +290,6 @@
       "purl": "pkg:pypi/starlette@1.3.1",
       "type": "library",
       "version": "1.3.1"
-    },
-    {
-      "bom-ref": "pkg:pypi/typing-extensions@4.15.0",
-      "name": "typing_extensions",
-      "properties": [
-        {
-          "name": "vulnflow:dependency-lock",
-          "value": "requirements.lock"
-        }
-      ],
-      "purl": "pkg:pypi/typing-extensions@4.15.0",
-      "type": "library",
-      "version": "4.15.0"
     },
     {
       "bom-ref": "pkg:pypi/typing-inspection@0.4.2",
@@ -331,17 +305,17 @@
       "version": "0.4.2"
     },
     {
-      "bom-ref": "pkg:pypi/urllib3@2.7.0",
-      "name": "urllib3",
+      "bom-ref": "pkg:pypi/typing-extensions@4.15.0",
+      "name": "typing_extensions",
       "properties": [
         {
           "name": "vulnflow:dependency-lock",
           "value": "requirements.lock"
         }
       ],
-      "purl": "pkg:pypi/urllib3@2.7.0",
+      "purl": "pkg:pypi/typing-extensions@4.15.0",
       "type": "library",
-      "version": "2.7.0"
+      "version": "4.15.0"
     },
     {
       "bom-ref": "pkg:pypi/uvicorn@0.48.0",
@@ -406,35 +380,33 @@
         "pkg:pypi/annotated-doc@0.0.4",
         "pkg:pypi/annotated-types@0.7.0",
         "pkg:pypi/anyio@4.13.0",
-        "pkg:pypi/certifi@2026.5.20",
         "pkg:pypi/cffi@2.0.0",
-        "pkg:pypi/charset-normalizer@3.4.7",
         "pkg:pypi/click@8.1.8",
         "pkg:pypi/colorama@0.4.6",
         "pkg:pypi/cryptography@48.0.1",
+        "pkg:pypi/et-xmlfile@2.0.0",
         "pkg:pypi/fastapi@0.140.9",
         "pkg:pypi/h11@0.16.0",
         "pkg:pypi/httptools@0.8.0",
         "pkg:pypi/idna@3.17",
         "pkg:pypi/jinja2@3.1.6",
         "pkg:pypi/markupsafe@3.0.3",
+        "pkg:pypi/openpyxl@3.1.5",
         "pkg:pypi/pycparser@3.0",
-        "pkg:pypi/pydantic@2.13.4",
         "pkg:pypi/pydantic-core@2.46.4",
+        "pkg:pypi/pydantic@2.13.4",
         "pkg:pypi/python-dotenv@1.2.2",
         "pkg:pypi/python-multipart@0.0.31",
         "pkg:pypi/pyyaml@6.0.3",
-        "pkg:pypi/requests@2.33.0",
         "pkg:pypi/starlette@1.3.1",
         "pkg:pypi/typing-extensions@4.15.0",
         "pkg:pypi/typing-inspection@0.4.2",
-        "pkg:pypi/urllib3@2.7.0",
         "pkg:pypi/uvicorn@0.48.0",
         "pkg:pypi/uvloop@0.22.1",
         "pkg:pypi/watchfiles@1.2.0",
         "pkg:pypi/websockets@16.0"
       ],
-      "ref": "pkg:generic/vulnflow@72.0.13"
+      "ref": "pkg:generic/vulnflow@72.0.72"
     },
     {
       "dependsOn": [],
@@ -450,15 +422,7 @@
     },
     {
       "dependsOn": [],
-      "ref": "pkg:pypi/certifi@2026.5.20"
-    },
-    {
-      "dependsOn": [],
       "ref": "pkg:pypi/cffi@2.0.0"
-    },
-    {
-      "dependsOn": [],
-      "ref": "pkg:pypi/charset-normalizer@3.4.7"
     },
     {
       "dependsOn": [],
@@ -471,6 +435,10 @@
     {
       "dependsOn": [],
       "ref": "pkg:pypi/cryptography@48.0.1"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/et-xmlfile@2.0.0"
     },
     {
       "dependsOn": [],
@@ -497,16 +465,22 @@
       "ref": "pkg:pypi/markupsafe@3.0.3"
     },
     {
+      "dependsOn": [
+        "pkg:pypi/et-xmlfile@2.0.0"
+      ],
+      "ref": "pkg:pypi/openpyxl@3.1.5"
+    },
+    {
       "dependsOn": [],
       "ref": "pkg:pypi/pycparser@3.0"
     },
     {
       "dependsOn": [],
-      "ref": "pkg:pypi/pydantic@2.13.4"
+      "ref": "pkg:pypi/pydantic-core@2.46.4"
     },
     {
       "dependsOn": [],
-      "ref": "pkg:pypi/pydantic-core@2.46.4"
+      "ref": "pkg:pypi/pydantic@2.13.4"
     },
     {
       "dependsOn": [],
@@ -522,10 +496,6 @@
     },
     {
       "dependsOn": [],
-      "ref": "pkg:pypi/requests@2.33.0"
-    },
-    {
-      "dependsOn": [],
       "ref": "pkg:pypi/starlette@1.3.1"
     },
     {
@@ -535,10 +505,6 @@
     {
       "dependsOn": [],
       "ref": "pkg:pypi/typing-inspection@0.4.2"
-    },
-    {
-      "dependsOn": [],
-      "ref": "pkg:pypi/urllib3@2.7.0"
     },
     {
       "dependsOn": [],
@@ -559,13 +525,13 @@
   ],
   "metadata": {
     "component": {
-      "bom-ref": "pkg:generic/vulnflow@72.0.13",
+      "bom-ref": "pkg:generic/vulnflow@72.0.72",
       "description": "Local vulnerability operations with append-only public integrity-proof transparency logs, signed revocation checkpoints, independent witness quorum, multi-scanner reconciliation, governed VEX, evidence-backed remediation verification, policy governance, RBAC approvals, durable automation, audit integrity, backup and restore",
       "name": "VulnFlow",
       "type": "application",
-      "version": "72.0.13"
+      "version": "72.0.72"
     },
-    "timestamp": "2026-07-29T00:00:00Z"
+    "timestamp": "2026-08-03T00:00:00Z"
   },
   "serialNumber": "urn:uuid:08e1e6a9-9239-4fdc-b49a-02ef8d555720",
   "specVersion": "1.6",

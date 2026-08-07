@@ -68,7 +68,7 @@ def test_schema_v20_has_multiscanner_tables(tmp_path: Path):
         tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         columns = {r[1] for r in conn.execute("PRAGMA table_info(findings)")}
         version = conn.execute("PRAGMA user_version").fetchone()[0]
-    assert version == CURRENT_SCHEMA_VERSION == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert {"source_finding_records", "finding_reconciliation_decisions"} <= tables
     assert {"canonical_key", "source_count", "source_conflict_count"} <= columns
 

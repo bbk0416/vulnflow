@@ -31,10 +31,10 @@ USERS = json.dumps({
     "admin": {"password": "admin-pass", "role": "admin"},
 })
 TOKENS = json.dumps({
-    "reader": {"token": "reader-token-1234567890", "role": "viewer"},
-    "scanner": {"token": "scanner-token-123456789", "role": "operator"},
-    "approval-bot": {"token": "approval-token-12345678", "role": "approver"},
-    "admin-api": {"token": "admin-token-12345678901", "role": "admin"},
+    "reader": {"token": "reader-token-1234567890", "role": "viewer", "projects": "*"},
+    "scanner": {"token": "scanner-token-123456789", "role": "operator", "projects": "*"},
+    "approval-bot": {"token": "approval-token-12345678", "role": "approver", "projects": "*"},
+    "admin-api": {"token": "admin-token-12345678901", "role": "admin", "projects": "*"},
 })
 
 
@@ -46,7 +46,7 @@ def make_client(tmp_path: Path, monkeypatch) -> TestClient:
     monkeypatch.setattr(main, "DB_PATH", tmp_path / "v7.sqlite3")
     monkeypatch.setattr(main, "AUTH_USER", "")
     monkeypatch.setattr(main, "AUTH_PASSWORD", "")
-    monkeypatch.setattr(main, "AUTH_USERS_JSON", USERS)
+    monkeypatch.setattr(main, "AUTH_USERS_JSON", "")
     monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", TOKENS)
     monkeypatch.setattr(main, "WEBHOOKS_JSON", "")
     monkeypatch.setattr(main, "WEBHOOK_INTERVAL_SECONDS", 0)

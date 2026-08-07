@@ -47,6 +47,7 @@ from app.services.request_processing import (
     number as _number,
     parse_assets_csv as _parse_assets_csv,
     parse_findings_csv,
+    prepare_findings_rows,
     public_job as _public_job,
 )
 from app.services.view_models import (
@@ -272,7 +273,13 @@ def _refresh_intelligence_operation(
 def _execute_background_job(
     job: dict[str, Any], *, worker_id: str, context: "ApplicationContext | None" = None
 ) -> dict[str, Any]:
-    return execute_background_job_for_context(context or APPLICATION_CONTEXT, job, worker_id=worker_id)
+    runtime = context or APPLICATION_CONTEXT
+    return execute_background_job_with_project_scope(
+        runtime,
+        job,
+        worker_id=worker_id,
+        executor=execute_background_job_for_context,
+    )
 
 
 
@@ -338,6 +345,36 @@ def _parse_findings_csv(
     )
 
 
+
+def _evaluate_finding_import(
+    content: bytes,
+    *,
+    filename: str,
+    format_hint: str,
+    mapping: dict[str, str] | None,
+    scanner_source: str,
+    allow_empty: bool = False,
+) -> dict[str, Any]:
+    parsed = parse_import_file(content, filename=filename, format_hint=format_hint)
+    active_mapping = dict(parsed["mapping"] if mapping is None else mapping)
+    mapped_rows, mapped_source_rows, mapping_errors = map_import_rows(
+        parsed["rows"], parsed["source_rows"], active_mapping
+    )
+    prepared = prepare_findings_rows(
+        mapped_rows, scanner_source=scanner_source, allow_empty=allow_empty, db_path=DB_PATH,
+        list_findings_fn=list_findings, list_assets_fn=list_assets,
+        normalize_callback=lambda raw, idx, source: normalize_row(raw, idx, scanner_source=source),
+        rescore_callback=score_row, source_rows=mapped_source_rows, collect_errors=True,
+    )
+    errors = list(parsed.get("source_errors", [])) + list(mapping_errors) + list(prepared["errors"])
+    return {
+        **parsed,
+        "mapping": active_mapping,
+        "mapped_row_count": len(mapped_rows),
+        "valid_rows": prepared["rows"],
+        "errors": errors,
+    }
+
 def rescore_all(
     *, audit: bool = True, actor: str = "local-user",
     context: "ApplicationContext | None" = None,
@@ -389,6 +426,7 @@ def _enqueue_simple_job(
 from app.core.context import ApplicationContext, RequestRuntime, get_application_context
 from app.core.runtime import RuntimeSettings, ServiceContainer
 from app.factory import create_application
+from app.application_runtime_common import prepare_application_context
 from app.routers import refresh_runtime_dependencies as _refresh_router_dependencies
 
 APPLICATION_CONTEXT = ApplicationContext(
@@ -422,6 +460,7 @@ def create_app(
         service_overrides=service_overrides,
         coordination_state=dict(_COORDINATION_STATE),
     )
+    prepare_application_context(runtime_context)
     bind_operation_guard(runtime_context)
     return create_application(
         context=runtime_context,

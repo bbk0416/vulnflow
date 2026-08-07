@@ -24,7 +24,7 @@
 - KEV·EPSS 갱신
 - 보고서·백업·안전 복원
 - CycloneDX 인벤토리와 두 버전 비교
-- Basic 사용자·Bearer token 기반 viewer/operator/approver/admin RBAC
+- DB 사용자 로그인 세션·Bearer token 기반 viewer/operator/approver/admin RBAC
 - 로컬 보안 통제와 자동 테스트
 
 ## 제외 범위

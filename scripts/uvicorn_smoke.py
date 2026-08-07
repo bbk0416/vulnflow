@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import json
 import os
 from pathlib import Path
@@ -22,11 +21,6 @@ def free_port() -> int:
         return int(sock.getsockname()[1])
 
 
-def basic(username: str, password: str) -> dict[str, str]:
-    token = base64.b64encode(f"{username}:{password}".encode()).decode()
-    return {"Authorization": f"Basic {token}"}
-
-
 def bearer(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
@@ -41,18 +35,15 @@ def main() -> None:
             "VULNFLOW_DB": str(Path(temp_dir) / "uvicorn.sqlite3"),
             "VULNFLOW_EVIDENCE_DIR": str(Path(temp_dir) / "evidence"),
             "VULNFLOW_RECOVERY_DIR": str(Path(temp_dir) / "recovery"),
-            "VULNFLOW_USERS_JSON": json.dumps({
-                "viewer": {"password": "view-pass", "role": "viewer"},
-                "admin": {"password": "admin-pass", "role": "admin"},
-            }),
             "VULNFLOW_BACKUP_SIGNING_KEY": "uvicorn-backup-signing-key",
             "VULNFLOW_BACKUP_REQUIRE_SIGNATURE": "1",
             "VULNFLOW_AUDIT_SIGNING_KEY": "uvicorn-audit-signing-key",
             "VULNFLOW_AUDIT_REQUIRE_SIGNATURE": "1",
             "VULNFLOW_API_TOKENS_JSON": json.dumps({
-                "ops": {"token": "uvicorn-operator-token-12345", "role": "operator"},
-                "approval": {"token": "uvicorn-approval-token-1234", "role": "approver"},
-                "admin-api": {"token": "uvicorn-admin-token-123456", "role": "admin"},
+                "viewer-api": {"token": "uvicorn-viewer-token-1234567", "role": "viewer", "projects": "*"},
+                "ops": {"token": "uvicorn-operator-token-12345", "role": "operator", "projects": "*"},
+                "approval": {"token": "uvicorn-approval-token-1234", "role": "approver", "projects": "*"},
+                "admin-api": {"token": "uvicorn-admin-token-123456", "role": "admin", "projects": "*"},
             }),
         })
         process = subprocess.Popen(
@@ -79,16 +70,16 @@ def main() -> None:
 
             checks = [
                 ("anonymous root", requests.get(base + "/", timeout=3).status_code, 401),
-                ("viewer root", requests.get(base + "/", headers=basic("viewer", "view-pass"), timeout=3).status_code, 200),
-                ("viewer upload", requests.get(base + "/upload", headers=basic("viewer", "view-pass"), timeout=3).status_code, 403),
-                ("viewer policies", requests.get(base + "/policies", headers=basic("viewer", "view-pass"), timeout=3).status_code, 200),
-                ("viewer jobs", requests.get(base + "/jobs", headers=basic("viewer", "view-pass"), timeout=3).status_code, 200),
-                ("viewer assets", requests.get(base + "/assets", headers=basic("viewer", "view-pass"), timeout=3).status_code, 200),
-                ("viewer exposure groups", requests.get(base + "/exposure-groups", headers=basic("viewer", "view-pass"), timeout=3).status_code, 200),
-                ("viewer campaigns", requests.get(base + "/campaigns", headers=basic("viewer", "view-pass"), timeout=3).status_code, 200),
+                ("viewer root", requests.get(base + "/", headers=bearer("uvicorn-viewer-token-1234567"), timeout=3).status_code, 200),
+                ("viewer upload", requests.get(base + "/upload", headers=bearer("uvicorn-viewer-token-1234567"), timeout=3).status_code, 403),
+                ("viewer policies", requests.get(base + "/policies", headers=bearer("uvicorn-viewer-token-1234567"), timeout=3).status_code, 200),
+                ("viewer jobs", requests.get(base + "/jobs", headers=bearer("uvicorn-viewer-token-1234567"), timeout=3).status_code, 200),
+                ("viewer assets", requests.get(base + "/assets", headers=bearer("uvicorn-viewer-token-1234567"), timeout=3).status_code, 200),
+                ("viewer exposure groups", requests.get(base + "/exposure-groups", headers=bearer("uvicorn-viewer-token-1234567"), timeout=3).status_code, 200),
+                ("viewer campaigns", requests.get(base + "/campaigns", headers=bearer("uvicorn-viewer-token-1234567"), timeout=3).status_code, 200),
                 ("assets api", requests.get(base + "/api/v1/assets", headers=bearer("uvicorn-operator-token-12345"), timeout=3).status_code, 200),
-                ("admin system", requests.get(base + "/system", headers=basic("admin", "admin-pass"), timeout=3).status_code, 200),
-                ("admin cluster", requests.get(base + "/cluster", headers=basic("admin", "admin-pass"), timeout=3).status_code, 200),
+                ("admin system", requests.get(base + "/system", headers=bearer("uvicorn-admin-token-123456"), timeout=3).status_code, 200),
+                ("admin cluster", requests.get(base + "/cluster", headers=bearer("uvicorn-admin-token-123456"), timeout=3).status_code, 200),
                 ("cluster api", requests.get(base + "/api/v1/system/cluster", headers=bearer("uvicorn-admin-token-123456"), timeout=3).status_code, 200),
                 ("audit integrity", requests.get(base + "/api/v1/audit/integrity", headers=bearer("uvicorn-approval-token-1234"), timeout=3).status_code, 200),
                 ("bearer summary", requests.get(base + "/api/v1/summary", headers=bearer("uvicorn-operator-token-12345"), timeout=3).status_code, 200),
@@ -108,7 +99,7 @@ def main() -> None:
                 raise SystemExit(f"audit checkpoint failed: {checkpoint.text}")
 
             recovery = requests.get(
-                base + "/export/recovery-bundle.zip", headers=basic("admin", "admin-pass"), timeout=10,
+                base + "/export/recovery-bundle.zip", headers=bearer("uvicorn-admin-token-123456"), timeout=10,
             )
             results.append(f"recovery export: {recovery.status_code}")
             if recovery.status_code != 200 or not recovery.content.startswith(b"PK"):

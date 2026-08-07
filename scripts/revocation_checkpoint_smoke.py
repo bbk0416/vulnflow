@@ -46,7 +46,7 @@ def main() -> None:
         root = Path(temp_name)
         db, exports = root / "vulnflow.db", root / "exports"
         init_db(db)
-        checks["schema_40"] = validate_database_file(db)["schema_version"] == CURRENT_SCHEMA_VERSION == 40
+        checks["schema_42"] = validate_database_file(db)["schema_version"] == CURRENT_SCHEMA_VERSION == 46
         private = {name: _private() for name in ("compromised", "replacement", "recovery")}
         public = {name: public_key_from_private(value) for name, value in private.items()}
 

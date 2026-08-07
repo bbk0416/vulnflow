@@ -31,7 +31,7 @@ def main() -> None:
         with sqlite3.connect(db) as conn:
             version = int(conn.execute("PRAGMA user_version").fetchone()[0])
             archive_columns = {row[1] for row in conn.execute("PRAGMA table_info(execution_receipt_archives)")}
-        checks["schema_33"] = version == CURRENT_SCHEMA_VERSION == 40
+        checks["schema_33"] = version == CURRENT_SCHEMA_VERSION == 46
         checks["archive_redacted_columns"] = {
             "receipt_digest_sha256", "operation_summary_json", "outcome_summary_json", "actor_sha256"
         } <= archive_columns and not ({"payload_json", "result_json", "error", "actor"} & archive_columns)
@@ -85,7 +85,7 @@ def main() -> None:
         maintenance = run_maintenance(db, actor="admin", webhook_retention_days=1)
         checks["webhook_retention_preserves_dead_letter"] = maintenance["webhooks_deleted"] == 0
         checks["archive_listing"] = list_execution_receipt_archives(db)[0]["receipt_count"] == 2
-        checks["recovery_validation"] = validate_database_file(db)["schema_version"] == 40
+        checks["recovery_validation"] = validate_database_file(db)["schema_version"] == 46
 
         result = {
             "version": CURRENT_APP_VERSION,
@@ -100,7 +100,7 @@ def main() -> None:
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
     REPORT_JSON.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     lines = [
-        "VulnFlow 72.0.13 execution receipt retention archive verification", "",
+        "VulnFlow 72.0.72 execution receipt retention archive verification", "",
         f"version: {result['version']}", f"schema version: {result['schema_version']}",
         f"checks: {result['passed']}/{result['total']}", "",
     ]

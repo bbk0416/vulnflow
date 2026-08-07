@@ -170,6 +170,28 @@ def consistency_issues(*, check_installed: bool = False) -> list[str]:
     if not re.search(r"pip install .*requirements\.lock", dockerfile):
         issues.append("Dockerfile does not install requirements.lock")
 
+    windows_batch = (ROOT / "run_windows.bat").read_text(encoding="utf-8")
+    windows_launcher = (ROOT / "run_windows.ps1").read_text(encoding="utf-8")
+    linux_launcher = (ROOT / "run_linux.sh").read_text(encoding="utf-8")
+    if "run_windows.ps1" not in windows_batch or "pip install" in windows_batch.lower():
+        issues.append("run_windows.bat must delegate installation and startup to run_windows.ps1")
+    for name, launcher in (
+        ("run_windows.ps1", windows_launcher),
+        ("run_linux.sh", linux_launcher),
+    ):
+        if "requirements.lock" not in launcher:
+            issues.append(f"{name} does not install requirements.lock")
+        if "requirements.txt" in launcher:
+            issues.append(f"{name} installs the unlocked requirements.txt input")
+        if "pip install --upgrade" in launcher.lower():
+            issues.append(f"{name} performs an unpinned pip upgrade")
+        if "VULNFLOW_RUNTIME_DEPENDENCY_POLICY" not in launcher or "enforce" not in launcher:
+            issues.append(f"{name} does not enforce the packaged runtime dependency manifest")
+    if "Scripts\\python.exe" not in windows_launcher or "& $venvPython -m uvicorn" not in windows_launcher:
+        issues.append("run_windows.ps1 does not execute installation and startup through venv Python")
+    if '.venv/bin/python' not in linux_launcher or 'exec "$VENV_PYTHON" -m uvicorn' not in linux_launcher:
+        issues.append("run_linux.sh does not execute installation and startup through venv Python")
+
     if not PUBLIC_CI_WORKFLOW.is_file():
         issues.append("public CI workflow is missing: .github/workflows/public-ci.yml")
         workflow = ""

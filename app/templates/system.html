@@ -1,5 +1,5 @@
 {% extends "base.html" %}{% block title %}시스템·복구 · VulnFlow{% endblock %}{% block content %}
-<h1>시스템 구성·재해복구</h1>
+<h1>시스템 구성·재해복구</h1>{% if request.state.recovery_mode is defined and request.state.recovery_mode.active %}<section class="panel warning-zone recovery-mode-panel"><h2>읽기 전용 복구 모드가 활성화되었습니다</h2><p>일반 데이터 변경, 재채점, 작업 큐와 예약 작업은 중단되었습니다. 현재 데이터를 먼저 내려받은 뒤 정상 복구본을 검증·복원하세요. 복원이 완료되면 서버를 재시작해 무결성 검사를 다시 수행해야 합니다.</p><ul>{% for reason in request.state.recovery_mode.reasons %}<li>{{ reason }}</li>{% endfor %}</ul><p><a class="button-link" href="/export/backup.sqlite3">현재 SQLite 백업 다운로드</a> <a class="button-link" href="/export/findings.csv">취약점 CSV 다운로드</a></p></section>{% endif %}
 {% if notice_message %}<div class="notice">{{ notice_message }}</div>{% endif %}
 <section class="panel"><h2>구성 감사</h2><p>비밀번호·API 토큰·웹훅 비밀키와 전체 URL을 제외한 운영 설정 점검 결과입니다.</p>
 <div class="cards"><div class="card"><span>상태</span><strong>{{ audit.posture }}</strong></div><div class="card"><span>발견사항</span><strong>{{ audit.findings|length }}</strong></div><div class="card"><span>스키마</span><strong>{{ schema.schema_version }}</strong></div><div class="card"><span>앱</span><strong>{{ schema.app_version }}</strong></div></div>

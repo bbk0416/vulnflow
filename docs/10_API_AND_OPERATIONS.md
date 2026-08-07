@@ -2,11 +2,22 @@
 
 ## 인증
 
-- UI와 조회 API: Basic 또는 Bearer
+- 브라우저 UI: DB 사용자 로그인 세션
+- 조회 API: 로그인 세션 또는 Bearer API 토큰
 - 쓰기 API: Bearer API 토큰만
 - 헬스체크: 인증 예외 최소정보
 
 자세한 토큰 구성은 `14_API_TOKENS_AUTOMATION.md`를 참고합니다.
+
+## 프로젝트 선택
+
+브라우저 세션은 상단 선택기와 `vulnflow_project` HttpOnly 쿠키를 사용합니다. API 토큰은 설정의 `projects` 범위 안에서만 프로젝트를 선택할 수 있으며, 요청 헤더에 다음 값을 보냅니다.
+
+```http
+X-VulnFlow-Project: customer-a-1234abcd
+```
+
+`projects`를 생략한 API 토큰은 기본 프로젝트에만 접근합니다. `"projects": "*"`는 모든 활성 프로젝트에 접근하므로 제한된 관리자 자동화에만 사용해야 합니다. 응답에는 실제 적용된 프로젝트 ID가 `X-VulnFlow-Project`로 반환됩니다.
 
 ## 조회 API
 
@@ -50,6 +61,13 @@
 - `/export/report.html` — viewer
 - `/export/backup.sqlite3` — admin
 - `/policies/{policy_id}/download` — viewer
+
+## 프로젝트 복구 운영 UI
+
+- `POST /admin/projects/backup` — 선택 프로젝트의 복구 번들 생성 작업 예약, admin session
+- `POST /admin/projects/recovery-drill` — 저장된 로컬 또는 외부 번들을 임시 격리 저장소에 복원해 재검사, admin session
+
+복구 리허설은 CSRF 보호가 적용된 관리자 UI 작업이며 공개 Bearer API로 제공하지 않습니다. 실제 프로젝트 데이터는 변경하지 않고 결과 JSON은 해당 프로젝트의 로컬 `recovery/drills` 아래에 저장합니다.
 
 
 ## 백그라운드 작업 API

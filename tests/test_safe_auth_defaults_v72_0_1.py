@@ -18,6 +18,7 @@ def _app(tmp_path: Path, *, fallback: bool):
             "AUTH_API_TOKENS_JSON": "",
             "AUTH_USER": "",
             "AUTH_PASSWORD": "",
+            "DEMO_MODE": fallback,
             "ALLOW_LOCAL_ADMIN_FALLBACK": fallback,
             "JOB_WORKER_ENABLED": False,
             "CLUSTER_COORDINATION_ENABLED": False,
@@ -54,7 +55,7 @@ def test_loopback_detection_supports_ipv4_ipv6_and_testclient():
 
 def test_startup_refuses_missing_auth_without_explicit_fallback(tmp_path: Path):
     application = _app(tmp_path, fallback=False)
-    with pytest.raises(RuntimeError, match="인증 계정 또는 API token이 없습니다"):
+    with pytest.raises(RuntimeError, match="활성 사용자 계정 또는 API token이 없습니다"):
         with TestClient(application):
             pass
 
@@ -78,12 +79,13 @@ def test_partial_legacy_credentials_fail_startup(tmp_path: Path):
             "AUTH_API_TOKENS_JSON": "",
             "AUTH_USER": "admin",
             "AUTH_PASSWORD": "",
+            "DEMO_MODE": False,
             "ALLOW_LOCAL_ADMIN_FALLBACK": False,
             "JOB_WORKER_ENABLED": False,
             "CLUSTER_COORDINATION_ENABLED": False,
         }
     )
-    with pytest.raises(RuntimeError, match="함께 설정"):
+    with pytest.raises(RuntimeError, match="평문 환경변수 사용자 인증은 제거되었습니다"):
         with TestClient(application):
             pass
 
@@ -94,8 +96,13 @@ def test_container_and_local_launch_defaults_are_explicit():
     dockerfile = (root / "Dockerfile").read_text(encoding="utf-8")
     linux = (root / "run_linux.sh").read_text(encoding="utf-8")
     windows = (root / "run_windows.ps1").read_text(encoding="utf-8")
-    assert 'vulnflow:72.0.13' in compose
+    assert 'vulnflow:72.0.72' in compose
+    assert 'VULNFLOW_DEMO_MODE:-0' in compose
     assert 'VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK:-0' in compose
+    assert 'VULNFLOW_COOKIE_SECURE:-1' in compose
+    assert 'VULNFLOW_DEMO_MODE=0' in dockerfile
     assert 'VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK=0' in dockerfile
-    assert 'VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK:=1' in linux
-    assert 'VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK = "1"' in windows
+    assert 'VULNFLOW_DEMO_MODE:=0' in linux
+    assert 'VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK:=0' in linux
+    assert 'VULNFLOW_DEMO_MODE = "0"' in windows
+    assert 'VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK = "0"' in windows

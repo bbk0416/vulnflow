@@ -85,17 +85,18 @@ def main() -> None:
             os.environ["VULNFLOW_RECOVERY_DIR"] = str(root / "recovery")
             os.environ["VULNFLOW_JOB_WORKER_ENABLED"] = "0"
             os.environ["VULNFLOW_API_TOKENS_JSON"] = json.dumps({
-                "operator": {"token": "osv-http-operator-token-12345", "role": "operator"},
-            })
-            os.environ["VULNFLOW_USERS_JSON"] = json.dumps({
-                "admin": {"password": "osv-http-admin-pass", "role": "admin"},
+                "operator": {"token": "osv-http-operator-token-12345", "role": "operator", "projects": "*"},
             })
             os.environ["VULNFLOW_OSV_API_BASE"] = f"http://127.0.0.1:{server.server_address[1]}"
             os.environ["VULNFLOW_OSV_RETRIES"] = "1"
+            os.environ["VULNFLOW_OUTBOUND_ALLOW_PRIVATE_NETWORKS"] = "1"
+            os.environ["VULNFLOW_OUTBOUND_HOST_ALLOWLIST"] = "127.0.0.1"
             os.environ["VULNFLOW_WEBHOOK_INTERVAL_SECONDS"] = "0"
 
             from app import main as app_main
+            from app.core.project_scope import project_scope
             from app.core.storage import claim_background_job, complete_background_job, get_background_job
+            from app.services.project_runtime import application_project_selections
 
             token = bearer("osv-http-operator-token-12345")
             with TestClient(app_main.app) as client:
@@ -124,21 +125,24 @@ def main() -> None:
                 assert queued.status_code == 200, queued.text
                 job_id = queued.json()["job_id"]
 
-                claimed = claim_background_job(
-                    app_main.DB_PATH,
-                    worker_id="osv-http-worker",
-                    lease_seconds=60,
-                    allowed_types=["OSV_SCAN"],
-                )
-                assert claimed and claimed["job_id"] == job_id
-                result = app_main._execute_background_job(claimed, worker_id="osv-http-worker")
-                complete_background_job(
-                    app_main.DB_PATH,
-                    job_id=job_id,
-                    worker_id="osv-http-worker",
-                    result=result,
-                )
-                assert get_background_job(app_main.DB_PATH, job_id)["status"] == "SUCCEEDED"
+                selection = application_project_selections(app_main.APPLICATION_CONTEXT)[0]
+                assert selection is not None
+                with project_scope(selection):
+                    claimed = claim_background_job(
+                        app_main.DB_PATH,
+                        worker_id="osv-http-worker",
+                        lease_seconds=60,
+                        allowed_types=["OSV_SCAN"],
+                    )
+                    assert claimed and claimed["job_id"] == job_id
+                    result = app_main._execute_background_job(claimed, worker_id="osv-http-worker")
+                    complete_background_job(
+                        app_main.DB_PATH,
+                        job_id=job_id,
+                        worker_id="osv-http-worker",
+                        result=result,
+                    )
+                    assert get_background_job(app_main.DB_PATH, job_id)["status"] == "SUCCEEDED"
 
                 scans = client.get(f"/api/v1/sboms/{sbom_id}/osv-scans", headers=token)
                 matches = client.get(f"/api/v1/sboms/{sbom_id}/osv-matches", headers=token)

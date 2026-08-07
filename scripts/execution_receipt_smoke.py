@@ -27,7 +27,7 @@ def main() -> None:
         with sqlite3.connect(db) as conn:
             columns = {row[1] for row in conn.execute("PRAGMA table_info(execution_receipts)")}
             version = int(conn.execute("PRAGMA user_version").fetchone()[0])
-        checks["schema_32_receipts_on_schema_33"] = version == CURRENT_SCHEMA_VERSION == 40
+        checks["schema_32_receipts_on_schema_33"] = version == CURRENT_SCHEMA_VERSION == 46
         checks["redacted_columns"] = not ({"payload_json", "result_json", "error", "worker_id", "actor"} & columns)
 
         job = create_background_job(
@@ -107,7 +107,7 @@ def main() -> None:
         )
         summary = count_execution_receipts(db)
         checks["dead_letter_metric_cleared"] = summary["dead_letters"] == 0
-        checks["recovery_validation"] = validate_database_file(db)["schema_version"] == 40
+        checks["recovery_validation"] = validate_database_file(db)["schema_version"] == 46
 
         result = {
             "version": CURRENT_APP_VERSION,

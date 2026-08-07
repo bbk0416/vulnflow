@@ -1,50 +1,107 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}VulnFlow{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 {% set current_path = request.url.path if request.url is defined else '' %}
+{% set role_map = {'viewer':'조회 사용자','operator':'조치 담당자','approver':'승인 담당자','admin':'관리자'} %}
 <header class="app-header">
   <div class="header-inner">
-    <div class="brand"><a href="/">VulnFlow</a><span>{{ app_version }}</span></div>
-    <nav class="primary-nav" aria-label="주요 메뉴">
-      <a class="nav-link {% if current_path == '/' %}active{% endif %}" href="/">대시보드</a>
-      <a class="nav-link {% if current_path.startswith('/assets') or current_path.startswith('/asset-identities') %}active{% endif %}" href="/assets">자산</a>
-      <details class="nav-group {% if current_path.startswith('/campaign') or current_path.startswith('/approval') or current_path.startswith('/verification') or current_path.startswith('/exposure-groups') %}active{% endif %}">
-        <summary>조치·승인</summary>
-        <div class="nav-menu">
-          <a href="/campaigns">조치 캠페인</a>
-          {% if request.state.role in ['operator','approver','admin'] %}<a href="/approvals">위험수용 승인</a><a href="/verifications">조치 검증</a>{% endif %}
-          <a href="/exposure-groups">노출 군집</a>
-        </div>
-      </details>
-      <details class="nav-group {% if current_path.startswith('/upload') or current_path.startswith('/imports') or current_path.startswith('/reconciliation') or current_path.startswith('/sbom') or current_path.startswith('/exports') %}active{% endif %}">
-        <summary>데이터</summary>
-        <div class="nav-menu">
-          {% if request.state.role in ['operator','approver','admin'] %}<a href="/upload">가져오기·복원</a>{% endif %}
-          <a href="/imports">가져오기 이력</a>
-          <a href="/reconciliation">스캐너 조정</a>
-          <a href="/sboms">SBOM·VEX</a>
-          <a href="/exports">내보내기</a>
-        </div>
-      </details>
-      <details class="nav-group {% if current_path.startswith('/audit') or current_path.startswith('/policies') or current_path.startswith('/config-changes') or current_path.startswith('/jobs') or current_path.startswith('/maintenance') or current_path.startswith('/webhooks') or current_path.startswith('/execution-receipts') or current_path.startswith('/system') or current_path.startswith('/cluster') %}active{% endif %}">
-        <summary>운영·설정</summary>
-        <div class="nav-menu nav-menu-wide">
-          <a href="/audit">감사 이력</a>
-          <a href="/policies">정책 관리</a>
-          <a href="/jobs">작업 큐</a>
-          {% if request.state.role in ['operator','approver','admin'] %}<a href="/config-changes">구성 변경</a>{% endif %}
-          {% if request.state.role=='admin' %}<a href="/maintenance">유지관리</a><a href="/webhooks">웹훅</a><a href="/execution-receipts">실행 영수증</a><a href="/system">시스템·복구</a><a href="/cluster">인스턴스</a>{% endif %}
+    <div class="brand">
+      <a href="/">VulnFlow</a>
+      <span class="brand-subtitle">취약점 조치관리</span>
+    </div>
+    <nav class="primary-nav simple-nav" aria-label="주요 메뉴">
+      <a class="nav-link {% if current_path == '/' %}active{% endif %}" href="/">홈</a>
+      <a class="nav-link {% if current_path.startswith('/finding/') %}active{% endif %}" href="/#findings">취약점</a>
+      {% if request.state.role in ['operator','approver','admin'] %}
+      <a class="nav-link {% if current_path.startswith('/upload') %}active{% endif %}" href="/upload">결과 가져오기</a>
+      {% endif %}
+      {% if request.state.role in ['operator','approver','admin'] %}
+      <a class="nav-link {% if current_path.startswith('/verification') %}active{% endif %}" href="/verifications?status=PENDING">검증 요청</a>
+      {% endif %}
+      <details class="nav-group admin-nav {% if current_path.startswith('/assets') or current_path.startswith('/campaign') or current_path.startswith('/approval') or current_path.startswith('/imports') or current_path.startswith('/reconciliation') or current_path.startswith('/sbom') or current_path.startswith('/exports') or current_path.startswith('/audit') or current_path.startswith('/policies') or current_path.startswith('/config-changes') or current_path.startswith('/jobs') or current_path.startswith('/maintenance') or current_path.startswith('/integrations') or current_path.startswith('/webhooks') or current_path.startswith('/execution-receipts') or current_path.startswith('/pilot') or current_path.startswith('/system') or current_path.startswith('/cluster') %}active{% endif %}">
+        <summary>관리자 메뉴</summary>
+        <div class="nav-menu nav-menu-wide admin-menu">
+          <div class="nav-menu-section">
+            <strong>운영</strong>
+            <a href="/assets">자산 관리</a>
+            <a href="/campaigns">조치 캠페인</a>
+            {% if request.state.role in ['operator','approver','admin'] %}<a href="/approvals">예외 승인</a>{% endif %}
+            <a href="/exposure-groups">노출 군집</a>
+          </div>
+          <div class="nav-menu-section">
+            <strong>데이터</strong>
+            <a href="/imports">가져오기 이력</a>
+            <a href="/reconciliation">스캐너 조정</a>
+            <a href="/sboms">SBOM·VEX</a>
+            <a href="/exports">내보내기</a>
+          </div>
+          <div class="nav-menu-section">
+            <strong>설정·감사</strong>
+            <a href="/audit">변경 이력</a>
+            <a href="/policies">우선순위 정책</a>
+            <a href="/jobs">작업 큐</a>
+            {% if request.state.role in ['operator','approver','admin'] %}<a href="/config-changes">구성 변경</a>{% endif %}
+          </div>
+          {% if request.state.role=='admin' %}
+          <div class="nav-menu-section">
+            <strong>시스템</strong>
+            <a href="/pilot">파일럿 시작 센터</a>
+            <a href="/projects">고객사·프로젝트</a>
+            <a href="/admin/users">사용자 관리</a>
+            <a href="/maintenance">유지관리</a>
+            <a href="/integrations">이메일·Jira 연동</a>
+            <a href="/webhooks">웹훅</a>
+            <a href="/execution-receipts">실행 영수증</a>
+            <a href="/system">백업·복구</a>
+            <a href="/cluster">인스턴스</a>
+          </div>
+          {% endif %}
         </div>
       </details>
     </nav>
-    <div class="session-user">{{ request.state.actor }} · {{ request.state.role }}</div>
+    <div class="session-user">
+      {% if request.state.active_project is defined and request.state.auth_method not in ['anonymous','health'] %}
+      <form class="project-switcher" method="post" action="/projects/switch">
+        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+        <label>프로젝트
+          <select name="project_id" onchange="this.form.submit()" aria-label="현재 프로젝트">
+            {% for project in request.state.available_projects %}
+            <option value="{{ project.project_id }}" {% if project.project_id == request.state.active_project.project_id %}selected{% endif %}>{{ project.name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </form>
+      {% endif %}
+      <div>
+        <strong>{{ request.state.actor }}</strong>
+        <span>{{ role_map.get(request.state.role, request.state.role) }}</span>
+      </div>
+      {% if request.state.auth_method == 'session' %}
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+        <button type="submit">로그아웃</button>
+      </form>
+      {% endif %}
+    </div>
   </div>
 </header>
+{% if request.state.recovery_mode is defined and request.state.recovery_mode.active %}
+<div class="recovery-mode-banner" role="alert">
+  <strong>읽기 전용 복구 모드</strong>
+  <span>무결성 이상이 감지되어 일반 변경과 백그라운드 작업이 중단되었습니다.</span>
+  {% if request.state.role == 'admin' %}<a href="/system">복구 화면</a>{% endif %}
+</div>
+{% endif %}
 <main>{% block content %}{% endblock %}</main>
-<footer>로컬 취약점 조치 운영 도구 · 조치 우선순위 점수는 공격 예측 확률이나 자동 승인 결과가 아닙니다.</footer>
-</body></html>
+<footer>
+  <span>VulnFlow {{ app_version }}</span>
+  <span>발견 → 담당자 지정 → 조치 → 검증 → 완료</span>
+</footer>
+</body>
+</html>

@@ -29,7 +29,8 @@ def settings(root: Path, index: int) -> dict[str, object]:
         "RECOVERY_DIR": root / f"recovery-{index}",
         "COORDINATION_DB_ENV": str(root / f"coordination-{index}.db"),
         "CLUSTER_COORDINATION_ENABLED": False,
-        "ALLOW_LOCAL_ADMIN_FALLBACK": True,
+        "DEMO_MODE": True,
+            "ALLOW_LOCAL_ADMIN_FALLBACK": True,
         "JOB_WORKER_ENABLED": False,
         "MAINTENANCE_INTERVAL_MINUTES": 1,
         "WEBHOOK_INTERVAL_SECONDS": 1,
@@ -94,8 +95,8 @@ def main_smoke() -> dict[str, object]:
         }
         snapshots = [context.get("LIFECYCLE_SHUTDOWN_SNAPSHOT") for context in contexts]
         checks = [
-            {"name": "version_72_0_6", "passed": main.CURRENT_APP_VERSION == "72.0.13"},
-            {"name": "schema_40", "passed": main.CURRENT_SCHEMA_VERSION == 40},
+            {"name": "version_72_0_7", "passed": main.CURRENT_APP_VERSION == "72.0.72"},
+            {"name": "schema_42", "passed": main.CURRENT_SCHEMA_VERSION == 46},
             {"name": "three_named_tasks", "passed": direct["running"]["started_task_names"] == ["backup", "maintenance", "webhook"]},
             {"name": "running_state", "passed": direct["running"]["state"] == "RUNNING"},
             {"name": "stopped_state", "passed": direct["stopped"]["state"] == "STOPPED"},
@@ -110,7 +111,7 @@ def main_smoke() -> dict[str, object]:
         if not all(item["passed"] for item in checks):
             raise AssertionError(checks)
         return {
-            "title": "VulnFlow 72.0.13 deterministic lifecycle resource verification",
+            "title": "VulnFlow 72.0.72 deterministic lifecycle resource verification",
             "version": main.CURRENT_APP_VERSION,
             "checks": checks,
             "shutdown_elapsed_ms": round(float(direct["elapsed_seconds"]) * 1000.0, 3),

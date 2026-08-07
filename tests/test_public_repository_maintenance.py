@@ -126,31 +126,33 @@ def test_clamscan_signature_parser_ignores_windows_drive_colon(tmp_path: Path, m
     assert result["scan_signature"] == "Unit.Test"
 
 
-def test_dashboard_uses_five_primary_navigation_entry_points(client) -> None:
+def test_dashboard_uses_simple_primary_navigation_with_advanced_menu(client) -> None:
     response = client.get("/")
     assert response.status_code == 200
     html = response.text
-    assert html.count('class="nav-link') == 2
-    assert html.count('class="nav-group') == 3
-    for label in ("대시보드", "자산", "조치·승인", "데이터", "운영·설정"):
+    assert html.count('class="nav-link') == 4
+    assert html.count('class="nav-group') == 1
+    for label in ("홈", "취약점", "결과 가져오기", "검증 요청", "관리자 메뉴"):
         assert label in html
     assert 'href="/export/findings.csv"' not in html
     assert 'href="/export/recovery-bundle.zip"' not in html
 
 
-def test_dashboard_prioritizes_action_queue_and_progressive_filters(client) -> None:
+def test_dashboard_prioritizes_four_step_workflow_and_progressive_filters(client) -> None:
     response = client.get("/")
     assert response.status_code == 200
     html = response.text
-    assert 'aria-label="오늘의 작업 바로가기"' in html
-    assert "오늘 처리할 취약점부터 확인합니다." in html
+    assert 'aria-label="취약점 처리 단계"' in html
+    assert "해야 할 일만 순서대로 처리하세요." in html
+    for label in ("처리 전", "조치 중", "확인 요청", "완료"):
+        assert label in html
+    assert 'aria-label="지금 확인할 항목"' in html
     assert "즉시 조치" in html
     assert "기한 초과" in html
-    assert "조치 검증" in html
-    assert "진행 캠페인" in html
-    assert '<details class="secondary-metrics">' in html
+    assert "검증 대기" in html
+    assert 'product-admin-details' in html
     assert '<details class="advanced-filters"' in html
-    assert '<section class="panel" id="findings">' in html
+    assert '<section class="panel findings-panel" id="findings">' in html
 
     filtered = client.get("/?record_state=ALL&page_size=50")
     assert filtered.status_code == 200
@@ -175,9 +177,11 @@ def test_browser_e2e_covers_three_primary_vm_flows() -> None:
         assert f"def {test_name}(" in browser_test
 
 
-def test_readme_presents_three_step_scenario_with_five_screenshots() -> None:
+def test_readme_presents_four_step_flow_with_five_screenshots() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    assert "## 3단계 시연 시나리오" in readme
+    assert "## 4단계 기본 사용 흐름" in readme
+    for label in ("처리 전", "조치 중", "확인 요청", "완료"):
+        assert label in readme
     for filename in (
         "dashboard.png",
         "finding-detail.png",
@@ -203,6 +207,12 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "pip install -r requirements-dev.lock" in workflow
     assert "python scripts/dependency_lock_smoke.py" in workflow
     assert "python scripts/release_metadata.py --check --public" in workflow
+    public_runner = (ROOT / "scripts/run_public_tests.py").read_text(encoding="utf-8")
+    assert "_cleanup_residual_process_group" in public_runner
+    assert "os.killpg" in public_runner
+    assert "expected_counts = (78, 76, 168, 80, 117, 67, 77)" in public_runner
+    assert "--group" in public_runner
+    assert 'env.pop("FORCE_COLOR", None)' in public_runner
     assert ".github/workflows/public-ci.yml" in dependency_lock
     assert "tests.yml" not in dependency_lock
     assert "tests.yml" not in dependency_smoke

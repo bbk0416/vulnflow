@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import argparse
-import base64
 from dataclasses import dataclass
 import hashlib
 import json
@@ -23,11 +22,16 @@ import yaml
 sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 DEFAULT_UID = 10001
 DEFAULT_GID = 10001
-EXPECTED_SCHEMA_VERSION = 40
 REPORT_JSON = ROOT / "reports" / "container_deployment_rehearsal_verification.json"
 REPORT_TEXT = ROOT / "reports" / "container_deployment_rehearsal_verification.txt"
+
+from app.core.database_schema import CURRENT_SCHEMA_VERSION
+
+EXPECTED_SCHEMA_VERSION = CURRENT_SCHEMA_VERSION
 
 
 @dataclass(frozen=True)
@@ -58,11 +62,6 @@ def _free_port() -> int:
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         return int(sock.getsockname()[1])
-
-
-def _basic(username: str, password: str) -> dict[str, str]:
-    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
-    return {"Authorization": f"Basic {token}"}
 
 
 def _bearer(token: str) -> dict[str, str]:
@@ -155,19 +154,27 @@ def _deployment_environment(volume: Path, cycle: int) -> dict[str, str]:
         "HOME": str(volume / "home"),
         "TMPDIR": str(volume / "tmp"),
         "XDG_CACHE_HOME": str(volume / "cache"),
-        "VULNFLOW_DB": str(volume / "vulnflow.db"),
+        "VULNFLOW_DATA_DIR": str(volume),
+        "VULNFLOW_CONTROL_DB": str(volume / "control.db"),
+        "VULNFLOW_PROJECTS_DIR": str(volume / "projects"),
+        "VULNFLOW_DEFAULT_PROJECT_ROOT": str(volume / "projects" / "default"),
+        "VULNFLOW_DEFAULT_PROJECT_DB": str(volume / "projects" / "default" / "vulnflow.db"),
+        "VULNFLOW_DB": str(volume / "legacy-vulnflow.db"),
         "VULNFLOW_COORDINATION_DB": str(volume / "vulnflow-coordination.db"),
-        "VULNFLOW_EVIDENCE_DIR": str(volume / "evidence"),
-        "VULNFLOW_RECOVERY_DIR": str(volume / "recovery"),
-        "VULNFLOW_EXPORT_DIR": str(volume / "exports"),
+        "VULNFLOW_EVIDENCE_DIR": str(volume / "projects" / "default" / "evidence"),
+        "VULNFLOW_RECOVERY_DIR": str(volume / "projects" / "default" / "recovery"),
+        "VULNFLOW_EXPORT_DIR": str(volume / "projects" / "default" / "exports"),
         "VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK": "0",
-        "VULNFLOW_USERS_JSON": json.dumps({
-            "deployment-admin": {"password": "deployment-admin-pass-72-0-6", "role": "admin"},
-        }),
         "VULNFLOW_API_TOKENS_JSON": json.dumps({
             "deployment-operator": {
                 "token": "deployment-rehearsal-operator-token-72-0-6",
                 "role": "operator",
+                "projects": ["default"],
+            },
+            "deployment-admin": {
+                "token": "deployment-rehearsal-admin-token-72-0-14",
+                "role": "admin",
+                "projects": ["default"],
             },
         }),
         "VULNFLOW_CURSOR_SIGNING_KEY": "deployment-rehearsal-cursor-signing-key-72-0-6",
@@ -277,7 +284,7 @@ def _launch_cycle(
         result["anonymous_root_status"] = requests.get(base_url + "/", timeout=3).status_code
         result["authenticated_root_status"] = requests.get(
             base_url + "/",
-            headers=_basic("deployment-admin", "deployment-admin-pass-72-0-6"),
+            headers=_bearer("deployment-rehearsal-admin-token-72-0-14"),
             timeout=3,
         ).status_code
 
@@ -364,7 +371,7 @@ def run_rehearsal(root: Path = ROOT, *, cycles: int = 2, keep_temp: bool = False
             for cycle in range(1, cycles + 1)
         ]
         source_digest_after = _tree_digest(source)
-        database = volume / "vulnflow.db"
+        database = volume / "projects" / "default" / "vulnflow.db"
         sqlite_state = _sqlite_state(database)
         database_stat = database.stat()
 

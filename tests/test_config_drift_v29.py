@@ -33,9 +33,9 @@ def _csrf(client) -> str:
 def test_schema_29_and_config_tables(tmp_path: Path):
     db = tmp_path / "vf.db"
     init_db(db)
-    assert CURRENT_SCHEMA_VERSION == 40
+    assert CURRENT_SCHEMA_VERSION == 46
     with connect(db) as conn:
-        assert int(conn.execute("PRAGMA user_version").fetchone()[0]) == 40
+        assert int(conn.execute("PRAGMA user_version").fetchone()[0]) == CURRENT_SCHEMA_VERSION == 46
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         assert {"config_baselines", "config_drift_checks"} <= tables
         migration = conn.execute("SELECT name FROM schema_migrations WHERE version=29").fetchone()
@@ -46,8 +46,8 @@ def test_baseline_is_stable_and_does_not_store_secrets(tmp_path: Path):
     db = tmp_path / "vf.db"
     init_db(db)
     env = {
-        "VULNFLOW_USERS_JSON": '{"admin":{"password":"super-secret","role":"admin"}}',
-        "VULNFLOW_API_TOKENS_JSON": '{"automation":{"token":"api-secret","role":"operator"}}',
+        "VULNFLOW_USERS_JSON": '{"admin":{"password":"super-secret","role":"admin","projects":"*"}}',
+        "VULNFLOW_API_TOKENS_JSON": '{"automation":{"token":"api-secret","role":"operator","projects":"*"}}',
         "VULNFLOW_WEBHOOKS_JSON": '{"ops":{"url":"https://user:pass@example.test/private/path","secret":"hook-secret","events":["workflow.changed"]}}',
     }
     audit = _audit(db, **env)
@@ -113,7 +113,7 @@ def test_metrics_and_restore_validation_include_v29(tmp_path: Path):
     init_db(db)
     create_baseline(db, _audit(db), actor="admin")
     summary = validate_database_file(db)
-    assert summary["schema_version"] == 40
+    assert summary["schema_version"] == 46
     text = Metrics().render_prometheus(config_baseline_present=1, config_drift_changes=2)
     assert "vulnflow_config_baseline_present 1" in text
     assert "vulnflow_config_drift_changes 2" in text

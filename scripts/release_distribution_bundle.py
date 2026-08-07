@@ -269,7 +269,15 @@ def _artifact_definitions(root: Path, project_archive: Path) -> list[tuple[str, 
         ("distribution_artifact_verification", root / "reports/distribution_artifact_rehearsal_verification.txt", f"BBK_VULNFLOW_PROJECT_V{vtag}_DISTRIBUTION_ARTIFACT_REHEARSAL.txt"),
         ("runtime_snapshot_verification", root / "reports/runtime_dependency_snapshot_verification.txt", f"BBK_VULNFLOW_PROJECT_V{vtag}_RUNTIME_DEPENDENCY_SNAPSHOT.txt"),
         ("release_provenance_verification", root / "reports/release_provenance_verification.txt", f"BBK_VULNFLOW_PROJECT_V{vtag}_RELEASE_PROVENANCE_VERIFICATION.txt"),
+        ("offline_deployment_activation", root / "scripts/offline_deployment_activation.py", "offline_deployment_activation.py"),
+        ("offline_deployment_keyring", root / "scripts/offline_deployment_keyring.py", "offline_deployment_keyring.py"),
+        ("offline_deployment_audit", root / "scripts/offline_deployment_audit.py", "offline_deployment_audit.py"),
+        ("offline_deployment_witness", root / "scripts/offline_deployment_witness.py", "offline_deployment_witness.py"),
+        ("offline_deployment_recovery", root / "scripts/offline_deployment_recovery.py", "offline_deployment_recovery.py"),
+        ("offline_deployment_preflight", root / "scripts/offline_deployment_preflight.py", "offline_deployment_preflight.py"),
+        ("offline_deployment_history", root / "scripts/offline_deployment_history.py", "offline_deployment_history.py"),
         ("offline_deployment_bootstrap", root / "scripts/offline_deployment_bootstrap.py", "offline_deployment_bootstrap.py"),
+        ("offline_deployment_manager", root / "scripts/manage_offline_deployments.py", "manage_offline_deployments.py"),
     ]
 
 
@@ -351,6 +359,10 @@ def write_distribution_metadata(
         "    --expected-version " + str(index["version"]),
         "",
         "The bootstrap creates mode-0600 initial credentials and never prints secrets in its report.",
+        "",
+        "After stopping the service, inspect retained deployments with:",
+        "  python manage_offline_deployments.py list --target ./vulnflow-deployment",
+        "Rollback and prune require explicit confirmation values; see --help.",
     ]
     (staging / "DEPLOY_OFFLINE.txt").write_text("\n".join(deploy) + "\n", encoding="utf-8")
 
@@ -494,7 +506,13 @@ def run_rehearsal(root: Path = ROOT) -> dict[str, Any]:
             ("rehearsal trust state", index["trustState"] == "rehearsal-key-untrusted"),
             ("verifier script included", (staging / "verify_release_distribution.py").is_file()),
             ("verification instructions included", (staging / "VERIFY_RELEASE.txt").is_file()),
-            ("deployment bootstrap signed", any(item["role"] == "offline_deployment_bootstrap" for item in artifacts)),
+            ("deployment bootstrap signed", {
+                "offline_deployment_activation",
+                "offline_deployment_witness",
+                "offline_deployment_history",
+                "offline_deployment_bootstrap",
+                "offline_deployment_manager",
+            }.issubset({item["role"] for item in artifacts})),
             ("deployment instructions included", (staging / "DEPLOY_OFFLINE.txt").is_file()),
         ])
 

@@ -14,7 +14,7 @@ from app.repositories.audit import add_audit_event
 from app.repositories.idempotency import replay_result, request_sha256, store_result
 from app.repositories.execution_receipts import record_execution_receipt
 
-JOB_TYPES = {"CSV_IMPORT", "INTEL_REFRESH", "RESCORE_ALL", "MAINTENANCE", "WEBHOOK_DELIVERY", "RECOVERY_BACKUP", "EVIDENCE_SCAN", "OSV_SCAN", "FINDINGS_EXPORT", "DATABASE_MAINTENANCE"}
+JOB_TYPES = {"CSV_IMPORT", "INTEL_REFRESH", "RESCORE_ALL", "MAINTENANCE", "WEBHOOK_DELIVERY", "RECOVERY_BACKUP", "EVIDENCE_SCAN", "OSV_SCAN", "FINDINGS_EXPORT", "DATABASE_MAINTENANCE", "COLLABORATION_DELIVERY"}
 
 def create_background_job(
     db_path: str | Path,

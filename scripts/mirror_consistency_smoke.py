@@ -84,8 +84,8 @@ def main() -> None:
             trusted_mirror_consistency_checkpoint_sha256=checkpoint["document_sha256"],
         )
         checks.extend([
-            {"name": "schema_40", "passed": validate_database_file(db)["schema_version"] == 40},
-            {"name": "app_72_0_4", "passed": CURRENT_APP_VERSION == "72.0.13"},
+            {"name": "schema_42", "passed": validate_database_file(db)["schema_version"] == 46},
+            {"name": "app_72_0_4", "passed": CURRENT_APP_VERSION == "72.0.72"},
             {"name": "checkpoint_count", "passed": len(documents) == 1},
             {"name": "two_mirror_signatures", "passed": len(documents[0]["signatures"]) == 2},
             {"name": "consistency_quorum", "passed": verified["quorum"] == 2},
@@ -97,7 +97,7 @@ def main() -> None:
             {"name": "bundle_valid", "passed": result["valid"] is True},
         ])
     passed = sum(bool(item["passed"]) for item in checks)
-    payload = {"title": "VulnFlow 72.0.13 mirror consistency verification", "version": CURRENT_APP_VERSION,
+    payload = {"title": "VulnFlow 72.0.72 mirror consistency verification", "version": CURRENT_APP_VERSION,
                "schema_version": CURRENT_SCHEMA_VERSION, "passed": passed, "total": len(checks), "checks": checks}
     REPORTS.mkdir(parents=True, exist_ok=True)
     (REPORTS / "mirror_consistency_verification.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n")

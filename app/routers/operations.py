@@ -128,6 +128,9 @@ def webhooks_deliver(request: Request, csrf_token: str = Form(...)):
     summary = deliver_due_events(
         DB_PATH, endpoints=WEBHOOK_ENDPOINTS, timeout_seconds=WEBHOOK_TIMEOUT_SECONDS,
         max_attempts=WEBHOOK_MAX_ATTEMPTS, limit=200,
+        allow_private_networks=OUTBOUND_ALLOW_PRIVATE_NETWORKS,
+        host_allowlist=OUTBOUND_HOST_ALLOWLIST,
+        max_response_bytes=OUTBOUND_MAX_RESPONSE_BYTES,
     )
     for outcome, count in summary.items():
         for _ in range(int(count)):
@@ -259,6 +262,8 @@ def jobs_retry(request: Request, job_id: str, csrf_token: str = Form(...)):
 
 @router.post("/reset-demo")
 def reset_demo(request: Request, confirmation: str = Form(...), csrf_token: str = Form(...)):
+    if not bool(DEMO_MODE):
+        raise HTTPException(404, "데모 모드에서만 사용할 수 있습니다.")
     _require_role(request, "admin")
     _verify_csrf(request, csrf_token)
     if confirmation.strip() != "RESET":
@@ -291,6 +296,9 @@ def api_deliver_webhooks(request: Request):
     summary = deliver_due_events(
         DB_PATH, endpoints=WEBHOOK_ENDPOINTS, timeout_seconds=WEBHOOK_TIMEOUT_SECONDS,
         max_attempts=WEBHOOK_MAX_ATTEMPTS, limit=200,
+        allow_private_networks=OUTBOUND_ALLOW_PRIVATE_NETWORKS,
+        host_allowlist=OUTBOUND_HOST_ALLOWLIST,
+        max_response_bytes=OUTBOUND_MAX_RESPONSE_BYTES,
     )
     for outcome, count in summary.items():
         for _ in range(int(count)):
@@ -485,11 +493,19 @@ def api_prune_cluster_state(request: Request):
     return {"pruned": pruned, "cluster": _cluster_snapshot()}
 
 @router.get("/health/live")
-def health_live():
-    return {"status": "alive", "version": app.version}
+def health_live(request: Request):
+    recovery_mode = dict(getattr(request.state, "recovery_mode", {}) or {})
+    return {
+        "status": "alive",
+        "version": app.version,
+        "recovery_mode": bool(recovery_mode.get("active")),
+    }
 
 @router.get("/health/ready")
-def health_ready():
+def health_ready(request: Request):
+    recovery_mode = dict(getattr(request.state, "recovery_mode", {}) or {})
+    if recovery_mode.get("active"):
+        raise HTTPException(503, "not ready: read-only recovery mode")
     try:
         count_findings(DB_PATH)
         _policy()
@@ -510,11 +526,17 @@ def health_ready():
     }
 
 @router.get("/health")
-def health():
+def health(request: Request):
     # Compatibility probe with intentionally minimal information.
     count_findings(DB_PATH)
+    recovery_mode = dict(getattr(request.state, "recovery_mode", {}) or {})
     return {
-        "status": "ok",
+        "status": "degraded" if recovery_mode.get("active") else "ok",
+        "recovery_mode": {
+            "active": bool(recovery_mode.get("active")),
+            "read_only": bool(recovery_mode.get("read_only")),
+            "reasons": list(recovery_mode.get("reasons") or []),
+        },
         "version": app.version,
         "database": "ready",
         "maintenance_scheduler": "enabled" if MAINTENANCE_INTERVAL_MINUTES > 0 else "disabled",

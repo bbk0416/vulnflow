@@ -1,8 +1,75 @@
 {% extends "base.html" %}
 {% block title %}조치 검증 · VulnFlow{% endblock %}
 {% block content %}
-<section class="hero compact"><div><p class="eyebrow">Remediation verification</p><h1>조치 검증</h1><p>조치 완료 주장을 스캔 미탐지·재시험·수동 증거로 검토하고 승인 또는 반려합니다.</p></div></section>
+{% set status_map = {'PENDING':'검토 대기','APPROVED':'승인 완료','REJECTED':'반려','CANCELLED':'취소'} %}
+{% set method_map = {'SCAN_ABSENCE':'재스캔 미탐지','RETEST':'재시험','MANUAL_EVIDENCE':'수동 증거'} %}
+<section class="hero compact">
+  <div>
+    <p class="eyebrow">조치 검증</p>
+    <h1>검증할 항목부터 처리하세요.</h1>
+    <p>조치가 끝났다는 주장을 재스캔·재시험·증거로 확인하고 승인 또는 반려합니다.</p>
+  </div>
+  <div class="hero-actions">
+    <a class="button-link primary" href="/verifications?status=PENDING">검토 대기 {{ verification_counts.PENDING }}건</a>
+    {% if status_filter %}<a class="button-link" href="/verifications">전체 이력</a>{% endif %}
+  </div>
+</section>
 {% if notice_message %}<div class="notice success">{{ notice_message }}</div>{% endif %}
-<section class="panel"><form class="form inline" method="get"><label>상태<select name="status"><option value="">전체</option>{% for s in ['PENDING','APPROVED','REJECTED','CANCELLED'] %}<option value="{{ s }}" {% if status_filter==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></label><button>조회</button></form></section>
-<section class="panel"><div class="timeline">{% for item in requests %}<article><strong>{{ item.status }} · {{ item.method }} · {{ item.verification_id }}</strong><span><a href="/finding/{{ item.finding_id }}">{{ item.finding_id }}</a> · {{ item.asset_name }} · {{ item.cve_id }} · 요청 {{ item.requested_by }} · {{ item.requested_at }}</span><p>{{ item.evidence_note }}{% if item.observed_absence_count %} · 연속 미탐지 {{ item.observed_absence_count }}회{% endif %}</p>{% if item.source_batch_id %}<p class="meta">근거 배치: {{ item.source_batch_id }}</p>{% endif %}{% if item.decision_note %}<p>{{ item.decision_note }}</p>{% endif %}{% if item.status=='PENDING' and request.state.role in ['approver','admin'] %}<form class="form inline" method="post" action="/verifications/{{ item.verification_id }}/decision"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><select name="decision"><option value="APPROVE">승인·종료</option><option value="REJECT">반려·재조치</option></select><input name="decision_note" maxlength="4000" placeholder="검토 메모"><button class="primary">처리</button></form>{% endif %}</article>{% else %}<p>조치 검증 요청이 없습니다.</p>{% endfor %}</div></section>
+
+<section class="kpis secondary-kpis" aria-label="검증 상태 요약">
+  <a class="card" href="/verifications?status=PENDING"><span>검토 대기</span><strong>{{ verification_counts.PENDING }}</strong></a>
+  <a class="card" href="/verifications?status=APPROVED"><span>승인 완료</span><strong>{{ verification_counts.APPROVED }}</strong></a>
+  <a class="card" href="/verifications?status=REJECTED"><span>반려</span><strong>{{ verification_counts.REJECTED }}</strong></a>
+  <a class="card" href="/verifications?status=CANCELLED"><span>취소</span><strong>{{ verification_counts.CANCELLED }}</strong></a>
+</section>
+
+<section class="panel">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">검증 큐</p>
+      <h2>{{ status_map.get(status_filter, '전체 검증 이력') if status_filter else '전체 검증 이력' }}</h2>
+      <p>{% if status_filter == 'PENDING' %}승인 담당자가 지금 판단해야 하는 항목입니다.{% else %}상태별로 검증 요청과 결정 이력을 확인합니다.{% endif %}</p>
+    </div>
+    <form class="form inline" method="get">
+      <label>상태
+        <select name="status">
+          <option value="">전체</option>
+          {% for s in ['PENDING','APPROVED','REJECTED','CANCELLED'] %}
+          <option value="{{ s }}" {% if status_filter==s %}selected{% endif %}>{{ status_map[s] }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button>조회</button>
+    </form>
+  </div>
+
+  <div class="timeline">
+    {% for item in requests %}
+    <article>
+      <div class="page-heading">
+        <div>
+          <strong><span class="status-pill status-{{ item.status|lower }}">{{ status_map.get(item.status, item.status) }}</span> · {{ method_map.get(item.method, item.method) }}</strong>
+          <span><a href="/finding/{{ item.finding_id }}">{{ item.cve_id }}</a> · {{ item.asset_name }} · {{ item.product }}</span>
+        </div>
+        <a class="button-link" href="/finding/{{ item.finding_id }}">취약점 상세 보기</a>
+      </div>
+      <p>{{ item.evidence_note or '별도 메모 없음' }}</p>
+      <p class="meta">요청 {{ item.requested_by }} · {{ item.requested_at }} · 증거 {{ item.evidence_count or 0 }}개{% if item.observed_absence_count %} · 연속 미탐지 {{ item.observed_absence_count }}회{% endif %}{% if item.source_batch_id %} · 근거 배치 {{ item.source_batch_id }}{% endif %}</p>
+      {% if item.decision_note %}<div class="notice">결정 메모: {{ item.decision_note }}</div>{% endif %}
+      {% if item.status=='PENDING' and request.state.role in ['approver','admin'] %}
+      <form class="form inline" method="post" action="/verifications/{{ item.verification_id }}/decision">
+        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+        <label>판정
+          <select name="decision"><option value="APPROVE">승인·종료</option><option value="REJECT">반려·재조치</option></select>
+        </label>
+        <input name="decision_note" maxlength="4000" placeholder="검토 메모 · 반려 시 사유 필수">
+        <button class="primary">판정 저장</button>
+      </form>
+      {% endif %}
+    </article>
+    {% else %}
+    <p class="empty-state">이 상태의 검증 요청이 없습니다.</p>
+    {% endfor %}
+  </div>
+</section>
 {% endblock %}

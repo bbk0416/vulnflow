@@ -100,7 +100,7 @@ def test_schema_v21_has_asset_identity_tables_and_merge_columns(tmp_path: Path):
         asset_columns = {row[1] for row in conn.execute("PRAGMA table_info(assets)")}
         finding_columns = {row[1] for row in conn.execute("PRAGMA table_info(findings)")}
         version = conn.execute("PRAGMA user_version").fetchone()[0]
-    assert version == CURRENT_SCHEMA_VERSION == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert {"asset_identifiers", "asset_identity_candidates", "asset_merge_history"} <= tables
     assert "merged_into_asset_ref_id" in asset_columns
     assert "merged_into_finding_id" in finding_columns

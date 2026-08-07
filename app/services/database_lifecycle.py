@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+import tempfile
 from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,21 +13,74 @@ from app.core.database_schema import CURRENT_SCHEMA_VERSION, init_db
 from app.core.db import connect
 from app.repositories.audit import add_audit_event, verify_audit_integrity
 from app.services.database_validation import validate_schema_contents
+from app.services.database_identity import PROJECT_DATABASE_ROLE
 
 REQUIRED_RESTORE_TABLES = {"findings", "audit_events"}
 
 
 def backup_database(db_path: str | Path, destination: str | Path) -> None:
-    Path(destination).parent.mkdir(parents=True, exist_ok=True)
-    source = sqlite3.connect(db_path)
-    target = sqlite3.connect(destination)
-    try:
-        source.backup(target)
-    finally:
-        target.close()
-        source.close()
+    """Create a validated SQLite snapshot and publish it atomically.
 
-def validate_database_file(source: str | Path) -> dict[str, Any]:
+    The backup is written to a private temporary file in the destination
+    directory.  A failed source read, interrupted backup, or integrity failure
+    therefore cannot replace a previously valid artifact with a partial file.
+    """
+    source_path = Path(db_path)
+    destination_path = Path(destination)
+    if not source_path.is_file():
+        raise FileNotFoundError(f"백업 원본 데이터베이스가 존재하지 않습니다: {source_path}")
+    if source_path.stat().st_size <= 0:
+        raise ValueError("백업 원본 데이터베이스가 비어 있습니다.")
+    destination_path.parent.mkdir(parents=True, exist_ok=True)
+    if source_path.resolve() == destination_path.resolve():
+        raise ValueError("백업 원본과 대상 경로는 서로 달라야 합니다.")
+
+    handle = tempfile.NamedTemporaryFile(
+        prefix=f".{destination_path.name}.",
+        suffix=".partial",
+        dir=destination_path.parent,
+        delete=False,
+    )
+    temporary_path = Path(handle.name)
+    handle.close()
+    try:
+        with closing(sqlite3.connect(source_path, timeout=30.0)) as source, closing(
+            sqlite3.connect(temporary_path, timeout=30.0)
+        ) as target:
+            source.execute("PRAGMA trusted_schema=OFF")
+            target.execute("PRAGMA trusted_schema=OFF")
+            source.backup(target)
+            target.commit()
+            integrity = target.execute("PRAGMA integrity_check").fetchone()
+            if not integrity or str(integrity[0]).lower() != "ok":
+                raise sqlite3.DatabaseError(
+                    "SQLite 백업 무결성 검사에 실패했습니다: "
+                    + (str(integrity[0]) if integrity else "unknown")
+                )
+        # Windows maps os.fsync() to the CRT _commit() call, which rejects a
+        # read-only descriptor with EBADF. Open the completed snapshot for update
+        # so the durability barrier has a writable descriptor on every supported
+        # platform without changing the file contents.
+        with temporary_path.open("r+b") as snapshot:
+            os.fsync(snapshot.fileno())
+        os.replace(temporary_path, destination_path)
+        if os.name == "posix":
+            directory_fd = os.open(destination_path.parent, os.O_RDONLY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+    except Exception:
+        temporary_path.unlink(missing_ok=True)
+        raise
+
+def validate_database_file(
+    source: str | Path,
+    *,
+    expected_project_id: str = "",
+    expected_database_role: str = PROJECT_DATABASE_ROLE,
+    allow_unscoped: bool = False,
+) -> dict[str, Any]:
     """Validate that a SQLite file is readable and compatible with VulnFlow."""
     source_path = Path(source)
     if not source_path.is_file() or source_path.stat().st_size == 0:
@@ -51,6 +106,30 @@ def validate_database_file(source: str | Path) -> dict[str, Any]:
             finding_count, audit_count, evidence_count = validate_schema_contents(
                 conn, tables, schema_version
             )
+            identity: dict[str, str] = {}
+            if "system_metadata" in tables:
+                identity = {
+                    str(row[0]): str(row[1] or "")
+                    for row in conn.execute(
+                        "SELECT key,value FROM system_metadata "
+                        "WHERE key IN ('database_role','project_id','project_name')"
+                    ).fetchall()
+                }
+            expected_id = str(expected_project_id or "").strip().lower()
+            expected_role = str(expected_database_role or PROJECT_DATABASE_ROLE).strip().lower()
+            actual_id = str(identity.get("project_id") or "").strip().lower()
+            actual_role = str(identity.get("database_role") or "").strip().lower()
+            if expected_id:
+                if (not actual_id or not actual_role) and not allow_unscoped:
+                    raise ValueError("프로젝트 식별정보가 없는 SQLite 백업은 이 경로에서 복원할 수 없습니다.")
+                if actual_role and actual_role != expected_role:
+                    raise ValueError(
+                        f"백업 database role 불일치: expected={expected_role}, actual={actual_role}"
+                    )
+                if actual_id and actual_id != expected_id:
+                    raise ValueError(
+                        f"다른 프로젝트의 SQLite 백업입니다: expected={expected_id}, actual={actual_id}"
+                    )
     except sqlite3.DatabaseError as exc:
         raise ValueError(f"유효한 VulnFlow SQLite 백업이 아닙니다: {exc}") from exc
     audit_integrity = None
@@ -65,6 +144,7 @@ def validate_database_file(source: str | Path) -> dict[str, Any]:
         "schema_version": schema_version,
         "size_bytes": source_path.stat().st_size,
         "audit_integrity": audit_integrity,
+        "database_identity": identity,
     }
 
 def restore_database(
@@ -72,11 +152,19 @@ def restore_database(
     source: str | Path,
     *,
     actor: str = "local-user",
+    expected_project_id: str = "",
+    expected_database_role: str = PROJECT_DATABASE_ROLE,
+    allow_unscoped: bool = False,
 ) -> dict[str, Any]:
     """Restore a validated SQLite backup after creating a safety backup."""
     db_path = Path(db_path)
     source = Path(source)
-    source_summary = validate_database_file(source)
+    source_summary = validate_database_file(
+        source,
+        expected_project_id=expected_project_id,
+        expected_database_role=expected_database_role,
+        allow_unscoped=allow_unscoped,
+    )
     db_path.parent.mkdir(parents=True, exist_ok=True)
     backup_dir = db_path.parent / "backups"
     backup_dir.mkdir(parents=True, exist_ok=True)

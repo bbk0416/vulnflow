@@ -16,6 +16,7 @@ if str(ROOT) not in sys.path:
 
 from app.core.public_signing import public_key_fingerprint
 from scripts.offline_deployment_bootstrap import deploy_release_kit
+from scripts.offline_deployment_history import inventory_retained_deployments, load_deployment_identity
 from scripts.release_distribution_bundle import (
     build_index,
     build_project_archive,
@@ -52,7 +53,7 @@ def run_rehearsal(root: Path = ROOT, *, keep_workspace: bool = False) -> dict[st
         kit_result_a = build_release_kit(staging, kit_a, version=version)
         kit_result_b = build_release_kit(staging, kit_b, version=version)
         target = workspace / "deployment"
-        deployment = deploy_release_kit(
+        initial_deployment = deploy_release_kit(
             kit_a,
             target,
             expected_kit_sha256=sha256_file(kit_a),
@@ -60,25 +61,94 @@ def run_rehearsal(root: Path = ROOT, *, keep_workspace: bool = False) -> dict[st
             expected_version=version,
             run_cycles=2,
         )
+        operator_marker = target / "OPERATOR_STATE.txt"
+        operator_marker.write_text("retain-before-replacement\n", encoding="utf-8")
+        deployment = deploy_release_kit(
+            kit_a,
+            target,
+            expected_kit_sha256=sha256_file(kit_a),
+            expected_public_key_fingerprint=public_key_fingerprint(public_key),
+            expected_version=version,
+            force=True,
+            run_cycles=2,
+        )
+        previous = Path(str(deployment["previous_deployment"]))
+        inventory = inventory_retained_deployments(target)
+        active_identity = load_deployment_identity(target, expected_target_name=target.name)
+        previous_identity = load_deployment_identity(previous, expected_target_name=target.name)
+        signed_roles = {item["role"] for item in artifacts}
+        runtime_config = json.loads(
+            (target / "config" / "runtime_environment.json").read_text(encoding="utf-8")
+        )
         checks = {
             "project_archive_reproducible": project_result_a["sha256"] == project_result_b["sha256"],
             "release_kit_reproducible": kit_result_a["sha256"] == kit_result_b["sha256"],
             "release_kit_nontrivial": kit_result_a["size"] >= 25 * 1024 * 1024,
             "signed_artifact_roles_complete": len(artifacts) >= 16,
-            "bootstrap_script_signed": any(item["role"] == "offline_deployment_bootstrap" for item in artifacts),
+            "bootstrap_script_signed": {
+                "offline_deployment_activation",
+                "offline_deployment_keyring",
+                "offline_deployment_audit",
+                "offline_deployment_witness",
+                "offline_deployment_recovery",
+                "offline_deployment_preflight",
+                "offline_deployment_history",
+                "offline_deployment_bootstrap",
+                "offline_deployment_manager",
+            }.issubset(signed_roles),
+            "standalone_management_artifacts_signed": {
+                "offline_deployment_keyring",
+                "offline_deployment_audit",
+                "offline_deployment_witness",
+                "offline_deployment_recovery",
+                "offline_deployment_preflight",
+                "offline_deployment_history",
+                "offline_deployment_manager",
+            }.issubset(signed_roles),
+            "initial_bootstrap_all_checks_passed": initial_deployment["checks_failed"] == 0,
             "bootstrap_all_checks_passed": deployment["checks_failed"] == 0,
             "bootstrap_two_cycles": len(deployment["cycles"]) == 2,
+            "bootstrap_activation_cycle": deployment["activation_cycle"]["persistence_verified"] is True,
             "bootstrap_restart_persistence": deployment["cycles"][-1]["persistence_verified"] is True,
             "bootstrap_authentication_closed": all(item["anonymous_root_status"] == 401 for item in deployment["cycles"]),
             "bootstrap_authenticated_access": all(item["authenticated_root_status"] == 200 for item in deployment["cycles"]),
             "bootstrap_healthchecks": all(item["live_status"] == 200 and item["ready_status"] == 200 for item in deployment["cycles"]),
             "bootstrap_sigterm_bounded": all(item["shutdown_ms"] <= 12_000 for item in deployment["cycles"]),
             "bootstrap_sqlite_integrity": deployment["sqlite"]["integrity"] == "ok",
-            "bootstrap_schema_current": deployment["sqlite"]["schema_version"] == 40,
+            "bootstrap_schema_current": deployment["sqlite"]["schema_version"] == 46,
             "bootstrap_credentials_private": Path(deployment["credentials_file"]).stat().st_mode & 0o077 == 0,
             "bootstrap_runtime_config_private": (target / "config" / "runtime_environment.json").stat().st_mode & 0o077 == 0,
             "bootstrap_operator_run_script": (target / "bin" / "run.sh").is_file(),
             "bootstrap_operator_verify_script": (target / "bin" / "verify_installation.sh").is_file(),
+            "bootstrap_startup_preflight_launcher": "preflight_deployment_history" in (target / "bin" / "run_vulnflow.py").read_text(encoding="utf-8"),
+            "bootstrap_signed_management_tools": all(
+                (target / "bin" / "offline-management" / name).is_file()
+                for name in (
+                    "offline_deployment_activation.py",
+                    "offline_deployment_keyring.py",
+                    "offline_deployment_audit.py",
+                    "offline_deployment_witness.py",
+                    "offline_deployment_recovery.py",
+                    "offline_deployment_preflight.py",
+                    "offline_deployment_history.py",
+                    "offline_deployment_bootstrap.py",
+                    "manage_offline_deployments.py",
+                )
+            ),
+            "replacement_previous_retained": previous.is_dir(),
+            "replacement_previous_marker_retained": (previous / "OPERATOR_STATE.txt").read_text(encoding="utf-8").strip() == "retain-before-replacement",
+            "replacement_active_marker_absent": not operator_marker.exists(),
+            "replacement_previous_hidden_sibling": previous.parent == target.parent and previous.name.startswith(f".{target.name}.previous-"),
+            "replacement_report_previous_path": deployment["previous_deployment"] == str(previous),
+            "replacement_active_identity": active_identity.installation_id == deployment["deployment_identity"]["installation_id"],
+            "replacement_previous_identity": previous_identity.installation_id == initial_deployment["deployment_identity"]["installation_id"],
+            "replacement_inventory_managed": len(inventory["managed"]) == 1 and not inventory["unmanaged"],
+            "replacement_retention_completed": deployment["retention"].get("status") == "completed",
+            "replacement_runtime_paths_relocated": all(
+                not str(value).startswith(str(target.parent / f".{target.name}.staging-"))
+                for value in runtime_config.values()
+            ) and runtime_config["VULNFLOW_BASE_DIR"] == str(target),
+            "replacement_credentials_path_relocated": Path(deployment["credentials_file"]).is_relative_to(target),
         }
         passed = sum(checks.values())
         result = {
@@ -91,6 +161,7 @@ def run_rehearsal(root: Path = ROOT, *, keep_workspace: bool = False) -> dict[st
             "project_archive_sha256": project_result_a["sha256"],
             "release_kit_sha256": kit_result_a["sha256"],
             "release_public_key_fingerprint": public_key_fingerprint(public_key),
+            "initial_deployment": initial_deployment,
             "deployment": deployment,
             "private_key_persisted": False,
             "scope": "Linux CPython signed offline release-kit deployment bootstrap",
@@ -98,6 +169,7 @@ def run_rehearsal(root: Path = ROOT, *, keep_workspace: bool = False) -> dict[st
                 "the rehearsal uses an in-memory untrusted release key rather than an organizational trust root",
                 "the runtime snapshot remains platform-specific and is not an upstream package-index wheelhouse",
                 "the service is bound to loopback and does not validate TLS termination or a real container engine",
+                "--force performs a fresh replacement and retains the previous tree; it is not an in-place data migration",
             ],
         }
         if passed != len(checks):

@@ -1,40 +1,232 @@
 {% extends "base.html" %}
-{% block title %}{{ finding.finding_id }} · VulnFlow{% endblock %}
+{% block title %}{{ finding.product }} · {{ finding.cve_id }} · VulnFlow{% endblock %}
 {% block content %}
-<a href="/">← 대시보드</a>
-<section class="hero compact"><div><p class="eyebrow">{{ finding.finding_id }} · 정책 {{ finding.policy_version }}</p><h1>{{ finding.product }} · {{ finding.cve_id }}</h1><p>{{ finding.component }} {{ finding.component_version }} / <a href="/asset/{{ finding.asset_ref_id }}">{{ finding.asset_name }}</a> · 원천 {{ finding.scanner_source or "manual" }} · 레코드 {{ finding.record_state or "ACTIVE" }}</p></div><div><small>조치 우선순위 점수</small><span class="score big score-{{ finding.decision }}">{{ finding.score }}</span></div></section>
-{% if notice_message %}<div class="notice success">{{ notice_message }}</div>{% endif %}
-<section class="panel"><h2>다중 스캐너 원천</h2><p>Canonical key: <code>{{ finding.canonical_key }}</code> · 현재 scanner {{ finding.source_count or 0 }}개 · 미해결 충돌 {{ finding.source_conflict_count or 0 }}개</p><div class="table-wrap"><table><thead><tr><th>Scanner·원본 ID</th><th>관측</th><th>주요 값</th><th>최근 확인</th></tr></thead><tbody>{% for source in source_reconciliation.records %}<tr><td><strong>{{ source.scanner_source }}</strong><br><small>{{ source.source_finding_id }}<br>{{ source.source_record_id }}</small></td><td>{{ source.observed_state }}{% if source.consecutive_absent_scans %}<br><small>연속 누락 {{ source.consecutive_absent_scans }}회</small>{% endif %}</td><td>CVSS {{ source.snapshot.cvss }} · 버전 {{ source.snapshot.component_version or source.snapshot.product_version }} · 패치 {{ source.snapshot.patch_available }}</td><td>{{ source.last_seen_at }}</td></tr>{% else %}<tr><td colspan="4">원천 관측이 없습니다.</td></tr>{% endfor %}</tbody></table></div>
-{% if source_reconciliation.conflicts %}<h3>값 충돌 조정</h3>{% for conflict in source_reconciliation.conflicts %}<article class="notice {% if conflict.resolved %}success{% else %}warning{% endif %}"><strong>{{ conflict.field_name }}</strong> · {{ conflict.values|join(' / ') }}{% if conflict.resolved %}<p>현재 조정 결정이 적용돼 있습니다.</p>{% endif %}{% if request.state.role != 'viewer' %}<form method="post" action="/finding/{{ finding.finding_id }}/source-resolution" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="hidden" name="field_name" value="{{ conflict.field_name }}"><select name="chosen_source_record_id" required>{% for option in conflict.options %}<option value="{{ option.source_record_id }}">{{ option.scanner_source }} · {{ option.value }}</option>{% endfor %}</select><input name="reason" maxlength="1500" placeholder="권위 원천 선택 사유" required><button>이 값으로 조정</button></form>{% if conflict.resolved %}<form method="post" action="/finding/{{ finding.finding_id }}/source-resolution/{{ conflict.field_name }}/retire" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>조정 해제</button></form>{% endif %}{% endif %}</article>{% endfor %}{% endif %}</section>
-{% if overdue %}<div class="notice danger">현재 목표일이 지났으며 활성 조치 대상입니다.</div>{% endif %}
-{% if exception_state == 'expired' %}<div class="notice danger">위험수용 예외가 만료되었습니다. 재검토가 필요합니다.</div>{% elif exception_state == 'expiring' %}<div class="notice warning">위험수용 예외가 14일 안에 만료됩니다.</div>{% endif %}
-<div class="grid2">
-<section class="panel"><h2>판정 근거</h2><p><strong>{{ finding.decision_label }}</strong> · 권고 SLA {{ finding.sla_days }}일 · 기준 목표일 {{ finding.target_date }}</p><p>{{ finding.reasons }}</p><dl><dt>위협 신호</dt><dd>{{ finding.threat_score }}</dd><dt>자산 맥락</dt><dd>{{ finding.asset_context_score }}</dd><dt>조치 긴급성</dt><dd>{{ finding.remediation_urgency_score }}</dd><dt>KEV</dt><dd>{{ '예' if finding.kev else '아니오' }}</dd><dt>EPSS</dt><dd>{{ finding.epss }}</dd><dt>CVSS</dt><dd>{{ finding.cvss }}</dd><dt>인터넷 노출</dt><dd>{{ '예' if finding.internet_exposed else '아니오' }}</dd><dt>패치</dt><dd>{{ '있음' if finding.patch_available else '없음' }}</dd><dt>최초 평가</dt><dd>{{ finding.first_scored_at }}</dd><dt>최근 평가</dt><dd>{{ finding.last_scored_at }}</dd></dl></section>
-<section class="panel"><h2>조치 워크플로</h2>{% if request.state.role=='viewer' %}<p>viewer 역할은 조회만 가능합니다.</p>{% else %}<form class="form" method="post"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="hidden" name="row_version" value="{{ finding.row_version or 1 }}"><label>상태<select name="status">{% for s in ['OPEN','IN_PROGRESS','MITIGATED','RISK_ACCEPTED'] %}<option {% if finding.status==s %}selected{% endif %}>{{ s }}</option>{% endfor %}</select></label><label>담당자<input name="owner" maxlength="500" value="{{ finding.owner or '' }}"></label><label>운영 목표일<input type="date" name="due_date" value="{{ finding.due_date or '' }}"><small>비워두면 정책 기준 목표일을 참고합니다.</small></label><label>위험수용 만료일<input type="date" name="exception_expiry" value="{{ finding.exception_expiry or '' }}"></label><label>위험수용 사유<textarea name="risk_acceptance_reason" maxlength="1500" rows="3">{{ finding.risk_acceptance_reason or '' }}</textarea></label><label>위험수용 승인자<input value="{{ finding.risk_acceptance_approver or '승인 후 인증 사용자로 자동 기록' }}" disabled></label><label>처리 근거·메모<textarea name="notes" maxlength="4000" rows="6">{{ finding.notes or '' }}</textarea></label><button class="primary">저장·재평가</button></form><p class="meta">operator가 RISK_ACCEPTED를 선택하면 승인 요청으로 전환됩니다. CLOSED는 조치 검증 승인으로만 전환됩니다.</p>{% endif %}</section>
-</div>
+{% set status_map = {'OPEN':'처리 전','IN_PROGRESS':'조치 중','MITIGATED':'확인 요청','RISK_ACCEPTED':'예외 승인','CLOSED':'완료'} %}
+<nav class="breadcrumb" aria-label="현재 위치"><a href="/#findings">취약점 목록</a><span>›</span><span>{{ finding.finding_id }}</span></nav>
 
-<section class="panel"><h2>조치 검증 상태</h2>
-<p>검증 상태: <strong>{{ finding.resolution_state or 'UNVERIFIED' }}</strong> · 연속 전체 스냅샷 미탐지: <strong>{{ finding.consecutive_absent_scans or 0 }}</strong>회 · 재발: <strong>{{ finding.reopen_count or 0 }}</strong>회</p>
-{% if finding.verified_at %}<p class="meta">검증 완료: {{ finding.verified_at }} · {{ finding.verified_by }} · {{ finding.verification_method }}</p>{% endif %}
-{% if finding.last_reopened_at %}<p class="meta">최근 재개방: {{ finding.last_reopened_at }}</p>{% endif %}
-{% if finding.status == 'MITIGATED' and request.state.role != 'viewer' %}
-<form class="form" method="post" action="/finding/{{ finding.finding_id }}/verification-requests">
-<input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="hidden" name="row_version" value="{{ finding.row_version or 1 }}">
-<label>검증 방식<select name="method"><option value="SCAN_ABSENCE">연속 스냅샷 미탐지</option><option value="RETEST">재시험</option><option value="MANUAL_EVIDENCE">수동 증거</option></select></label>
-<label>검증 근거<textarea name="evidence_note" maxlength="4000" rows="4" placeholder="재시험 결과, 패치 버전, 변경 티켓 또는 증거 위치"></textarea></label>
-<button class="primary">조치 검증 요청</button></form>
-<p class="meta">SCAN_ABSENCE는 STALE 상태에서 연속 전체 스냅샷 미탐지 {{ verification_absence_scans }}회 이상일 때 사용할 수 있습니다.</p>
-{% endif %}
-<div class="timeline">{% for item in verification_requests %}<article><strong>{{ item.status }} · {{ item.method }} · {{ item.verification_id }}</strong><span>{{ item.requested_at }} · 요청 {{ item.requested_by }}{% if item.decided_by %} · 결정 {{ item.decided_by }}{% endif %} · 증거 {{ item.evidence_count or 0 }}개</span><p>{{ item.evidence_note }}{% if item.observed_absence_count %} · 미탐지 {{ item.observed_absence_count }}회{% endif %}</p>{% if item.decision_note %}<p>{{ item.decision_note }}</p>{% endif %}
-{% set related = evidence_artifacts | selectattr('verification_id', 'equalto', item.verification_id) | list %}
-{% if related %}<div class="table-wrap"><table><thead><tr><th>증거·출처</th><th>무결성·보관 사슬</th><th>상태</th><th>작업</th></tr></thead><tbody>{% for evidence in related %}<tr><td><strong>{{ evidence.original_filename }}</strong><br><small>{{ evidence.content_type }} · {{ evidence.size_bytes }} bytes · {{ evidence.uploaded_at }} · {{ evidence.uploaded_by }}</small><br><small>출처 {{ evidence.source_type }}{% if evidence.source_reference %} · {{ evidence.source_reference }}{% endif %} · 수집 {{ evidence.acquisition_method }}{% if evidence.collected_at %} · {{ evidence.collected_at }}{% endif %}</small>{% if evidence.notes %}<br>{{ evidence.notes }}{% endif %}</td><td><code>{{ evidence.sha256 }}</code><br><small>현재 보관자: {{ evidence.current_custodian or evidence.uploaded_by }} · 이벤트 {{ evidence.custody_event_count or 0 }}건 · 체인 {% if evidence.custody_integrity.valid %}<strong>정상</strong>{% else %}<strong>오류</strong>{% endif %}</small><details><summary>보관 사슬 보기</summary><div class="timeline">{% for custody in evidence.custody_events %}<article><strong>#{{ custody.event_seq }} {{ custody.event_type }}</strong><span>{{ custody.created_at }} · {{ custody.actor }}</span><p>{{ custody.from_custodian }} → {{ custody.to_custodian }}{% if custody.purpose %} · {{ custody.purpose }}{% endif %}</p></article>{% else %}<p>보관 사슬 기록이 없습니다.</p>{% endfor %}</div></details></td><td>{{ evidence.status }} · 검사 <strong>{{ evidence.scan_status or 'PENDING' }}</strong>{% if evidence.scan_engine %}<br><small>{{ evidence.scan_engine }}{% if evidence.scan_signature %} · {{ evidence.scan_signature }}{% endif %}</small>{% endif %}{% if evidence.scan_error %}<br><small>{{ evidence.scan_error }}</small>{% endif %}{% if evidence.scan_waiver_reason %}<br><small>면제: {{ evidence.scan_waiver_reason }} · {{ evidence.scan_waived_by }}</small>{% endif %}{% if evidence.retire_reason %}<br><small>{{ evidence.retire_reason }}</small>{% endif %}</td><td>{% if request.state.role != 'viewer' and evidence.scan_status in ['CLEAN','WAIVED'] %}<a class="button-link" href="/evidence/{{ evidence.evidence_id }}/download">다운로드</a>{% endif %}{% if request.state.role != 'viewer' and evidence.status=='ACTIVE' %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/custody-transfer" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input name="to_custodian" maxlength="200" placeholder="새 보관 책임자" required><input name="purpose" maxlength="1500" placeholder="인계 목적" required><button>인계 기록</button></form>{% endif %}{% if request.state.role=='admin' and evidence.status=='ACTIVE' %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/scan" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>다시 검사</button></form>{% if evidence.scan_status in ['PENDING','ERROR','NOT_SCANNED','BASELINE_ONLY'] %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/scan-waiver" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input name="reason" maxlength="1500" placeholder="검사 면제 사유" required><button>관리자 면제</button></form>{% endif %}{% endif %}{% if evidence.status=='ACTIVE' and item.status=='PENDING' and request.state.role != 'viewer' %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/retire" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input name="reason" maxlength="1500" placeholder="보관해제 사유" required><button>보관해제</button></form>{% endif %}</td></tr>{% endfor %}</tbody></table></div>{% endif %}
-{% if item.status=='PENDING' and request.state.role != 'viewer' %}<form method="post" action="/verifications/{{ item.verification_id }}/evidence" enctype="multipart/form-data" class="form"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><label>증거 파일<input type="file" name="file" accept=".txt,.log,.csv,.json,.pdf,.png,.jpg,.jpeg" required></label><label>출처 유형<select name="source_type"><option value="USER_UPLOAD">사용자 업로드</option><option value="SCANNER_EXPORT">스캐너 내보내기</option><option value="TICKET_ATTACHMENT">변경·장애 티켓</option><option value="SYSTEM_LOG">시스템 로그</option><option value="MANUAL_CAPTURE">수동 캡처</option></select></label><label>출처 참조<input name="source_reference" maxlength="1000" placeholder="티켓 번호, 스캐너 작업 ID, 로그 경로 등"></label><label>수집 방법<input name="acquisition_method" maxlength="80" value="UPLOAD" placeholder="UPLOAD, EXPORT, CAPTURE"></label><label>수집 시각<input name="collected_at" maxlength="64" placeholder="ISO 8601, 비워두면 업로드 시각"></label><label>증거 설명<input name="notes" maxlength="1500" placeholder="재시험 결과, 패치 확인, 티켓 등"></label><button>증거 업로드</button></form><p class="meta">허용 형식: txt, log, csv, json, pdf, png, jpg. 출처·수집자·보관자와 모든 검사·다운로드·인계가 해시 체인으로 기록됩니다.</p>{% endif %}
-</article>{% else %}<p>조치 검증 이력이 없습니다.</p>{% endfor %}</div>
+<section class="hero compact finding-hero">
+  <div>
+    <div class="finding-title-row">
+      <span class="status-pill status-{{ finding.status|lower|replace('_','-') }}">{{ status_map.get(finding.status, finding.status) }}</span>
+      <span class="priority-badge priority-{{ finding.decision }}">{{ finding.decision_label }}</span>
+    </div>
+    <p class="eyebrow">{{ finding.finding_id }} · {{ finding.asset_name }}</p>
+    <h1>{{ finding.product }} · {{ finding.cve_id }}</h1>
+    <p>{{ finding.component }} {{ finding.component_version }} · {{ finding.environment }} · 담당자 {{ finding.owner or '미지정' }}</p>
+  </div>
+  <div class="finding-score"><small>조치 우선순위</small><span class="score big score-{{ finding.decision }}">{{ finding.score }}</span></div>
 </section>
 
-<section class="panel"><h2>스캔 관측 증거</h2><div class="timeline">{% for item in observations %}<article><strong>{{ item.observation }} · {{ item.scanner_source }}</strong><span>{{ item.observed_at }} · 배치 {{ item.batch_id }}</span>{% if item.details %}<pre>{{ item.details | tojson(indent=2) }}</pre>{% endif %}</article>{% else %}<p>관측 기록이 없습니다.</p>{% endfor %}</div></section>
+{% if jira_link or jira_enabled %}
+<section class="panel jira-link-panel">
+  <div class="section-heading">
+    <div><p class="eyebrow">JIRA</p><h2>외부 조치 티켓</h2></div>
+    {% if jira_link %}<a class="button-link primary" href="{{ jira_link.external_url }}" target="_blank" rel="noopener">{{ jira_link.external_key }} 열기</a>{% elif request.state.role != 'viewer' %}<form method="post" action="/finding/{{ finding.finding_id }}/jira"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button class="primary">Jira 티켓 생성 예약</button></form>{% endif %}
+  </div>
+  {% if jira_link %}<p>이 취약점의 상태·검증 변경은 연결된 Jira 티켓에 댓글로 동기화됩니다.</p>{% else %}<p>티켓을 만들면 이후 VulnFlow 변경 이력이 Jira 댓글로 자동 전달됩니다.</p>{% endif %}
+</section>
+{% endif %}
 
-<section class="panel"><h2>위험수용 승인 이력</h2><div class="timeline">{% for item in approval_requests %}<article><strong>{{ item.status }} · {{ item.request_id }}</strong><span>{{ item.requested_at }} · 요청 {{ item.requested_by }}{% if item.decided_by %} · 결정 {{ item.decided_by }}{% endif %}</span><p>{{ item.reason }} · 만료 {{ item.exception_expiry }}</p>{% if item.decision_note %}<p>{{ item.decision_note }}</p>{% endif %}</article>{% else %}<p>위험수용 승인 요청이 없습니다.</p>{% endfor %}</div></section>
-<section class="panel"><h2>스캔 생명주기</h2><p>원천: <strong>{{ finding.scanner_source or 'manual' }}</strong> · 최근 확인: {{ finding.source_last_seen_at or '기록 없음' }} · 현재 레코드: <strong>{{ finding.record_state or 'ACTIVE' }}</strong></p>{% if finding.stale_since %}<p class="meta">STALE 시작: {{ finding.stale_since }}</p>{% endif %}{% if finding.archived_at %}<p class="meta">보관 시각: {{ finding.archived_at }}</p>{% endif %}{% if request.state.role != 'viewer' %}<form class="form inline" method="post" action="/finding/{{ finding.finding_id }}/record-state"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="hidden" name="row_version" value="{{ finding.row_version or 1 }}"><select name="record_state"><option value="ACTIVE" {% if finding.record_state=='ACTIVE' %}selected{% endif %}>ACTIVE</option><option value="STALE" {% if finding.record_state=='STALE' %}selected{% endif %}>STALE</option><option value="ARCHIVED" {% if finding.record_state=='ARCHIVED' %}selected{% endif %}>ARCHIVED</option></select><button>레코드 상태 변경</button></form>{% endif %}</section>
-<section class="panel"><h2>변경 이력</h2><div class="timeline">{% for event in audit_events %}<article><strong>{{ event.summary }}</strong><span>{{ event.created_at }} · {{ event.actor }} · {{ event.event_type }}</span>{% if event.details %}<pre>{{ event.details | tojson(indent=2) }}</pre>{% endif %}</article>{% else %}<p>기록된 변경 이력이 없습니다.</p>{% endfor %}</div></section>
+{% if notice_message %}<div class="notice success">{{ notice_message }}</div>{% endif %}
+{% if overdue %}<div class="notice danger"><strong>목표일이 지났습니다.</strong> 담당자와 조치 일정을 먼저 확인하세요.</div>{% endif %}
+{% if exception_state == 'expired' %}<div class="notice danger">예외 승인 기간이 만료되었습니다. 다시 검토해야 합니다.</div>{% elif exception_state == 'expiring' %}<div class="notice warning">예외 승인 기간이 14일 안에 끝납니다.</div>{% endif %}
+
+<section class="finding-progress" aria-label="현재 처리 단계">
+  <div class="progress-step {% if finding.owner or finding.status != 'OPEN' %}done{% elif finding.status == 'OPEN' %}current{% endif %}"><span>1</span><strong>담당자 지정</strong><small>누가 처리할지 정합니다.</small></div>
+  <div class="progress-step {% if finding.status in ['MITIGATED','RISK_ACCEPTED','CLOSED'] %}done{% elif finding.status == 'IN_PROGRESS' %}current{% endif %}"><span>2</span><strong>조치 진행</strong><small>패치·설정 변경을 기록합니다.</small></div>
+  <div class="progress-step {% if finding.status == 'CLOSED' %}done{% elif finding.status == 'MITIGATED' %}current{% endif %}"><span>3</span><strong>결과 확인</strong><small>증거를 첨부하고 검증합니다.</small></div>
+  <div class="progress-step {% if finding.status in ['CLOSED','RISK_ACCEPTED'] %}done{% endif %}"><span>4</span><strong>{% if finding.status == 'RISK_ACCEPTED' %}예외 승인{% else %}완료{% endif %}</strong><small>검증 또는 승인으로 마칩니다.</small></div>
+</section>
+
+<div class="grid2 finding-main-grid">
+  <section class="panel next-action-panel">
+    <p class="eyebrow">현재 해야 할 일</p>
+    {% if finding.status == 'OPEN' %}
+      <h2>담당자와 목표일을 정하세요.</h2>
+      <p>조치를 시작할 사람을 지정하고 상태를 <strong>조치 중</strong>으로 바꾸면 됩니다.</p>
+      <ul class="action-checklist"><li>담당자 지정</li><li>목표 완료일 확인</li><li>조치 중으로 변경</li></ul>
+    {% elif finding.status == 'IN_PROGRESS' %}
+      <h2>조치 결과를 기록하세요.</h2>
+      <p>패치, 버전 변경, 설정 보완 내용을 메모한 뒤 <strong>확인 요청</strong>으로 바꾸세요.</p>
+      <ul class="action-checklist"><li>실제 조치 수행</li><li>변경 내용과 근거 기록</li><li>확인 요청으로 변경</li></ul>
+    {% elif finding.status == 'MITIGATED' %}
+      <h2>조치가 제대로 됐는지 확인하세요.</h2>
+      <p>아래에서 검증 방법과 근거를 입력하고 검증 요청을 보내면 됩니다.</p>
+      <a class="button-link primary" href="#verification">검증 요청 작성</a>
+    {% elif finding.status == 'RISK_ACCEPTED' %}
+      <h2>승인된 예외 항목입니다.</h2>
+      <p>만료일 전에 다시 검토해야 합니다. 조치를 시작하려면 상태를 <strong>조치 중</strong>으로 되돌리세요.</p>
+      <dl class="easy-summary"><dt>예외 만료일</dt><dd>{{ finding.exception_expiry or '미지정' }}</dd><dt>승인자</dt><dd>{{ finding.risk_acceptance_approver or '미지정' }}</dd></dl>
+    {% else %}
+      <h2>처리가 완료됐습니다.</h2>
+      <p>검증 결과와 변경 이력은 아래 기록에서 확인할 수 있습니다.</p>
+      {% if finding.verified_at %}<dl class="easy-summary"><dt>완료 시각</dt><dd>{{ finding.verified_at }}</dd><dt>확인자</dt><dd>{{ finding.verified_by }}</dd></dl>{% endif %}
+    {% endif %}
+    <div class="quick-facts">
+      <div><span>담당자</span><strong>{{ finding.owner or '미지정' }}</strong></div>
+      <div><span>목표일</span><strong>{{ finding.due_date or finding.target_date or '미지정' }}</strong></div>
+      <div><span>대상 자산</span><strong><a href="/asset/{{ finding.asset_ref_id }}">{{ finding.asset_name }}</a></strong></div>
+    </div>
+  </section>
+
+  <section class="panel workflow-panel">
+    <p class="eyebrow">처리 정보</p>
+    <h2>담당자·상태·조치 내용</h2>
+    {% if request.state.role=='viewer' %}
+      <p>조회 권한으로 접속했습니다. 조치 내용은 변경할 수 없습니다.</p>
+      <dl class="easy-summary"><dt>진행 상태</dt><dd>{{ status_map.get(finding.status, finding.status) }}</dd><dt>담당자</dt><dd>{{ finding.owner or '미지정' }}</dd><dt>조치 메모</dt><dd>{{ finding.notes or '기록 없음' }}</dd></dl>
+    {% else %}
+    <form class="form easy-workflow-form" method="post">
+      <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+      <input type="hidden" name="row_version" value="{{ finding.row_version or 1 }}">
+      <label>진행 상태
+        <select name="status">
+          {% for s in ['OPEN','IN_PROGRESS','MITIGATED','RISK_ACCEPTED'] %}<option value="{{ s }}" {% if finding.status==s %}selected{% endif %}>{{ status_map.get(s, s) }}</option>{% endfor %}
+        </select>
+        <small>조치를 끝냈다면 ‘확인 요청’을 선택하세요.</small>
+      </label>
+      <div class="form-row-two">
+        <label>담당자<input name="owner" maxlength="500" value="{{ finding.owner or '' }}" placeholder="예: 홍길동, 인프라팀"></label>
+        <label>목표 완료일<input type="date" name="due_date" value="{{ finding.due_date or '' }}"><small>비워두면 정책 기준일 {{ finding.target_date or '없음' }}을 사용합니다.</small></label>
+      </div>
+      <label>조치 내용과 근거
+        <textarea name="notes" maxlength="4000" rows="7" placeholder="예: OpenSSL 3.0.15로 업데이트하고 서비스를 재기동했습니다. 변경 티켓 SEC-1234 확인.">{{ finding.notes or '' }}</textarea>
+        <small>확인 요청 단계에는 실제로 수행한 조치 내용을 반드시 적어야 합니다.</small>
+      </label>
+      <details class="exception-fields" {% if finding.status=='RISK_ACCEPTED' %}open{% endif %}>
+        <summary>지금 조치하지 않고 예외 승인을 요청하는 경우</summary>
+        <div class="exception-fields-body">
+          <label>예외 만료일<input type="date" name="exception_expiry" value="{{ finding.exception_expiry or '' }}"></label>
+          <label>예외 사유<textarea name="risk_acceptance_reason" maxlength="1500" rows="3" placeholder="즉시 조치하기 어려운 이유와 대체 통제 방법을 적으세요.">{{ finding.risk_acceptance_reason or '' }}</textarea></label>
+          <label>승인자<input value="{{ finding.risk_acceptance_approver or '승인 처리 시 자동 기록' }}" disabled></label>
+        </div>
+      </details>
+      <input type="hidden" name="risk_acceptance_approver" value="">
+      <button class="primary large-action">저장하고 반영</button>
+    </form>
+    <p class="meta">‘완료’는 조치 검증이 승인되면 자동으로 전환됩니다.</p>
+    {% endif %}
+  </section>
+</div>
+
+<section class="panel verification-panel" id="verification">
+  <div class="page-heading">
+    <div><p class="eyebrow">3단계</p><h2>조치 결과 확인</h2><p>조치가 끝난 항목에 증거를 남기고 검증을 요청합니다.</p></div>
+    <span class="status-pill status-{{ finding.status|lower|replace('_','-') }}">{{ status_map.get(finding.status, finding.status) }}</span>
+  </div>
+  <div class="verification-summary">
+    <div><span>검증 상태</span><strong>{% if finding.resolution_state=='VERIFIED' %}검증 완료{% elif finding.resolution_state=='PENDING' %}검증 대기{% elif finding.resolution_state=='READY_FOR_VERIFICATION' %}검증 가능{% elif finding.resolution_state=='REOPENED' %}재조치 필요{% else %}검증 전{% endif %}</strong></div>
+    <div><span>연속 미탐지</span><strong>{{ finding.consecutive_absent_scans or 0 }}회</strong></div>
+    <div><span>재발 횟수</span><strong>{{ finding.reopen_count or 0 }}회</strong></div>
+  </div>
+  {% if finding.verified_at %}<p class="notice success">{{ finding.verified_at }}에 {{ finding.verified_by }} 사용자가 검증을 완료했습니다.</p>{% endif %}
+  {% if finding.last_reopened_at %}<p class="notice warning">최근 재조치 전환: {{ finding.last_reopened_at }}</p>{% endif %}
+
+  {% if finding.status == 'MITIGATED' and request.state.role != 'viewer' %}
+  <form class="form verification-request-form" method="post" action="/finding/{{ finding.finding_id }}/verification-requests">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+    <input type="hidden" name="row_version" value="{{ finding.row_version or 1 }}">
+    <label>어떻게 확인할까요?
+      <select name="method"><option value="SCAN_ABSENCE">다음 스캔에서 사라졌는지 확인</option><option value="RETEST">직접 재시험</option><option value="MANUAL_EVIDENCE">패치 버전·티켓 등 증거 확인</option></select>
+    </label>
+    <label>확인 근거<textarea name="evidence_note" maxlength="4000" rows="4" placeholder="예: 패치 후 재스캔 결과 미탐지, 변경 티켓 SEC-1234, 설치 버전 3.0.15"></textarea></label>
+    <button class="primary large-action">조치 검증 요청</button>
+  </form>
+  <p class="meta">스캔 미탐지 방식은 최근 미탐지 상태에서 연속 {{ verification_absence_scans }}회 이상 확인돼야 사용할 수 있습니다.</p>
+  {% elif finding.status not in ['MITIGATED','CLOSED'] %}
+  <div class="empty-guidance">조치 내용을 저장하고 진행 상태를 <strong>확인 요청</strong>으로 바꾸면 검증 요청을 작성할 수 있습니다.</div>
+  {% endif %}
+
+  <div class="verification-history">
+    {% for item in verification_requests %}
+    <article class="verification-item">
+      <div class="verification-item-heading">
+        <div><strong>{% if item.status=='PENDING' %}검증 대기{% elif item.status=='APPROVED' %}검증 승인{% elif item.status=='REJECTED' %}보완 요청{% else %}{{ item.status }}{% endif %}</strong><small>{{ item.verification_id }} · 요청 {{ item.requested_at }} · {{ item.requested_by }}</small></div>
+        <span class="tag">{% if item.method=='SCAN_ABSENCE' %}스캔 미탐지{% elif item.method=='RETEST' %}재시험{% else %}수동 증거{% endif %}</span>
+      </div>
+      <p>{{ item.evidence_note }}{% if item.observed_absence_count %} · 미탐지 {{ item.observed_absence_count }}회{% endif %}</p>
+      {% if item.decision_note %}<p class="notice {% if item.status=='APPROVED' %}success{% else %}warning{% endif %}">{{ item.decision_note }}</p>{% endif %}
+
+      {% set related = evidence_artifacts | selectattr('verification_id', 'equalto', item.verification_id) | list %}
+      {% if related %}
+      <div class="evidence-list">
+        {% for evidence in related %}
+        <article class="evidence-card">
+          <div><strong>{{ evidence.original_filename }}</strong><small>{{ evidence.content_type }} · {{ evidence.size_bytes }} bytes · {{ evidence.uploaded_at }}</small><small>검사: {{ evidence.scan_status or '대기' }} · 보관자 {{ evidence.current_custodian or evidence.uploaded_by }}</small></div>
+          <div class="evidence-actions">
+            {% if request.state.role != 'viewer' and evidence.scan_status in ['CLEAN','WAIVED'] %}<a class="button-link" href="/evidence/{{ evidence.evidence_id }}/download">다운로드</a>{% endif %}
+            <details><summary>증거 관리</summary>
+              <code>{{ evidence.sha256 }}</code>
+              <p class="meta">출처 {{ evidence.source_type }}{% if evidence.source_reference %} · {{ evidence.source_reference }}{% endif %} · 보관 사슬 {% if evidence.custody_integrity.valid %}정상{% else %}오류{% endif %}</p>
+              {% if request.state.role != 'viewer' and evidence.status=='ACTIVE' %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/custody-transfer" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input name="to_custodian" maxlength="200" placeholder="새 보관 책임자" required><input name="purpose" maxlength="1500" placeholder="인계 목적" required><button>인계 기록</button></form>{% endif %}
+              {% if request.state.role=='admin' and evidence.status=='ACTIVE' %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/scan" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>다시 검사</button></form>{% if evidence.scan_status in ['PENDING','ERROR','NOT_SCANNED','BASELINE_ONLY'] %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/scan-waiver" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input name="reason" maxlength="1500" placeholder="검사 면제 사유" required><button>관리자 면제</button></form>{% endif %}{% endif %}
+              {% if evidence.status=='ACTIVE' and item.status=='PENDING' and request.state.role != 'viewer' %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/retire" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input name="reason" maxlength="1500" placeholder="보관해제 사유" required><button>보관해제</button></form>{% endif %}
+              <details><summary>보관 사슬 보기</summary><div class="timeline">{% for custody in evidence.custody_events %}<article><strong>#{{ custody.event_seq }} {{ custody.event_type }}</strong><span>{{ custody.created_at }} · {{ custody.actor }}</span><p>{{ custody.from_custodian }} → {{ custody.to_custodian }}{% if custody.purpose %} · {{ custody.purpose }}{% endif %}</p></article>{% else %}<p>보관 사슬 기록이 없습니다.</p>{% endfor %}</div></details>
+            </details>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if item.status=='PENDING' and request.state.role != 'viewer' %}
+      <details class="evidence-upload"><summary>증거 파일 첨부</summary>
+        <form method="post" action="/verifications/{{ item.verification_id }}/evidence" enctype="multipart/form-data" class="form">
+          <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+          <label>증거 파일<input type="file" name="file" accept=".txt,.log,.csv,.json,.pdf,.png,.jpg,.jpeg" required></label>
+          <label>출처 유형<select name="source_type"><option value="USER_UPLOAD">사용자 업로드</option><option value="SCANNER_EXPORT">스캐너 결과</option><option value="TICKET_ATTACHMENT">변경·장애 티켓</option><option value="SYSTEM_LOG">시스템 로그</option><option value="MANUAL_CAPTURE">수동 캡처</option></select></label>
+          <label>출처 참조<input name="source_reference" maxlength="1000" placeholder="티켓 번호, 스캐너 작업 ID, 로그 경로"></label>
+          <input type="hidden" name="acquisition_method" value="UPLOAD">
+          <input type="hidden" name="collected_at" value="">
+          <label>증거 설명<input name="notes" maxlength="1500" placeholder="이 파일이 조치 완료를 증명하는 이유"></label>
+          <button>증거 업로드</button>
+        </form>
+      </details>
+      {% endif %}
+    </article>
+    {% else %}<p class="empty-state">아직 조치 검증 요청이 없습니다.</p>{% endfor %}
+  </div>
+</section>
+
+<section class="advanced-records">
+  <h2>세부 정보</h2>
+  <p>일반적인 조치에는 아래 정보가 필요하지 않습니다. 감사나 기술 검토가 필요할 때 펼쳐보세요.</p>
+
+  <details class="advanced-section">
+    <summary>우선순위 판정 근거</summary>
+    <div class="advanced-section-body grid2">
+      <div><h3>{{ finding.decision_label }} · 권고 {{ finding.sla_days }}일</h3><p>{{ finding.reasons }}</p><dl><dt>KEV</dt><dd>{{ '해당' if finding.kev else '해당 없음' }}</dd><dt>EPSS</dt><dd>{{ finding.epss }}</dd><dt>CVSS</dt><dd>{{ finding.cvss }}</dd><dt>인터넷 노출</dt><dd>{{ '예' if finding.internet_exposed else '아니오' }}</dd><dt>패치</dt><dd>{{ '있음' if finding.patch_available else '없음' }}</dd></dl></div>
+      <div><dl><dt>위협 신호</dt><dd>{{ finding.threat_score }}</dd><dt>자산 맥락</dt><dd>{{ finding.asset_context_score }}</dd><dt>조치 긴급성</dt><dd>{{ finding.remediation_urgency_score }}</dd><dt>최초 평가</dt><dd>{{ finding.first_scored_at }}</dd><dt>최근 평가</dt><dd>{{ finding.last_scored_at }}</dd><dt>정책</dt><dd>{{ finding.policy_version }}</dd></dl></div>
+    </div>
+  </details>
+
+  <details class="advanced-section">
+    <summary>스캐너 원천 및 값 충돌</summary>
+    <div class="advanced-section-body">
+      <p>Canonical key: <code>{{ finding.canonical_key }}</code> · 원천 {{ finding.source_count or 0 }}개 · 미해결 충돌 {{ finding.source_conflict_count or 0 }}개</p>
+      <div class="table-wrap"><table><thead><tr><th>스캐너·원본 ID</th><th>관측 상태</th><th>주요 값</th><th>최근 확인</th></tr></thead><tbody>{% for source in source_reconciliation.records %}<tr><td><strong>{{ source.scanner_source }}</strong><br><small>{{ source.source_finding_id }}<br>{{ source.source_record_id }}</small></td><td>{{ source.observed_state }}{% if source.consecutive_absent_scans %}<br><small>연속 누락 {{ source.consecutive_absent_scans }}회</small>{% endif %}</td><td>CVSS {{ source.snapshot.cvss }} · 버전 {{ source.snapshot.component_version or source.snapshot.product_version }} · 패치 {{ source.snapshot.patch_available }}</td><td>{{ source.last_seen_at }}</td></tr>{% else %}<tr><td colspan="4">원천 관측이 없습니다.</td></tr>{% endfor %}</tbody></table></div>
+      {% if source_reconciliation.conflicts %}<h3>값 충돌 조정</h3>{% for conflict in source_reconciliation.conflicts %}<article class="notice {% if conflict.resolved %}success{% else %}warning{% endif %}"><strong>{{ conflict.field_name }}</strong> · {{ conflict.values|join(' / ') }}{% if conflict.resolved %}<p>현재 조정 결정이 적용돼 있습니다.</p>{% endif %}{% if request.state.role != 'viewer' %}<form method="post" action="/finding/{{ finding.finding_id }}/source-resolution" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="hidden" name="field_name" value="{{ conflict.field_name }}"><select name="chosen_source_record_id" required>{% for option in conflict.options %}<option value="{{ option.source_record_id }}">{{ option.scanner_source }} · {{ option.value }}</option>{% endfor %}</select><input name="reason" maxlength="1500" placeholder="이 값을 선택하는 이유" required><button>이 값 사용</button></form>{% if conflict.resolved %}<form method="post" action="/finding/{{ finding.finding_id }}/source-resolution/{{ conflict.field_name }}/retire" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>조정 해제</button></form>{% endif %}{% endif %}</article>{% endfor %}{% endif %}
+    </div>
+  </details>
+
+  <details class="advanced-section">
+    <summary>스캔 관측 기록</summary>
+    <div class="advanced-section-body timeline">{% for item in observations %}<article><strong>{{ item.observation }} · {{ item.scanner_source }}</strong><span>{{ item.observed_at }} · 배치 {{ item.batch_id }}</span>{% if item.details %}<pre>{{ item.details | tojson(indent=2) }}</pre>{% endif %}</article>{% else %}<p>관측 기록이 없습니다.</p>{% endfor %}</div>
+  </details>
+
+  <details class="advanced-section">
+    <summary>예외 승인 이력</summary>
+    <div class="advanced-section-body timeline">{% for item in approval_requests %}<article><strong>{{ item.status }} · {{ item.request_id }}</strong><span>{{ item.requested_at }} · 요청 {{ item.requested_by }}{% if item.decided_by %} · 결정 {{ item.decided_by }}{% endif %}</span><p>{{ item.reason }} · 만료 {{ item.exception_expiry }}</p>{% if item.decision_note %}<p>{{ item.decision_note }}</p>{% endif %}</article>{% else %}<p>예외 승인 요청이 없습니다.</p>{% endfor %}</div>
+  </details>
+
+  <details class="advanced-section">
+    <summary>데이터 생명주기</summary>
+    <div class="advanced-section-body"><p>원천: <strong>{{ finding.scanner_source or 'manual' }}</strong> · 최근 확인: {{ finding.source_last_seen_at or '기록 없음' }} · 데이터 상태: <strong>{{ finding.record_state or 'ACTIVE' }}</strong></p>{% if finding.stale_since %}<p class="meta">최근 미탐지 시작: {{ finding.stale_since }}</p>{% endif %}{% if finding.archived_at %}<p class="meta">보관 시각: {{ finding.archived_at }}</p>{% endif %}{% if request.state.role != 'viewer' %}<form class="form inline" method="post" action="/finding/{{ finding.finding_id }}/record-state"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="hidden" name="row_version" value="{{ finding.row_version or 1 }}"><select name="record_state"><option value="ACTIVE" {% if finding.record_state=='ACTIVE' %}selected{% endif %}>활성 데이터</option><option value="STALE" {% if finding.record_state=='STALE' %}selected{% endif %}>최근 미탐지</option><option value="ARCHIVED" {% if finding.record_state=='ARCHIVED' %}selected{% endif %}>보관됨</option></select><button>데이터 상태 변경</button></form>{% endif %}</div>
+  </details>
+
+  <details class="advanced-section">
+    <summary>전체 변경 이력</summary>
+    <div class="advanced-section-body timeline">{% for event in audit_events %}<article><strong>{{ event.summary }}</strong><span>{{ event.created_at }} · {{ event.actor }} · {{ event.event_type }}</span>{% if event.details %}<pre>{{ event.details | tojson(indent=2) }}</pre>{% endif %}</article>{% else %}<p>기록된 변경 이력이 없습니다.</p>{% endfor %}</div>
+  </details>
+</section>
 {% endblock %}

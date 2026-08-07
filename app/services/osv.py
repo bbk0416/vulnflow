@@ -4,12 +4,15 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any, Iterable, Protocol
 from urllib.parse import quote, urlparse
 
-import requests
 
 from app.core.database_schema import CURRENT_APP_VERSION
+from app.services.outbound_http import OutboundError
+from app.services.outbound_json import (
+    OutboundHTTPStatusError, OutboundJsonError, request_json_with_retries,
+)
 
 DEFAULT_API_BASE = "https://api.osv.dev"
 MAX_BATCH_SIZE = 200
@@ -28,6 +31,17 @@ def validate_api_base(api_base: str) -> str:
     if parsed.scheme == "http" and parsed.hostname in {"127.0.0.1", "localhost", "::1"}:
         return raw
     raise OsvError("OSV API base must use HTTPS; loopback HTTP is allowed for local testing")
+
+
+class ResponseLike(Protocol):
+    status_code: int
+    headers: dict[str, Any]
+
+    def json(self) -> Any: ...
+
+
+class SessionLike(Protocol):
+    def request(self, method: str, url: str, **kwargs: Any) -> ResponseLike: ...
 
 
 @dataclass(frozen=True)
@@ -75,14 +89,39 @@ def build_component_query(component: dict[str, Any]) -> ComponentQuery | None:
 
 
 def _request_json(
-    session: requests.Session,
+    session: SessionLike | None,
     method: str,
     url: str,
     *,
     timeout: int,
     retries: int,
     json_payload: dict[str, Any] | None = None,
+    allow_private_networks: bool = False,
+    host_allowlist: str | Iterable[str] | None = None,
+    max_response_bytes: int = 4 * 1024 * 1024,
 ) -> tuple[dict[str, Any], int]:
+    if session is None:
+        try:
+            result = request_json_with_retries(
+                method,
+                url,
+                headers={
+                    "Accept": "application/json",
+                    "User-Agent": f"VulnFlow/{CURRENT_APP_VERSION}",
+                },
+                json_body=json_payload,
+                timeout_seconds=timeout,
+                retries=retries,
+                max_response_bytes=max_response_bytes,
+                allow_private_networks=allow_private_networks,
+                host_allowlist=host_allowlist,
+            )
+            return result.payload, result.attempts
+        except OutboundHTTPStatusError as exc:
+            raise OsvError(f"OSV API returned HTTP {exc.status_code}") from exc
+        except (OutboundError, OutboundJsonError) as exc:
+            raise OsvError(str(exc)) from exc
+
     attempts = 0
     last_error: Exception | None = None
     while attempts < max(1, retries):
@@ -112,7 +151,7 @@ def _request_json(
             if not isinstance(payload, dict):
                 raise OsvError("OSV API response must be a JSON object")
             return payload, attempts
-        except (requests.RequestException, ValueError, OsvError) as exc:
+        except (OsvError, ValueError, OSError, RuntimeError) as exc:
             last_error = exc
             if attempts >= retries:
                 break
@@ -127,90 +166,91 @@ def query_components(
     timeout: int = 15,
     retries: int = 3,
     batch_size: int = 100,
-    session: requests.Session | None = None,
+    session: SessionLike | None = None,
     cached_records: dict[str, dict[str, Any]] | None = None,
+    allow_private_networks: bool = False,
+    host_allowlist: str | Iterable[str] | None = None,
+    max_response_bytes: int = 4 * 1024 * 1024,
 ) -> dict[str, Any]:
     component_list = [dict(item) for item in components]
     prepared = [query for item in component_list if (query := build_component_query(item))]
     skipped = len(component_list) - len(prepared)
-    own_session = session is None
-    session = session or requests.Session()
     base = validate_api_base(api_base)
     batch_size = max(1, min(int(batch_size), MAX_BATCH_SIZE))
     cached_records = cached_records or {}
     api_requests = 0
     result_ids: dict[str, dict[str, str]] = {q.component_id: {} for q in prepared}
     errors: list[str] = []
-    try:
-        for offset in range(0, len(prepared), batch_size):
-            batch = prepared[offset:offset + batch_size]
-            pending = [(query, None) for query in batch]
-            page_count = 0
-            while pending:
-                page_count += 1
-                if page_count > MAX_PAGES:
-                    raise OsvError("OSV pagination exceeded the safety limit")
-                payload_queries = []
-                for query, token in pending:
-                    item = dict(query.query)
-                    if token:
-                        item["page_token"] = token
-                    payload_queries.append(item)
-                response, attempts = _request_json(
-                    session, "POST", f"{base}/v1/querybatch", timeout=timeout,
-                    retries=retries, json_payload={"queries": payload_queries},
-                )
-                api_requests += attempts
-                results = response.get("results")
-                if not isinstance(results, list) or len(results) != len(pending):
-                    raise OsvError("OSV querybatch result count does not match request count")
-                next_pending: list[tuple[ComponentQuery, str | None]] = []
-                for (query, _), item in zip(pending, results):
-                    if not isinstance(item, dict):
-                        errors.append(f"{query.component_id}: invalid result")
-                        continue
-                    vulns = item.get("vulns", [])
-                    if not isinstance(vulns, list):
-                        vulns = []
-                    for vuln in vulns:
-                        if not isinstance(vuln, dict):
-                            continue
-                        osv_id = str(vuln.get("id") or "").strip()
-                        if osv_id:
-                            result_ids[query.component_id][osv_id] = str(vuln.get("modified") or "")
-                    token = str(item.get("next_page_token") or "").strip()
-                    if token:
-                        next_pending.append((query, token))
-                pending = next_pending
-
-        all_ids = sorted({osv_id for values in result_ids.values() for osv_id in values})
-        records: dict[str, dict[str, Any]] = {}
-        cache_hits = 0
-        for osv_id in all_ids:
-            expected_modified = next((values[osv_id] for values in result_ids.values() if osv_id in values), "")
-            cached = cached_records.get(osv_id)
-            if cached and str(cached.get("modified") or "") == expected_modified and cached.get("raw_record"):
-                records[osv_id] = dict(cached["raw_record"])
-                cache_hits += 1
-                continue
+    for offset in range(0, len(prepared), batch_size):
+        batch = prepared[offset:offset + batch_size]
+        pending = [(query, None) for query in batch]
+        page_count = 0
+        while pending:
+            page_count += 1
+            if page_count > MAX_PAGES:
+                raise OsvError("OSV pagination exceeded the safety limit")
+            payload_queries = []
+            for query, token in pending:
+                item = dict(query.query)
+                if token:
+                    item["page_token"] = token
+                payload_queries.append(item)
             response, attempts = _request_json(
-                session, "GET", f"{base}/v1/vulns/{quote(osv_id, safe='')}",
-                timeout=timeout, retries=retries,
+                session, "POST", f"{base}/v1/querybatch", timeout=timeout,
+                retries=retries, json_payload={"queries": payload_queries},
+                allow_private_networks=allow_private_networks,
+                host_allowlist=host_allowlist, max_response_bytes=max_response_bytes,
             )
             api_requests += attempts
-            records[osv_id] = response
-        return {
-            "queries": prepared,
-            "skipped_components": skipped,
-            "component_vulnerability_ids": result_ids,
-            "records": records,
-            "cache_hits": cache_hits,
-            "api_requests": api_requests,
-            "errors": errors,
-        }
-    finally:
-        if own_session:
-            session.close()
+            results = response.get("results")
+            if not isinstance(results, list) or len(results) != len(pending):
+                raise OsvError("OSV querybatch result count does not match request count")
+            next_pending: list[tuple[ComponentQuery, str | None]] = []
+            for (query, _), item in zip(pending, results):
+                if not isinstance(item, dict):
+                    errors.append(f"{query.component_id}: invalid result")
+                    continue
+                vulns = item.get("vulns", [])
+                if not isinstance(vulns, list):
+                    vulns = []
+                for vuln in vulns:
+                    if not isinstance(vuln, dict):
+                        continue
+                    osv_id = str(vuln.get("id") or "").strip()
+                    if osv_id:
+                        result_ids[query.component_id][osv_id] = str(vuln.get("modified") or "")
+                token = str(item.get("next_page_token") or "").strip()
+                if token:
+                    next_pending.append((query, token))
+            pending = next_pending
+
+    all_ids = sorted({osv_id for values in result_ids.values() for osv_id in values})
+    records: dict[str, dict[str, Any]] = {}
+    cache_hits = 0
+    for osv_id in all_ids:
+        expected_modified = next((values[osv_id] for values in result_ids.values() if osv_id in values), "")
+        cached = cached_records.get(osv_id)
+        if cached and str(cached.get("modified") or "") == expected_modified and cached.get("raw_record"):
+            records[osv_id] = dict(cached["raw_record"])
+            cache_hits += 1
+            continue
+        response, attempts = _request_json(
+            session, "GET", f"{base}/v1/vulns/{quote(osv_id, safe='')}",
+            timeout=timeout, retries=retries,
+            allow_private_networks=allow_private_networks,
+            host_allowlist=host_allowlist, max_response_bytes=max_response_bytes,
+        )
+        api_requests += attempts
+        records[osv_id] = response
+    return {
+        "queries": prepared,
+        "skipped_components": skipped,
+        "component_vulnerability_ids": result_ids,
+        "records": records,
+        "cache_hits": cache_hits,
+        "api_requests": api_requests,
+        "errors": errors,
+    }
 
 
 def record_digest(record: dict[str, Any]) -> str:

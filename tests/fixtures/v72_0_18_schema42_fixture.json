@@ -1,0 +1,16 @@
+{
+  "compressed_database_sha256": "d2d4078662a9bfd3230a061814e963f0863c9756b8b6bfcf1b5dad13680428e6",
+  "contains": {
+    "app_users": 1,
+    "audit_events": 2,
+    "findings": 1,
+    "project_memberships": 1,
+    "projects": 1
+  },
+  "finding_id": "V8-LEGACY-001",
+  "fixture_format": "vulnflow-legacy-sqlite-gzip-fixture/1",
+  "source_release": "72.0.18",
+  "source_schema_version": 42,
+  "uncompressed_database_sha256": "324d970dbb00a49d1b1c5c330cde050e085082af0df5ad8e8ae2bcf66fd5c693",
+  "username": "legacy-admin"
+}

@@ -17,6 +17,7 @@ from app.services.cluster_leadership import verify_scheduler_leadership
 from app.services.job_worker_runtime import job_worker_loop
 from app.services.operation_guard import bind_operation_guard
 from app.services.lifecycle_resources import LifecycleResourceTracker
+from app.services.scheduled_project_jobs import schedule_all_projects, schedule_current_project
 
 
 def _service(context: ApplicationContext, name: str) -> Any:
@@ -41,6 +42,7 @@ def instance_capabilities(context: ApplicationContext) -> list[str]:
         [
             int(context.get("MAINTENANCE_INTERVAL_MINUTES")) > 0,
             bool(endpoints and int(context.get("WEBHOOK_INTERVAL_SECONDS")) > 0),
+            len(str(context.get("INTEGRATION_SECRET_KEY", "") or "")) >= 32,
             int(context.get("BACKUP_INTERVAL_HOURS")) > 0,
         ]
     ):
@@ -141,60 +143,51 @@ def restore_in_progress(context: ApplicationContext) -> bool:
 
 @context_transaction_scope
 def schedule_maintenance(context: ApplicationContext, *, now: float | None = None) -> dict[str, Any] | None:
-    if not is_scheduler_leader(context) or restore_in_progress(context):
-        return None
-    interval = max(60, int(context.get("MAINTENANCE_INTERVAL_MINUTES")) * 60)
-    bucket = int((time.time() if now is None else now) // interval)
-    settings_function = _service(context, "_maintenance_settings")
-    try:
-        settings = settings_function(context=context)
-    except TypeError:
-        settings = settings_function()
-    return _service(context, "create_background_job")(
-        context.get("DB_PATH"),
-        job_type="MAINTENANCE",
-        payload={"settings": settings},
-        requested_by="system-scheduler",
-        priority=5,
-        max_attempts=int(context.get("JOB_MAX_ATTEMPTS")),
-        dedupe_key=f"scheduled-maintenance:{bucket}",
+    return schedule_current_project(
+        context, "maintenance", now=now, scheduler_leader=is_scheduler_leader(context)
     )
 
 
 @context_transaction_scope
 def schedule_webhook_delivery(context: ApplicationContext, *, now: float | None = None) -> dict[str, Any] | None:
-    if not is_scheduler_leader(context) or restore_in_progress(context):
-        return None
-    if _service(context, "count_pending_webhooks")(context.get("DB_PATH")) <= 0:
-        return None
-    interval = max(1, int(context.get("WEBHOOK_INTERVAL_SECONDS")))
-    bucket = int((time.time() if now is None else now) // interval)
-    return _service(context, "create_background_job")(
-        context.get("DB_PATH"),
-        job_type="WEBHOOK_DELIVERY",
-        payload={},
-        requested_by="system-scheduler",
-        priority=10,
-        max_attempts=int(context.get("JOB_MAX_ATTEMPTS")),
-        dedupe_key=f"scheduled-webhook:{bucket}",
+    return schedule_current_project(
+        context, "webhook", now=now, scheduler_leader=is_scheduler_leader(context)
     )
 
 
 @context_transaction_scope
 def schedule_recovery_backup(context: ApplicationContext, *, now: float | None = None) -> dict[str, Any] | None:
-    if not is_scheduler_leader(context) or restore_in_progress(context):
-        return None
-    interval = max(3600, int(context.get("BACKUP_INTERVAL_HOURS")) * 3600)
-    bucket = int((time.time() if now is None else now) // interval)
-    return _service(context, "create_background_job")(
-        context.get("DB_PATH"),
-        job_type="RECOVERY_BACKUP",
-        payload={},
-        requested_by="system-scheduler",
-        priority=8,
-        max_attempts=int(context.get("JOB_MAX_ATTEMPTS")),
-        dedupe_key=f"scheduled-recovery:{bucket}",
+    return schedule_current_project(
+        context, "backup", now=now, scheduler_leader=is_scheduler_leader(context)
     )
+
+
+@context_transaction_scope
+def schedule_all_project_maintenance(
+    context: ApplicationContext, *, now: float | None = None
+) -> dict[str, Any]:
+    return schedule_all_projects(
+        context, "maintenance", now=now, scheduler_leader=is_scheduler_leader(context)
+    )
+
+
+@context_transaction_scope
+def schedule_all_project_webhooks(
+    context: ApplicationContext, *, now: float | None = None
+) -> dict[str, Any]:
+    return schedule_all_projects(
+        context, "webhook", now=now, scheduler_leader=is_scheduler_leader(context)
+    )
+
+
+@context_transaction_scope
+def schedule_all_project_backups(
+    context: ApplicationContext, *, now: float | None = None
+) -> dict[str, Any]:
+    return schedule_all_projects(
+        context, "backup", now=now, scheduler_leader=is_scheduler_leader(context)
+    )
+
 
 @context_transaction_scope
 async def coordination_loop(
@@ -234,7 +227,7 @@ async def maintenance_loop(
         else:
             await asyncio.sleep(interval)
         try:
-            await asyncio.to_thread(schedule_maintenance, context)
+            await asyncio.to_thread(schedule_all_project_maintenance, context)
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -255,7 +248,7 @@ async def webhook_loop(
         else:
             await asyncio.sleep(interval)
         try:
-            await asyncio.to_thread(schedule_webhook_delivery, context)
+            await asyncio.to_thread(schedule_all_project_webhooks, context)
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -276,7 +269,7 @@ async def backup_loop(
         else:
             await asyncio.sleep(interval)
         try:
-            await asyncio.to_thread(schedule_recovery_backup, context)
+            await asyncio.to_thread(schedule_all_project_backups, context)
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -333,6 +326,12 @@ class LifecycleSupervisor:
         endpoints = dict(context.get("WEBHOOK_ENDPOINTS", {}) or {})
         if endpoints and int(context.get("WEBHOOK_INTERVAL_SECONDS")) > 0:
             tracker.create_task("webhook", webhook_loop(context, tracker=tracker))
+        if len(str(context.get("INTEGRATION_SECRET_KEY", "") or "")) >= 32:
+            from app.services.collaboration_lifecycle import collaboration_loop
+            tracker.create_task(
+                "collaboration",
+                collaboration_loop(context, tracker=tracker, leader_check=is_scheduler_leader),
+            )
         if int(context.get("BACKUP_INTERVAL_HOURS")) > 0:
             tracker.create_task("backup", backup_loop(context, tracker=tracker))
 

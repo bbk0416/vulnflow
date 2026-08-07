@@ -15,9 +15,12 @@ from urllib.request import urlopen
 import pytest
 from playwright.sync_api import Browser, Page, expect, sync_playwright
 
+from app.core.database_schema import init_db
+from app.services.accounts import create_user
+
 ROOT = Path(__file__).resolve().parents[2]
-ADMIN = {"username": "admin-e2e", "password": "admin-e2e-password"}
-OPERATOR = {"username": "operator-e2e", "password": "operator-e2e-password"}
+ADMIN = {"username": "admin-e2e", "password": "Admin-E2E-Password-42!"}
+OPERATOR = {"username": "operator-e2e", "password": "Operator-E2E-Password-42!"}
 
 
 def _free_port() -> int:
@@ -26,12 +29,12 @@ def _free_port() -> int:
         return int(sock.getsockname()[1])
 
 
-def _wait_until_ready(base_url: str, process: subprocess.Popen[str]) -> None:
+def _wait_until_ready(base_url: str, process: subprocess.Popen[str], log_path: Path) -> None:
     deadline = time.monotonic() + 30
     last_error = ""
     while time.monotonic() < deadline:
         if process.poll() is not None:
-            output = process.stdout.read() if process.stdout else ""
+            output = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
             raise RuntimeError(f"VulnFlow exited before readiness (code={process.returncode}).\n{output}")
         try:
             with urlopen(f"{base_url}/health/live", timeout=1) as response:
@@ -48,25 +51,22 @@ def live_server(tmp_path: Path) -> Iterator[str]:
     port = _free_port()
     base_url = f"http://127.0.0.1:{port}"
     data_dir = tmp_path / "data"
+    db_path = data_dir / "vulnflow.db"
+    init_db(db_path)
+    create_user(db_path, username=ADMIN["username"], password=ADMIN["password"], role="admin", actor="e2e-bootstrap")
+    create_user(db_path, username=OPERATOR["username"], password=OPERATOR["password"], role="operator", actor="e2e-bootstrap")
     env = os.environ.copy()
     env.update(
         {
             "PYTHONUNBUFFERED": "1",
             "VULNFLOW_BASE_DIR": str(ROOT),
             "VULNFLOW_DATA_DIR": str(data_dir),
-            "VULNFLOW_DB": str(data_dir / "vulnflow.db"),
+            "VULNFLOW_DB": str(db_path),
             "VULNFLOW_EVIDENCE_DIR": str(data_dir / "evidence"),
             "VULNFLOW_EXPORT_DIR": str(data_dir / "exports"),
             "VULNFLOW_RECOVERY_DIR": str(data_dir / "recovery"),
-            "VULNFLOW_USERS_JSON": json.dumps(
-                {
-                    ADMIN["username"]: {"password": ADMIN["password"], "role": "admin"},
-                    OPERATOR["username"]: {
-                        "password": OPERATOR["password"],
-                        "role": "operator",
-                    },
-                }
-            ),
+            "VULNFLOW_DEMO_MODE": "1",
+            "VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK": "0",
             "VULNFLOW_JOB_WORKER_ENABLED": "0",
             "VULNFLOW_CLUSTER_COORDINATION_ENABLED": "0",
             "VULNFLOW_WEBHOOK_INTERVAL_SECONDS": "0",
@@ -75,41 +75,44 @@ def live_server(tmp_path: Path) -> Iterator[str]:
             "VULNFLOW_COOKIE_SECURE": "0",
         }
     )
-    process = subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "uvicorn",
-            "app.main:app",
-            "--host",
-            "127.0.0.1",
-            "--port",
-            str(port),
-            "--log-level",
-            "warning",
-        ],
-        cwd=ROOT,
-        env=env,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-    )
-    try:
-        _wait_until_ready(base_url, process)
-        yield base_url
-    finally:
-        if process.poll() is None:
-            process.terminate()
-            try:
-                process.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=5)
-        if process.returncode not in {0, -15, 1}:
-            output = process.stdout.read() if process.stdout else ""
-            pytest.fail(f"VulnFlow shutdown failed (code={process.returncode}).\n{output}")
+    log_path = tmp_path / "uvicorn-e2e.log"
+    with log_path.open("w", encoding="utf-8") as log_handle:
+        process = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "app.main:app",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                str(port),
+                "--log-level",
+                "warning",
+            ],
+            cwd=ROOT,
+            env=env,
+            stdout=log_handle,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        try:
+            _wait_until_ready(base_url, process, log_path)
+            yield base_url
+        finally:
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
+            log_handle.flush()
+            if process.returncode not in {0, -15, 1}:
+                output = log_path.read_text(encoding="utf-8", errors="replace")
+                pytest.fail(f"VulnFlow shutdown failed (code={process.returncode}).\n{output}")
 
 
 @pytest.fixture(scope="session")
@@ -127,25 +130,48 @@ def browser() -> Iterator[Browser]:
 
 
 def _page(browser: Browser, base_url: str, credentials: dict[str, str]) -> tuple[Page, object]:
-    context = browser.new_context(base_url=base_url, http_credentials=credentials)
-    return context.new_page(), context
+    context = browser.new_context(base_url=base_url)
+    page = context.new_page()
+    page.goto("/login")
+    page.locator("input[name='username']").fill(credentials["username"])
+    page.locator("input[name='password']").fill(credentials["password"])
+    page.get_by_role("button", name="로그인").click()
+    expect(page).to_have_url(re.compile(rf"^{re.escape(base_url)}/(?:$|\?)"))
+    return page, context
 
+
+
+
+def _success_notice(page: Page, text: str):
+    return page.locator(".notice.success").filter(has_text=text).first
+
+
+def _advanced_section(page: Page, summary_text: str):
+    return page.locator("details.advanced-section").filter(
+        has=page.locator("summary", has_text=summary_text)
+    ).first
 
 def test_dashboard_to_finding_workflow_update(browser: Browser, live_server: str) -> None:
     page, context = _page(browser, live_server, ADMIN)
     try:
         page.goto("/")
-        expect(page.get_by_role("heading", name="취약점 조치 대상")).to_be_visible()
-        page.locator("#findings a[href='/finding/F-0001']").click()
-        expect(page.get_by_text("F-0001 · 정책", exact=False)).to_be_visible()
+        expect(page.get_by_role("heading", name="전체 조치 항목")).to_be_visible()
+        page.locator("#findings a.finding-link[href='/finding/F-0001']").click()
+        expect(page).to_have_url(re.compile(r"/finding/F-0001$"))
+        expect(
+            page.locator("nav.breadcrumb").get_by_text("F-0001", exact=True)
+        ).to_be_visible()
+        expect(page.get_by_role("heading", level=1)).to_contain_text(
+            "EdgeConnect Gateway · CVE-2024-3400"
+        )
 
         workflow = page.locator("form").filter(has=page.locator("select[name='status']")).first
         workflow.locator("select[name='status']").select_option("IN_PROGRESS")
         workflow.locator("input[name='owner']").fill("browser-e2e-owner")
         workflow.locator("textarea[name='notes']").fill("Playwright browser workflow update")
-        workflow.get_by_role("button", name="저장·재평가").click()
+        workflow.get_by_role("button", name="저장하고 반영").click()
 
-        expect(page.get_by_text("조치 워크플로를 저장하고 재평가했습니다.")).to_be_visible()
+        expect(_success_notice(page, "조치 워크플로를 저장하고 재평가했습니다.")).to_be_visible()
         expect(workflow.locator("select[name='status']")).to_have_value("IN_PROGRESS")
         expect(workflow.locator("input[name='owner']")).to_have_value("browser-e2e-owner")
     finally:
@@ -156,8 +182,8 @@ def test_csv_import_creates_searchable_finding(browser: Browser, live_server: st
     page, context = _page(browser, live_server, ADMIN)
     try:
         page.goto("/upload")
-        expect(page.get_by_role("heading", name="데이터 가져오기·백업·복원")).to_be_visible()
-        upload_form = page.locator("form[action='/upload/findings']")
+        expect(page.get_by_role("heading", name="취약점 결과를 가져오세요.")).to_be_visible()
+        upload_form = page.locator("form[action='/upload/findings/preview']")
         upload_form.locator("input[name='scanner_source']").fill("browser-e2e")
         csv_content = (
             "finding_id,product,cve_id,asset_name,environment,component,component_version,"
@@ -173,14 +199,16 @@ def test_csv_import_creates_searchable_finding(browser: Browser, live_server: st
                 "buffer": csv_content.encode("utf-8"),
             }
         )
-        upload_form.get_by_role("button", name="즉시 반영").click()
+        upload_form.get_by_role("button", name="파일 분석하고 미리보기").click()
+        expect(page.get_by_role("heading", name="반영 전에 결과를 확인하세요.")).to_be_visible()
+        page.get_by_role("button", name="1건 목록에 반영").click()
 
-        expect(page.get_by_text("취약점 CSV를 반영했습니다.")).to_be_visible()
-        page.locator("#findings input[name='query']").fill("E2E-0001")
+        expect(page.get_by_text("취약점 결과를 반영했습니다.")).to_be_visible()
+        page.locator("#findings input[name='query']").fill("CVE-2099-9999")
         page.locator("#findings form.dashboard-filters").get_by_role(
-            "button", name="필터 적용"
+            "button", name="검색"
         ).click()
-        expect(page.locator("#findings a[href='/finding/E2E-0001']")).to_be_visible()
+        expect(page.locator("#findings").get_by_text("CVE-2099-9999", exact=False)).to_be_visible()
         expect(page.get_by_text("E2E Browser Asset", exact=False)).to_be_visible()
     finally:
         context.close()
@@ -194,13 +222,14 @@ def test_operator_risk_acceptance_requires_approver(browser: Browser, live_serve
             has=operator_page.locator("select[name='status']")
         ).first
         workflow.locator("select[name='status']").select_option("RISK_ACCEPTED")
+        workflow.locator("details.exception-fields summary").click()
         workflow.locator("input[name='exception_expiry']").fill("2099-12-31")
         workflow.locator("textarea[name='risk_acceptance_reason']").fill(
             "Browser E2E validates approval separation"
         )
         workflow.locator("textarea[name='notes']").fill("Temporary acceptance request")
-        workflow.get_by_role("button", name="저장·재평가").click()
-        expect(operator_page.get_by_text("위험수용 승인 요청을 생성했습니다.")).to_be_visible()
+        workflow.get_by_role("button", name="저장하고 반영").click()
+        expect(_success_notice(operator_page, "위험수용 승인 요청을 생성했습니다.")).to_be_visible()
     finally:
         operator_context.close()
 
@@ -214,13 +243,19 @@ def test_operator_risk_acceptance_requires_approver(browser: Browser, live_serve
             "Browser E2E approver decision"
         )
         request_row.locator("button[value='APPROVED']").click()
-        expect(admin_page.get_by_text("위험수용 승인 요청을 처리했습니다.")).to_be_visible()
+        expect(_success_notice(admin_page, "위험수용 승인 요청을 처리했습니다.")).to_be_visible()
 
         admin_page.goto("/finding/F-0004")
         workflow = admin_page.locator("form").filter(
             has=admin_page.locator("select[name='status']")
         ).first
         expect(workflow.locator("select[name='status']")).to_have_value("RISK_ACCEPTED")
-        expect(admin_page.get_by_text(re.compile(r"^APPROVED · APR-"))).to_be_visible()
+        approval_history = _advanced_section(admin_page, "예외 승인 이력")
+        approval_history.locator("summary").click()
+        expect(
+            approval_history.locator("strong").filter(
+                has_text=re.compile(r"^APPROVED · APR-")
+            ).first
+        ).to_be_visible()
     finally:
         admin_context.close()

@@ -310,6 +310,9 @@ def finding_summary(db_path: str | Path, *, today: date | None = None) -> dict[s
         resolution_states = {str(row["state"]): int(row["count"]) for row in conn.execute(
             f"SELECT COALESCE(NULLIF(resolution_state,''),'UNVERIFIED') AS state,COUNT(*) AS count FROM findings WHERE {visible} GROUP BY COALESCE(NULLIF(resolution_state,''),'UNVERIFIED')"
         ).fetchall()}
+        statuses = {str(row["status"]): int(row["count"]) for row in conn.execute(
+            f"SELECT COALESCE(NULLIF(status,''),'OPEN') AS status,COUNT(*) AS count FROM findings WHERE {visible} GROUP BY COALESCE(NULLIF(status,''),'OPEN')"
+        ).fetchall()}
 
     total = int(totals["total"] or 0)
     active_count = int(totals["active"] or 0)
@@ -321,7 +324,7 @@ def finding_summary(db_path: str | Path, *, today: date | None = None) -> dict[s
         "overdue": int(totals["overdue"] or 0),
         "exception_expired": int(totals["exception_expired"] or 0),
         "exception_expiring": int(totals["exception_expiring"] or 0),
-        "decisions": decisions, "record_states": record_states, "resolution_states": resolution_states,
+        "decisions": decisions, "record_states": record_states, "resolution_states": resolution_states, "statuses": statuses,
         "verified_closed": int(resolution_states.get("VERIFIED", 0)),
         "verification_pending": int(resolution_states.get("PENDING", 0)),
         "verification_ready": int(resolution_states.get("READY_FOR_VERIFICATION", 0)),

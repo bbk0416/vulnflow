@@ -36,7 +36,15 @@ REQUIRED_ROLES = (
     "distribution_artifact_verification",
     "runtime_snapshot_verification",
     "release_provenance_verification",
+    "offline_deployment_activation",
+    "offline_deployment_keyring",
+    "offline_deployment_audit",
+    "offline_deployment_witness",
+    "offline_deployment_recovery",
+    "offline_deployment_preflight",
+    "offline_deployment_history",
     "offline_deployment_bootstrap",
+    "offline_deployment_manager",
 )
 
 
