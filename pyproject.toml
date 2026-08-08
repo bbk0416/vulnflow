@@ -60,6 +60,10 @@ select = ["E9", "F63", "F7", "F82"]
 # These router modules intentionally resolve runtime dependencies through
 # install_dependencies(); only their injected-global F821 findings are ignored.
 [tool.ruff.lint.per-file-ignores]
+"app/routers/accounts.py" = ["F821"]
+"app/routers/imports.py" = ["F821"]
+"app/routers/integrations.py" = ["F821"]
+"app/routers/projects.py" = ["F821"]
 "app/routers/trust.py" = ["F821"]
 "app/routers/trust_observability.py" = ["F821"]
 

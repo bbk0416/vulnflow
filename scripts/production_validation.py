@@ -71,7 +71,12 @@ def main() -> int:
     parser.add_argument("--docker", choices=("auto", "required", "skip"), default="auto")
     parser.add_argument("--json-output", type=Path)
     args = parser.parse_args()
-    with tempfile.TemporaryDirectory(prefix="vulnflow_production_validation_") as temporary:
+    # Docker bind mounts can leave files with container ownership if an external
+    # engine aborts mid-rehearsal. The rehearsal restores ownership explicitly,
+    # and cleanup errors must not mask the actual validation result.
+    with tempfile.TemporaryDirectory(
+        prefix="vulnflow_production_validation_", ignore_cleanup_errors=True
+    ) as temporary:
         work_dir = args.work_dir or Path(temporary)
         work_dir.mkdir(parents=True, exist_ok=True)
         report = run_validation(work_dir=work_dir, docker_mode=args.docker)

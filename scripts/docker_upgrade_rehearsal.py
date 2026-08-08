@@ -11,6 +11,7 @@ import argparse
 import gzip
 import hashlib
 import json
+import os
 import shutil
 import sqlite3
 import subprocess
@@ -38,6 +39,17 @@ from app.services.integration_crypto import encrypt_secret  # noqa: E402
 FIXTURE_ARCHIVE = ROOT / "tests" / "fixtures" / "v72_0_18_schema42.sqlite3.gz"
 FIXTURE_META = ROOT / "tests" / "fixtures" / "v72_0_18_schema42_fixture.json"
 TEST_MASTER_KEY = "vulnflow-container-upgrade-rehearsal-key-2026"
+REHEARSAL_API_TOKENS_JSON = json.dumps(
+    {
+        "upgrade-rehearsal": {
+            "token": "upgrade-rehearsal-admin-token-0123456789",
+            "role": "admin",
+            "projects": "*",
+        }
+    },
+    sort_keys=True,
+    separators=(",", ":"),
+)
 
 
 def _sha256(path: Path) -> str:
@@ -161,6 +173,22 @@ def _require_success(result: subprocess.CompletedProcess[str], label: str) -> No
         raise RuntimeError(f"{label} failed\nstdout:\n{result.stdout}\nstderr:\n{result.stderr}")
 
 
+def _set_mount_owner(
+    docker: str,
+    *,
+    mount: str,
+    image: str,
+    uid: int,
+    gid: int,
+    label: str,
+) -> None:
+    ownership = _run([
+        docker, "run", "--rm", "--user", "0", "-v", mount, image,
+        "sh", "-c", f"chown -R {uid}:{gid} /app/data",
+    ], timeout=120)
+    _require_success(ownership, label)
+
+
 def run_docker_rehearsal(work_dir: Path, *, image: str, build: bool = True) -> dict[str, Any]:
     docker = shutil.which("docker")
     if not docker:
@@ -172,32 +200,53 @@ def run_docker_rehearsal(work_dir: Path, *, image: str, build: bool = True) -> d
         _require_success(_run([docker, "build", "-t", image, "."], timeout=900), "docker build")
 
     mount = f"{data_dir.resolve()}:/app/data"
-    ownership = _run([
-        docker, "run", "--rm", "--user", "0", "-v", mount, image,
-        "sh", "-c", "chown -R 10001:10001 /app/data",
-    ], timeout=120)
-    _require_success(ownership, "container data ownership preparation")
-    migrate = _run([
-        docker, "run", "--rm", "-v", mount,
-        "-e", "VULNFLOW_CLUSTER_COORDINATION_ENABLED=0",
-        image,
-        "python", "-c",
-        "from app.core.database_schema import init_db; init_db('/app/data/vulnflow.db')",
-    ], timeout=300)
-    _require_success(migrate, "container database migration")
-    checks = _check_current_database(database, metadata)
-
+    host_uid = os.getuid() if hasattr(os, "getuid") else None
+    host_gid = os.getgid() if hasattr(os, "getgid") else None
     container_name = f"vulnflow-upgrade-rehearsal-{int(time.time())}"
-    started = _run([
-        docker, "run", "-d", "--name", container_name, "-v", mount,
-        "-e", "VULNFLOW_CLUSTER_COORDINATION_ENABLED=0",
-        "-e", "VULNFLOW_COOKIE_SECURE=0",
-        image,
-    ])
-    _require_success(started, "container start")
-    ready = False
-    last_error = ""
+    container_started = False
+
+    def restore_host_ownership() -> None:
+        if host_uid is None or host_gid is None:
+            return
+        _set_mount_owner(
+            docker, mount=mount, image=image, uid=host_uid, gid=host_gid,
+            label="host data ownership restoration",
+        )
+
+    _set_mount_owner(
+        docker, mount=mount, image=image, uid=10001, gid=10001,
+        label="container data ownership preparation",
+    )
     try:
+        migrate = _run([
+            docker, "run", "--rm", "-v", mount,
+            "-e", "VULNFLOW_CLUSTER_COORDINATION_ENABLED=0",
+            image,
+            "python", "-c",
+            "from app.core.database_schema import init_db; init_db('/app/data/vulnflow.db')",
+        ], timeout=300)
+        _require_success(migrate, "container database migration")
+
+        # Host-side integrity checks must run under the host identity. The app
+        # container receives ownership again immediately before it starts.
+        restore_host_ownership()
+        checks = _check_current_database(database, metadata)
+        _set_mount_owner(
+            docker, mount=mount, image=image, uid=10001, gid=10001,
+            label="container data ownership before readiness probe",
+        )
+
+        started = _run([
+            docker, "run", "-d", "--name", container_name, "-v", mount,
+            "-e", "VULNFLOW_CLUSTER_COORDINATION_ENABLED=0",
+            "-e", "VULNFLOW_COOKIE_SECURE=0",
+            "-e", f"VULNFLOW_API_TOKENS_JSON={REHEARSAL_API_TOKENS_JSON}",
+            image,
+        ])
+        _require_success(started, "container start")
+        container_started = True
+        ready = False
+        last_error = ""
         for _ in range(30):
             probe = _run([
                 docker, "exec", container_name, "python", "-c",
@@ -208,11 +257,14 @@ def run_docker_rehearsal(work_dir: Path, *, image: str, build: bool = True) -> d
                 break
             last_error = (probe.stderr or probe.stdout).strip()[-500:]
             time.sleep(1)
+        checks.append({"name": "container readiness after upgrade", "passed": ready, "detail": last_error or "HTTP 200"})
+        if not ready:
+            raise AssertionError(f"container readiness failed: {last_error}")
     finally:
-        _run([docker, "rm", "-f", container_name], timeout=60)
-    checks.append({"name": "container readiness after upgrade", "passed": ready, "detail": last_error or "HTTP 200"})
-    if not ready:
-        raise AssertionError(f"container readiness failed: {last_error}")
+        if container_started:
+            _run([docker, "rm", "-f", container_name], timeout=60)
+        restore_host_ownership()
+
     return {
         "mode": "docker",
         "passed": True,

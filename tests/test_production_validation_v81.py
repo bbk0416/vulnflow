@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import smtplib
 import subprocess
 import sys
@@ -196,9 +197,11 @@ def test_scanner_compatibility_cli_writes_json(tmp_path: Path):
         encoding="utf-8",
     )
     output = tmp_path / "report.json"
+    environment = os.environ.copy()
+    environment["PYTHONIOENCODING"] = "cp1252"
     result = subprocess.run(
         [sys.executable, "scripts/scanner_compatibility_report.py", str(source), "--json-output", str(output), "--require-ready"],
-        cwd=ROOT, text=True, capture_output=True,
+        cwd=ROOT, text=True, capture_output=True, env=environment,
     )
     assert result.returncode == 0, result.stdout + result.stderr
     payload = json.loads(output.read_text(encoding="utf-8"))
@@ -373,12 +376,14 @@ def test_scanner_compatibility_cli_rejects_oversized_file_before_read(tmp_path: 
     source = tmp_path / "oversized.nessus"
     with source.open("wb") as handle:
         handle.truncate(MAX_IMPORT_UPLOAD_BYTES + 1)
+    environment = os.environ.copy()
+    environment["PYTHONIOENCODING"] = "cp1252"
     result = subprocess.run(
         [sys.executable, "scripts/scanner_compatibility_report.py", str(source)],
-        cwd=ROOT, text=True, capture_output=True,
+        cwd=ROOT, text=True, capture_output=True, env=environment,
     )
     assert result.returncode == 2
-    assert "최대" in result.stderr
+    assert "최대" in result.stderr or r"\ucd5c\ub300" in result.stderr
 
 
 

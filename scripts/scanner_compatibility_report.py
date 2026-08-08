@@ -59,6 +59,20 @@ def _text(reports: list[dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+
+
+def _console_write(text: str, *, stream: Any) -> None:
+    """Write CLI text without crashing on legacy Windows console encodings."""
+    encoding = getattr(stream, "encoding", None) or "utf-8"
+    try:
+        rendered = text.encode(encoding).decode(encoding)
+    except (LookupError, UnicodeEncodeError):
+        try:
+            rendered = text.encode(encoding, errors="backslashreplace").decode(encoding)
+        except LookupError:
+            rendered = text.encode("ascii", errors="backslashreplace").decode("ascii")
+    stream.write(rendered)
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("files", nargs="+", type=Path)
@@ -92,9 +106,9 @@ def main() -> int:
             json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
             encoding="utf-8",
         )
-    print(_text(reports), end="")
+    _console_write(_text(reports), stream=sys.stdout)
     for failure in failures:
-        print(f"[BLOCKED] {failure['path']}: {failure['error']}", file=sys.stderr)
+        _console_write(f"[BLOCKED] {failure['path']}: {failure['error']}\n", stream=sys.stderr)
     if failures:
         return 2
     if args.require_ready and any(item["status"] != "READY" for item in reports):
