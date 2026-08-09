@@ -249,6 +249,10 @@ def test_force_deploy_staging_failure_preserves_existing_target(
     assert not list(tmp_path.glob(".vulnflow.staging-*"))
 
 
+@pytest.mark.skipif(
+    __import__("os").name != "posix",
+    reason="Windows validation: POSIX filesystem semantics",
+)
 def test_force_deploy_rejects_target_symlink_before_staging(tmp_path: Path) -> None:
     from scripts.offline_deployment_bootstrap import deploy_release_kit, sha256_file
 

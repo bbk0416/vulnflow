@@ -177,7 +177,18 @@ def run_docker_rehearsal(root: Path = ROOT) -> dict[str, Any]:
                 "production docker compose up",
             )
             ready_url = f"https://localhost:{https_port}/health/ready"
-            ready = _wait_https(ready_url, cafile=cert)
+            try:
+                ready = _wait_https(ready_url, cafile=cert)
+            except RuntimeError as exc:
+                status = _run([*command, "ps", "--all"], env=env, timeout=30)
+                logs = _run([*command, "logs", "--no-color", "--tail", "200"], env=env, timeout=60)
+                diagnostic = "\n".join(
+                    part for part in (
+                        f"compose status:\n{status.stdout[-4000:]}\n{status.stderr[-2000:]}",
+                        f"compose logs:\n{logs.stdout[-12000:]}\n{logs.stderr[-4000:]}",
+                    ) if part.strip()
+                )
+                raise RuntimeError(f"{exc}\n{diagnostic}") from exc
             checks["https_readiness"] = ready.status_code == 200
 
             redirect = requests.get(

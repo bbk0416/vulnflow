@@ -63,9 +63,11 @@ services:
       - ./deploy/certs:/etc/nginx/certs:ro
     restart: unless-stopped
     networks:
+      - frontend
       - backend
 
 networks:
+  frontend:
   backend:
     internal: true
 

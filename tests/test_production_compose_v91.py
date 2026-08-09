@@ -24,6 +24,10 @@ def test_generated_production_compose_uses_loopback_tls_and_no_app_port(tmp_path
     app = compose["services"]["vulnflow"]
     proxy = compose["services"]["proxy"]
     assert not app.get("ports")
+    assert set(app.get("networks") or []) == {"backend"}
+    assert set(proxy.get("networks") or []) == {"frontend", "backend"}
+    assert compose["networks"]["backend"]["internal"] is True
+    assert not bool((compose["networks"].get("frontend") or {}).get("internal"))
     assert app["build"]["context"] == str(ROOT.resolve())
     assert proxy["ports"] == ["127.0.0.1:18080:80", "127.0.0.1:18443:443"]
     cert_mounts = [

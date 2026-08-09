@@ -121,7 +121,7 @@ def test_posix_only_offline_deployment_tests_use_selective_windows_skips() -> No
         source = matches[0].read_text(encoding="utf-8")
         assert "pytestmark = pytest.mark.skipif" not in source
         decorated += source.count("Windows validation: POSIX filesystem semantics")
-    assert decorated == 73
+    assert decorated == 74
 
 
 def test_browser_e2e_uses_a_unique_locator_and_a_file_backed_server_log() -> None:

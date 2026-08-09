@@ -30,7 +30,7 @@ COPY data/sample_sbom.cdx.json ./data/sample_sbom.cdx.json
 COPY data/sample_sbom_v2.cdx.json ./data/sample_sbom_v2.cdx.json
 COPY VERSION LICENSE README.md ./
 
-RUN mkdir -p /app/data/projects/default \
+RUN mkdir -p /app/data/projects/default /app/external-backups \
     && chown -R vulnflow:vulnflow /app
 USER vulnflow
 VOLUME ["/app/data"]

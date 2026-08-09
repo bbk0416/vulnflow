@@ -44,10 +44,11 @@ code-execution paths.
 
 ## Dynamic dependency-injection boundary
 
-`app/routers/trust.py` and `app/routers/trust_observability.py` receive their
-runtime symbols through `install_dependencies()`. Ruff cannot infer those injected
-globals, so only `F821` is ignored for those two files. All syntax, invalid control
-flow, and undefined-name checks remain enabled for the rest of the repository.
+The router modules listed in `pyproject.toml` under `tool.ruff.lint.per-file-ignores`
+receive runtime symbols through `install_dependencies()`. Ruff cannot infer those
+injected globals, so only `F821` is ignored for that explicit router set. All syntax
+and invalid-control-flow checks remain enabled there, and undefined-name checks
+remain enabled for the rest of the repository.
 
 The application-context composition helpers use local structural `Protocol` types
 instead of importing the concrete context class, preserving the zero-import-cycle
@@ -56,7 +57,7 @@ architecture boundary.
 ## Audited dependency baseline
 
 The production runtime baseline pins FastAPI 0.140.9, Starlette 1.3.1,
-python-multipart 0.0.31, and cryptography 48.0.1. Requests 2.33.0 is retained only
+python-multipart 0.0.31, and cryptography 50.0.0. Requests 2.33.0 is retained only
 in the development lock for deployment and rehearsal tooling; application code
 uses the reviewed pinned transports and the production image does not install
 Requests or its dedicated transitive packages. The complete CI quality job remains

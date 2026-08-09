@@ -94,6 +94,7 @@ def test_container_and_local_launch_defaults_are_explicit():
     root = Path(__file__).resolve().parents[1]
     compose = (root / "docker-compose.yml").read_text(encoding="utf-8")
     dockerfile = (root / "Dockerfile").read_text(encoding="utf-8")
+    assert "/app/external-backups" in dockerfile
     linux = (root / "run_linux.sh").read_text(encoding="utf-8")
     windows = (root / "run_windows.ps1").read_text(encoding="utf-8")
     assert 'vulnflow:72.0.72' in compose

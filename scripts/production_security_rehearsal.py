@@ -64,6 +64,9 @@ def run_rehearsal(root: Path = ROOT) -> dict[str, Any]:
         "forwarded_for_overwritten_at_edge": "proxy_set_header X-Forwarded-For $remote_addr;" in nginx and "$proxy_add_x_forwarded_for" not in nginx,
         "duplicate_edge_headers_hidden": all(f"proxy_hide_header {name};" in nginx for name in ("X-Content-Type-Options", "X-Frame-Options", "Referrer-Policy")),
         "backend_network_internal": bool(((compose.get("networks") or {}).get("backend") or {}).get("internal")),
+        "application_backend_only": set(app.get("networks") or []) == {"backend"},
+        "edge_proxy_dual_homed": set(proxy.get("networks") or []) == {"frontend", "backend"},
+        "frontend_network_not_internal": not bool(((compose.get("networks") or {}).get("frontend") or {}).get("internal")),
         "production_env_has_no_real_secrets": "replace-with" in env_example and "vulnflow.example.com" in env_example,
     }
 

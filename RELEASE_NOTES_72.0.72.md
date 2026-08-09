@@ -9,6 +9,13 @@ This release is the code-completion candidate for the current local vulnerabilit
 - Primary navigation opens the pending verification queue instead of a mixed history view.
 - README quick-start now delegates installation to the locked platform launchers rather than instructing users to install `requirements.txt` manually.
 
+## Release-blocking CI closure
+
+- Upgraded the locked `cryptography` runtime baseline from 48.0.1 to 50.0.0 after the public dependency audit reported newly disclosed advisories.
+- Kept the signed offline deployment bootstrap Linux/CPython-only and aligned the one missed POSIX filesystem test with the existing selective Windows skip contract.
+- Split the production Compose edge onto a normal `frontend` network while keeping the VulnFlow application isolated on the internal `backend` network; the proxy is dual-homed and remains the only published service.
+- Added production Compose failure diagnostics and pre-created the external-backup mount point with the non-root runtime ownership.
+
 ## Completion policy
 
 After 72.0.72, new features are frozen for this pilot scope. Subsequent changes should be limited to defects found by real scanner compatibility work, practitioner pilot use, or release-blocking security/reliability issues.
