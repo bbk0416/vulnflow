@@ -216,16 +216,34 @@ async def restore_backup(
         temp_path = handle.name
         handle.write(content)
         handle.close()
-        backup_summary = validate_database_file(temp_path)
+        active_project = dict(getattr(request.state, "active_project", {}) or {})
+        active_project_id = str(active_project.get("project_id") or "default")
+        backup_summary = validate_database_file(
+            temp_path, expected_project_id=active_project_id
+        )
         if int(backup_summary.get("evidence_count") or 0) > 0:
             raise ValueError("증거 파일이 포함된 데이터베이스는 복구 번들 ZIP으로 복원해야 합니다.")
         with _exclusive_operation(RESTORE_LEASE_NAME, "데이터베이스 복원"):
             if count_active_background_jobs(DB_PATH) > 0:
                 raise ConcurrencyError("실행 또는 대기 중인 백그라운드 작업이 있어 복원할 수 없습니다.")
-            if count_cluster_write_activities(_coordination_db_path()) > 0:
+            if (
+                CLUSTER_COORDINATION_ENABLED
+                and count_cluster_write_activities(
+                    _coordination_db_path(request.state.vulnflow_context)
+                ) > 0
+            ):
                 raise ConcurrencyError("처리 중인 쓰기 요청이 있어 복원할 수 없습니다.")
-            restore_database(DB_PATH, temp_path, actor=_actor(request))
-            rescore_all(audit=False, actor=_actor(request))
+            restore_database(
+                DB_PATH,
+                temp_path,
+                actor=_actor(request),
+                expected_project_id=active_project_id,
+            )
+            rescore_all(
+                audit=False,
+                actor=_actor(request),
+                context=request.state.vulnflow_context,
+            )
     except ConcurrencyError as exc:
         raise HTTPException(409, str(exc)) from exc
     except ValueError as exc:

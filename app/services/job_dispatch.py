@@ -12,6 +12,7 @@ import inspect
 from typing import Any, Callable
 
 from app.core.context import ApplicationContext
+from app.core.project_scope import active_project
 from app.core.transactions import context_transaction_scope
 
 
@@ -112,10 +113,30 @@ def execute_background_job(
             endpoints=dict(_setting(context, "WEBHOOK_ENDPOINTS", {}) or {}),
             timeout_seconds=int(_setting(context, "WEBHOOK_TIMEOUT_SECONDS")),
             max_attempts=int(_setting(context, "WEBHOOK_MAX_ATTEMPTS")),
+            allow_private_networks=bool(_setting(context, "OUTBOUND_ALLOW_PRIVATE_NETWORKS", False)),
+            host_allowlist=str(_setting(context, "OUTBOUND_HOST_ALLOWLIST", "") or ""),
+            max_response_bytes=int(_setting(context, "OUTBOUND_MAX_RESPONSE_BYTES", 1024 * 1024)),
         )
         for outcome, count in result.items():
             for _ in range(int(count)):
                 context.metrics.observe_webhook(outcome)
+    elif job_type == "COLLABORATION_DELIVERY":
+        master_key = str(_setting(context, "INTEGRATION_SECRET_KEY", "") or "")
+        if len(master_key) < 32:
+            raise ValueError("VULNFLOW_INTEGRATION_SECRET_KEY는 최소 32자여야 합니다.")
+        result = _service(context, "deliver_collaboration_events")(
+            db_path,
+            master_key=master_key,
+            timeout_seconds=int(_setting(context, "COLLABORATION_TIMEOUT_SECONDS", 10)),
+            max_attempts=int(_setting(context, "COLLABORATION_MAX_ATTEMPTS", 5)),
+            due_soon_days=int(_setting(context, "COLLABORATION_DUE_SOON_DAYS", 3)),
+            allow_private_networks=bool(_setting(context, "OUTBOUND_ALLOW_PRIVATE_NETWORKS", False)),
+            host_allowlist=str(_setting(context, "OUTBOUND_HOST_ALLOWLIST", "") or ""),
+            max_response_bytes=int(_setting(context, "OUTBOUND_MAX_RESPONSE_BYTES", 1024 * 1024)),
+            smtp_allow_private_networks=bool(_setting(context, "SMTP_ALLOW_PRIVATE_NETWORKS", False)),
+            smtp_host_allowlist=str(_setting(context, "SMTP_HOST_ALLOWLIST", "") or ""),
+            smtp_allow_plain=bool(_setting(context, "SMTP_ALLOW_PLAIN", False)),
+        )
     elif job_type == "EVIDENCE_SCAN":
         evidence_id = str(payload.get("evidence_id") or "").strip()
         if not evidence_id:
@@ -154,6 +175,9 @@ def execute_background_job(
             retries=int(_setting(context, "OSV_RETRIES")),
             batch_size=int(_setting(context, "OSV_BATCH_SIZE")),
             source_job_id=job_id,
+            allow_private_networks=bool(_setting(context, "OUTBOUND_ALLOW_PRIVATE_NETWORKS", False)),
+            host_allowlist=str(_setting(context, "OUTBOUND_HOST_ALLOWLIST", "") or ""),
+            max_response_bytes=int(_setting(context, "OSV_MAX_RESPONSE_BYTES", 4 * 1024 * 1024)),
         )
         _call_context_aware(
             queue_webhook,
@@ -235,6 +259,9 @@ def execute_background_job(
         signing, backup_key_id, backup_key = _call_context_aware(
             _service(context, "_backup_signing"), context=context
         )
+        selection = active_project()
+        project_id = selection.project_id if selection is not None else "default"
+        project_name = selection.name if selection is not None else "기본 프로젝트"
         result = _service(context, "create_scheduled_recovery_bundle")(
             db_path,
             _setting(context, "RECOVERY_DIR"),
@@ -246,11 +273,27 @@ def execute_background_job(
             actor=actor,
             base_dir=_setting(context, "BASE_DIR"),
             evidence_dir=_setting(context, "EVIDENCE_DIR"),
+            project_id=project_id,
+            project_name=project_name,
         )
+        external = _service(context, "mirror_recovery_bundle")(
+            result["bundle_path"],
+            external_root=_setting(context, "EXTERNAL_BACKUP_DIR"),
+            project_id=project_id,
+            retention_count=int(_setting(context, "EXTERNAL_BACKUP_RETENTION_COUNT", 30)),
+        )
+        result["external_backup"] = external
+        webhook_result = {k: v for k, v in result.items() if k not in {"bundle_path"}}
+        if isinstance(webhook_result.get("external_backup"), dict):
+            webhook_result["external_backup"] = {
+                key: value
+                for key, value in webhook_result["external_backup"].items()
+                if key != "bundle_path"
+            }
         _call_context_aware(
             queue_webhook,
             "recovery.bundle_created",
-            {k: v for k, v in result.items() if k not in {"bundle_path"}},
+            webhook_result,
             actor,
             context=context,
         )

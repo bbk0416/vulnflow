@@ -70,7 +70,7 @@ def test_schema_v17_has_provenance_and_custody_chain(tmp_path: Path):
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         columns = {row[1] for row in conn.execute("PRAGMA table_info(verification_evidence_artifacts)")}
         triggers = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='trigger'")}
-    assert version == CURRENT_SCHEMA_VERSION == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert "evidence_custody_events" in tables
     assert {
         "source_type", "source_reference", "acquisition_method", "collected_by", "collected_at",

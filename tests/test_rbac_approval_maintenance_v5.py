@@ -9,55 +9,69 @@ import app.main as main
 from app.core.storage import add_audit_event, connect, get_finding, list_maintenance_runs
 
 
-def accounts_json() -> str:
+TOKENS = {
+    "viewer": "viewer-token-123456789012",
+    "operator": "operator-token-1234567890",
+    "approver": "approver-token-1234567890",
+    "admin": "admin-token-12345678901234",
+}
+
+
+def tokens_json() -> str:
     return json.dumps({
-        "viewer": {"password": "view-pass", "role": "viewer"},
-        "operator": {"password": "ops-pass", "role": "operator"},
-        "approver": {"password": "approve-pass", "role": "approver"},
-        "admin": {"password": "admin-pass", "role": "admin"},
+        name: {"token": token, "role": name, "projects": "*"}
+        for name, token in TOKENS.items()
     })
+
+
+def auth_headers(role: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {TOKENS[role]}"}
 
 
 def make_client(tmp_path: Path, monkeypatch) -> TestClient:
     monkeypatch.setattr(main, "DB_PATH", tmp_path / "v5.sqlite3")
+    monkeypatch.setattr(main, "AUTH_USERS_JSON", "")
     monkeypatch.setattr(main, "AUTH_USER", "")
     monkeypatch.setattr(main, "AUTH_PASSWORD", "")
-    monkeypatch.setattr(main, "AUTH_USERS_JSON", accounts_json())
+    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", tokens_json())
+    monkeypatch.setattr(main, "DEMO_MODE", True)
     monkeypatch.setattr(main, "MAINTENANCE_INTERVAL_MINUTES", 0)
     return TestClient(main.app)
 
 
-def csrf(client: TestClient, auth: tuple[str, str], path: str = "/") -> str:
-    response = client.get(path, auth=auth)
+def csrf(client: TestClient, headers: dict[str, str], path: str = "/") -> str:
+    response = client.get(path, headers=headers)
     assert response.status_code == 200
-    return client.cookies.get(main.CSRF_COOKIE)
+    token = client.cookies.get(main.CSRF_COOKIE)
+    assert token
+    return token
 
 
 def test_role_permissions(tmp_path: Path, monkeypatch):
     with make_client(tmp_path, monkeypatch) as client:
-        viewer = ("viewer", "view-pass")
+        viewer = auth_headers("viewer")
         token = csrf(client, viewer)
-        assert client.get("/", auth=viewer).status_code == 200
-        assert client.get("/upload", auth=viewer).status_code == 403
-        assert client.get("/export/backup.sqlite3", auth=viewer).status_code == 403
-        assert client.post("/rescore", auth=viewer, data={"csrf_token": token}).status_code == 403
+        assert client.get("/", headers=viewer).status_code == 200
+        assert client.get("/upload", headers=viewer).status_code == 403
+        assert client.get("/export/backup.sqlite3", headers=viewer).status_code == 403
+        assert client.post("/rescore", headers=viewer, data={"csrf_token": token}).status_code == 403
 
-        operator = ("operator", "ops-pass")
-        assert client.get("/upload", auth=operator).status_code == 200
-        assert client.get("/maintenance", auth=operator).status_code == 403
+        operator = auth_headers("operator")
+        assert client.get("/upload", headers=operator).status_code == 200
+        assert client.get("/maintenance", headers=operator).status_code == 403
 
-        admin = ("admin", "admin-pass")
-        assert client.get("/maintenance", auth=admin).status_code == 200
-        assert client.get("/export/backup.sqlite3", auth=admin).status_code == 200
+        admin = auth_headers("admin")
+        assert client.get("/maintenance", headers=admin).status_code == 200
+        assert client.get("/export/backup.sqlite3", headers=admin).status_code == 200
 
 
 def test_operator_requests_and_approver_approves(tmp_path: Path, monkeypatch):
     with make_client(tmp_path, monkeypatch) as client:
-        operator = ("operator", "ops-pass")
+        operator = auth_headers("operator")
         token = csrf(client, operator, "/finding/F-0001")
         requested = client.post(
             "/finding/F-0001",
-            auth=operator,
+            headers=operator,
             data={
                 "csrf_token": token,
                 "status": "RISK_ACCEPTED",
@@ -73,33 +87,33 @@ def test_operator_requests_and_approver_approves(tmp_path: Path, monkeypatch):
         )
         assert requested.status_code == 303
         assert "approval_requested" in requested.headers["location"]
-        before = client.get("/api/v1/findings/F-0001", auth=operator).json()
+        before = client.get("/api/v1/findings/F-0001", headers=operator).json()
         assert before["status"] != "RISK_ACCEPTED"
-        pending = client.get("/api/v1/approvals?status=PENDING", auth=operator).json()["items"]
+        pending = client.get("/api/v1/approvals?status=PENDING", headers=operator).json()["items"]
         assert len(pending) == 1
         request_id = pending[0]["request_id"]
 
-        approver = ("approver", "approve-pass")
+        approver = auth_headers("approver")
         approve_token = csrf(client, approver, "/approvals")
         decided = client.post(
             f"/approvals/{request_id}/decision",
-            auth=approver,
+            headers=approver,
             data={"csrf_token": approve_token, "decision": "APPROVED", "decision_note": "compensating control verified"},
             follow_redirects=False,
         )
         assert decided.status_code == 303
-        saved = client.get("/api/v1/findings/F-0001", auth=approver).json()
+        saved = client.get("/api/v1/findings/F-0001", headers=approver).json()
         assert saved["status"] == "RISK_ACCEPTED"
-        assert saved["risk_acceptance_approver"] == "approver"
+        assert saved["risk_acceptance_approver"] == "api:approver"
         assert saved["exception_expiry"] == "2027-01-31"
 
 
 def test_approval_detects_changed_finding(tmp_path: Path, monkeypatch):
     with make_client(tmp_path, monkeypatch) as client:
-        operator = ("operator", "ops-pass")
+        operator = auth_headers("operator")
         token = csrf(client, operator, "/finding/F-0001")
         requested = client.post(
-            "/finding/F-0001", auth=operator,
+            "/finding/F-0001", headers=operator,
             data={
                 "csrf_token": token, "status": "RISK_ACCEPTED", "owner": "", "due_date": "",
                 "exception_expiry": "2027-02-01", "risk_acceptance_reason": "temporary",
@@ -107,13 +121,13 @@ def test_approval_detects_changed_finding(tmp_path: Path, monkeypatch):
             }, follow_redirects=False,
         )
         assert requested.status_code == 303
-        request_id = client.get("/api/v1/approvals?status=PENDING", auth=operator).json()["items"][0]["request_id"]
+        request_id = client.get("/api/v1/approvals?status=PENDING", headers=operator).json()["items"][0]["request_id"]
 
-        admin = ("admin", "admin-pass")
+        admin = auth_headers("admin")
         admin_token = csrf(client, admin, "/finding/F-0001")
-        current = client.get("/api/v1/findings/F-0001", auth=admin).json()
+        current = client.get("/api/v1/findings/F-0001", headers=admin).json()
         changed = client.post(
-            "/finding/F-0001", auth=admin,
+            "/finding/F-0001", headers=admin,
             data={
                 "csrf_token": admin_token, "status": "IN_PROGRESS", "owner": "admin-owner",
                 "due_date": "2026-09-01", "exception_expiry": "", "risk_acceptance_reason": "",
@@ -123,14 +137,14 @@ def test_approval_detects_changed_finding(tmp_path: Path, monkeypatch):
         )
         assert changed.status_code == 303
 
-        approver = ("approver", "approve-pass")
+        approver = auth_headers("approver")
         approve_token = csrf(client, approver, "/approvals")
         conflict = client.post(
-            f"/approvals/{request_id}/decision", auth=approver,
+            f"/approvals/{request_id}/decision", headers=approver,
             data={"csrf_token": approve_token, "decision": "APPROVED", "decision_note": ""},
         )
         assert conflict.status_code == 409
-        assert client.get("/api/v1/findings/F-0001", auth=approver).json()["status"] == "IN_PROGRESS"
+        assert client.get("/api/v1/findings/F-0001", headers=approver).json()["status"] == "IN_PROGRESS"
 
 
 def test_maintenance_reopens_exceptions_archives_stale_and_prunes(tmp_path: Path, monkeypatch):
@@ -158,9 +172,9 @@ def test_maintenance_reopens_exceptions_archives_stale_and_prunes(tmp_path: Path
             )
             conn.commit()
 
-        admin = ("admin", "admin-pass")
+        admin = auth_headers("admin")
         token = csrf(client, admin, "/maintenance")
-        response = client.post("/maintenance/run", auth=admin, data={"csrf_token": token}, follow_redirects=False)
+        response = client.post("/maintenance/run", headers=admin, data={"csrf_token": token}, follow_redirects=False)
         assert response.status_code == 303
         assert get_finding(main.DB_PATH, "F-0001")["status"] == "OPEN"
         assert get_finding(main.DB_PATH, "F-0002")["record_state"] == "ARCHIVED"
@@ -177,8 +191,8 @@ def test_maintenance_reopens_exceptions_archives_stale_and_prunes(tmp_path: Path
 
 def test_viewer_cannot_access_approval_api(tmp_path: Path, monkeypatch):
     with make_client(tmp_path, monkeypatch) as client:
-        assert client.get("/api/v1/approvals", auth=("viewer", "view-pass")).status_code == 403
-        assert client.get("/api/v1/maintenance-runs", auth=("approver", "approve-pass")).status_code == 403
+        assert client.get("/api/v1/approvals", headers=auth_headers("viewer")).status_code == 403
+        assert client.get("/api/v1/maintenance-runs", headers=auth_headers("approver")).status_code == 403
 
 
 def test_maintenance_cancels_obsolete_pending_approval(tmp_path: Path, monkeypatch):
@@ -246,15 +260,15 @@ def test_reset_demo_deletes_pending_approvals_without_fk_failure(tmp_path: Path,
             main.DB_PATH, "F-0001", requested_by="operator", reason="temporary",
             exception_expiry="2027-04-01", expected_version=finding["row_version"],
         )
-        admin = ("admin", "admin-pass")
+        admin = auth_headers("admin")
         token = csrf(client, admin)
         response = client.post(
-            "/reset-demo", auth=admin,
+            "/reset-demo", headers=admin,
             data={"csrf_token": token, "confirmation": "RESET"},
             follow_redirects=False,
         )
         assert response.status_code == 303
-        assert client.get("/api/v1/approvals", auth=admin).json()["items"] == []
+        assert client.get("/api/v1/approvals", headers=admin).json()["items"] == []
 
 
 def test_legacy_schema_migration_adds_v5_tables(tmp_path: Path):
@@ -273,11 +287,12 @@ def test_legacy_schema_migration_adds_v5_tables(tmp_path: Path):
     assert {"request_id", "finding_id", "finding_row_version", "status"} <= approval_columns
 
 
-def test_invalid_multi_user_auth_configuration_fails_startup(tmp_path: Path, monkeypatch):
+def test_legacy_plaintext_user_configuration_fails_startup(tmp_path: Path, monkeypatch):
     import pytest
 
     monkeypatch.setattr(main, "DB_PATH", tmp_path / "bad-auth.sqlite3")
     monkeypatch.setattr(main, "AUTH_USERS_JSON", "{not-json}")
-    with pytest.raises(ValueError, match="올바른 JSON"):
+    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", tokens_json())
+    with pytest.raises(RuntimeError, match="평문 환경변수 사용자"):
         with TestClient(main.app):
             pass

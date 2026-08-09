@@ -86,7 +86,7 @@ def test_schema_v19_has_osv_tables(tmp_path: Path):
     with sqlite3.connect(db) as conn:
         version = conn.execute("PRAGMA user_version").fetchone()[0]
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-    assert version == CURRENT_SCHEMA_VERSION == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert {"osv_scan_runs", "osv_vulnerability_records", "sbom_osv_matches"} <= tables
 
 

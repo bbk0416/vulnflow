@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+{% block title %}프로젝트 · VulnFlow{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">PROJECT ISOLATION</p>
+    <h1>고객사·프로젝트</h1>
+    <p>각 프로젝트는 별도 SQLite DB와 증거·내보내기 저장소를 사용합니다.</p>
+  </div>
+</div>
+{% if notice_message %}<div class="notice success">{{ notice_message }}</div>{% endif %}
+{% if error_message %}<div class="notice danger" role="alert">{{ error_message }}</div>{% endif %}
+<section class="panel">
+  <h2>접근 가능한 프로젝트</h2>
+  <div class="project-card-grid">
+  {% for project in projects %}
+    <article class="project-card {% if request.state.active_project.project_id == project.project_id %}active{% endif %}">
+      <div>
+        <strong>{{ project.name }}</strong>
+        <small>{{ project.project_id }}</small>
+      </div>
+      <div class="tag-row">
+        {% if project.is_default %}<span class="tag">기본</span>{% endif %}
+        {% if project.status == 'ACTIVE' %}<span class="tag status-ok">활성</span>{% else %}<span class="tag red">비활성</span>{% endif %}
+        {% if project.integrity.status == 'HEALTHY' %}<span class="tag status-ok">무결성 정상</span>{% elif project.integrity.status == 'READ_ONLY' %}<span class="tag red">읽기 전용 격리</span>{% else %}<span class="tag">미검사</span>{% endif %}
+        {% if request.state.role == 'admin' %}<span class="tag">사용자 {{ project.member_count }}명</span>{% endif %}
+      </div>
+      {% if project.status == 'ACTIVE' %}
+      <form method="post" action="/projects/switch">
+        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+        <input type="hidden" name="project_id" value="{{ project.project_id }}">
+        <button type="submit" {% if request.state.active_project.project_id == project.project_id %}disabled{% endif %}>
+          {{ '현재 프로젝트' if request.state.active_project.project_id == project.project_id else '이 프로젝트 열기' }}
+        </button>
+      </form>
+      {% endif %}
+      {% if project.latest_backup %}<small>최근 백업 {{ project.latest_backup.created_at }} · {{ project.latest_backup.bundle_count }}개 보관</small>{% elif project.status == 'ACTIVE' %}<small>생성된 예약 백업 없음</small>{% endif %}
+      {% if request.state.role == 'admin' %}<a href="/projects?selected={{ project.project_id }}">운영 설정</a>{% endif %}
+    </article>
+  {% endfor %}
+  </div>
+</section>
+{% if request.state.role == 'admin' %}
+<section class="panel">
+  <h2>새 프로젝트 만들기</h2>
+  <form class="form-grid" method="post" action="/admin/projects">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+    <label class="wide">고객사 또는 프로젝트 이름
+      <input name="name" minlength="2" maxlength="80" placeholder="예: A사 2026 정기 진단" required>
+      <small>생성 즉시 별도 DB와 증거 저장소가 만들어집니다.</small>
+    </label>
+    <button class="primary" type="submit">분리 프로젝트 생성</button>
+  </form>
+</section>
+{% if selected_project %}
+<section class="panel">
+  <div class="section-heading">
+    <div><h2>{{ selected_project.name }} 설정</h2><p>{{ selected_project.project_id }}</p></div>
+    {% if not selected_project.is_default %}
+    <form method="post" action="/admin/projects/{{ selected_project.project_id }}/status">
+      <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+      <input type="hidden" name="active" value="{{ 0 if selected_project.status == 'ACTIVE' else 1 }}">
+      <button type="submit">{{ '프로젝트 비활성화' if selected_project.status == 'ACTIVE' else '프로젝트 활성화' }}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% if selected_project.status == 'ACTIVE' %}
+  <div class="summary-grid">
+    <article class="summary-card">
+      <span>무결성 상태</span>
+      <strong>{{ '정상' if selected_project.integrity.status == 'HEALTHY' else '읽기 전용 격리' if selected_project.integrity.status == 'READ_ONLY' else '미검사' }}</strong>
+      <small>{{ selected_project.integrity.checked_at or '아직 검사하지 않았습니다.' }}</small>
+    </article>
+    <article class="summary-card">
+      <span>최근 복구 번들</span>
+      <strong>{{ selected_project.latest_backup.filename if selected_project.latest_backup else '없음' }}</strong>
+      <small>{% if selected_project.latest_backup %}{{ selected_project.latest_backup.created_at }} · {{ selected_project.latest_backup.size_bytes }} bytes{% else %}예약 또는 수동 백업을 실행하세요.{% endif %}</small>
+    </article>
+    <article class="summary-card">
+      <span>외부 보관 복사본</span>
+      <strong>{{ selected_project.recovery.latest_external.filename if selected_project.recovery.latest_external else '없음' }}</strong>
+      <small>{% if selected_project.recovery.latest_external %}{{ selected_project.recovery.latest_external.modified_at }} · {{ 'SHA-256 정상' if selected_project.recovery.latest_external.copy_verified else 'SHA-256 검증 실패' }}{% elif selected_project.recovery.external_configured %}외부 보관소에 아직 복사본이 없습니다.{% else %}<code>VULNFLOW_EXTERNAL_BACKUP_DIR</code> 미설정{% endif %}</small>
+    </article>
+    <article class="summary-card">
+      <span>최근 복구 리허설</span>
+      <strong>{% if selected_project.recovery.latest_drill %}{{ '성공' if selected_project.recovery.latest_drill.status == 'PASSED' else '실패' }}{% else %}없음{% endif %}</strong>
+      <small>{% if selected_project.recovery.latest_drill %}{{ selected_project.recovery.latest_drill.completed_at }} · {{ selected_project.recovery.latest_drill.bundle_filename }}{% else %}백업이 실제로 복원되는지 격리 환경에서 확인하세요.{% endif %}</small>
+    </article>
+  </div>
+  {% if selected_project.integrity.reasons %}
+  <div class="notice danger" role="alert"><strong>격리 사유</strong><ul>{% for reason in selected_project.integrity.reasons %}<li>{{ reason }}</li>{% endfor %}</ul></div>
+  {% endif %}
+  <div class="action-row">
+    <form method="post" action="/admin/projects/integrity-check">
+      <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+      <input type="hidden" name="project_id" value="{{ selected_project.project_id }}">
+      <button type="submit">무결성 다시 검사</button>
+    </form>
+    <form method="post" action="/admin/projects/backup">
+      <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+      <input type="hidden" name="project_id" value="{{ selected_project.project_id }}">
+      <button class="primary" type="submit" {% if selected_project.integrity.active %}disabled{% endif %}>복구 번들 생성 예약</button>
+    </form>
+  </div>
+  <h3>복구 번들·리허설</h3>
+  <p class="meta">리허설은 선택한 번들을 임시 격리 저장소에 복원하고 SQLite·감사 체인·증거 파일을 다시 검사합니다. 현재 프로젝트 데이터는 변경하지 않습니다.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>위치</th><th>파일</th><th>생성 시각</th><th>크기</th><th>SHA-256</th><th>리허설</th></tr></thead>
+      <tbody>
+      {% for item in selected_project.recovery.local + selected_project.recovery.external %}
+        <tr>
+          <td>{{ '외부 보관소' if item.location == 'external' else '서버 로컬' }}{% if item.location == 'external' %}<br><small>{{ '검증 정상' if item.copy_verified else '검증 실패' }}</small>{% endif %}</td>
+          <td><strong>{{ item.filename }}</strong></td>
+          <td>{{ item.modified_at }}</td>
+          <td>{{ item.size_bytes }} bytes</td>
+          <td><code>{{ item.sha256[:16] }}…</code></td>
+          <td>
+            <form method="post" action="/admin/projects/recovery-drill">
+              <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+              <input type="hidden" name="project_id" value="{{ selected_project.project_id }}">
+              <input type="hidden" name="location" value="{{ item.location }}">
+              <input type="hidden" name="filename" value="{{ item.filename }}">
+              <button type="submit" {% if item.location == 'external' and not item.copy_verified %}disabled{% endif %}>격리 복원 리허설</button>
+            </form>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">리허설에 사용할 복구 번들이 없습니다.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if selected_project.recovery.drills %}
+  <details>
+    <summary>최근 리허설 보고서 {{ selected_project.recovery.drills|length }}개</summary>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>상태</th><th>완료 시각</th><th>번들</th><th>소요</th><th>보고서</th></tr></thead>
+        <tbody>{% for drill in selected_project.recovery.drills %}<tr><td>{{ drill.status }}</td><td>{{ drill.completed_at }}</td><td>{{ drill.bundle_filename }}</td><td>{{ drill.duration_ms }}ms</td><td><code>{{ drill.report_filename }}</code></td></tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </details>
+  {% endif %}
+  {% endif %}
+  <h3>사용자 접근 권한</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>사용자</th><th>역할</th><th>계정 상태</th><th>프로젝트 접근</th></tr></thead>
+      <tbody>
+      {% for user in members %}
+        <tr>
+          <td><strong>{{ user.username }}</strong></td>
+          <td>{{ user.role }}</td>
+          <td>{{ '활성' if user.is_active else '비활성' }}</td>
+          <td>
+            {% if user.role == 'admin' %}
+            <span class="tag status-ok">모든 활성 프로젝트</span>
+            {% else %}
+            <form method="post" action="/admin/projects/{{ selected_project.project_id }}/members/{{ user.username }}">
+              <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+              <input type="hidden" name="member" value="{{ 0 if user.is_member else 1 }}">
+              <button type="submit">{{ '접근 해제' if user.is_member else '접근 부여' }}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endif %}
+{% endblock %}

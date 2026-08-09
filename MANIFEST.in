@@ -18,3 +18,8 @@ include requirements-quality.txt
 recursive-include scripts *.py
 recursive-include tests *.py *.json *.gz
 recursive-include assets *.png
+include docker-compose.yml
+include docker-compose.production.yml
+include .env.example
+include .env.production.example
+recursive-include deploy *.conf *.md

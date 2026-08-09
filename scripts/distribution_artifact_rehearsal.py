@@ -3,7 +3,6 @@ from __future__ import annotations
 """Build, normalize, install, and execute VulnFlow distribution artifacts."""
 
 import argparse
-import base64
 from dataclasses import dataclass
 import gzip
 import hashlib
@@ -28,12 +27,16 @@ import requests
 
 sys.dont_write_bytecode = True
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from app.core.schema_versions import CURRENT_SCHEMA_VERSION
+
 REPORT_JSON = ROOT / "reports" / "distribution_artifact_rehearsal_verification.json"
 REPORT_TEXT = ROOT / "reports" / "distribution_artifact_rehearsal_verification.txt"
 DIST_DIR = ROOT / "dist"
 SOURCE_DATE_EPOCH = 1767225600  # 2026-01-01T00:00:00Z
 PACKAGE_NAME = "bbk-vulnflow"
-EXPECTED_SCHEMA_VERSION = 40
 
 
 @dataclass(frozen=True)
@@ -214,11 +217,6 @@ def _free_port() -> int:
         return int(sock.getsockname()[1])
 
 
-def _basic(username: str, password: str) -> dict[str, str]:
-    token = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
-    return {"Authorization": f"Basic {token}"}
-
-
 def _wait_ready(base_url: str, process: subprocess.Popen[Any], log_path: Path) -> None:
     deadline = time.monotonic() + 30
     last_error = ""
@@ -321,22 +319,29 @@ def _install_and_run(wheel: Path, version: str, workspace: Path) -> dict[str, An
         raise RuntimeError("wheel installation failed:\n" + install.stdout[-4000:])
 
     data = run_dir / "data"
-    for relative in ("", "evidence", "recovery", "exports"):
-        (data / relative).mkdir(parents=True, exist_ok=True)
+    default_project = data / "projects" / "default"
+    for path in (data, default_project / "evidence", default_project / "backups" / "recovery", default_project / "exports"):
+        path.mkdir(parents=True, exist_ok=True)
     env = {key: value for key, value in os.environ.items() if key != "PYTHONPATH" and not key.startswith("VULNFLOW_")}
     env.update({
         "PYTHONDONTWRITEBYTECODE": "1",
         "PYTHONUNBUFFERED": "1",
         "VULNFLOW_HOST": "127.0.0.1",
         "VULNFLOW_PORT": str(_free_port()),
-        "VULNFLOW_DB": str(data / "vulnflow.db"),
+        "VULNFLOW_BASE_DIR": str(run_dir),
+        "VULNFLOW_DATA_DIR": str(data),
+        "VULNFLOW_DB": str(data / "legacy-vulnflow.db"),
+        "VULNFLOW_CONTROL_DB": str(data / "control.db"),
+        "VULNFLOW_PROJECTS_DIR": str(data / "projects"),
+        "VULNFLOW_DEFAULT_PROJECT_ROOT": str(default_project),
+        "VULNFLOW_DEFAULT_PROJECT_DB": str(default_project / "vulnflow.db"),
         "VULNFLOW_COORDINATION_DB": str(data / "coordination.db"),
-        "VULNFLOW_EVIDENCE_DIR": str(data / "evidence"),
-        "VULNFLOW_RECOVERY_DIR": str(data / "recovery"),
-        "VULNFLOW_EXPORT_DIR": str(data / "exports"),
+        "VULNFLOW_EVIDENCE_DIR": str(default_project / "evidence"),
+        "VULNFLOW_RECOVERY_DIR": str(default_project / "backups" / "recovery"),
+        "VULNFLOW_EXPORT_DIR": str(default_project / "exports"),
         "VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK": "0",
-        "VULNFLOW_USERS_JSON": json.dumps({
-            "artifact-admin": {"password": "artifact-admin-pass-72-0-6", "role": "admin"}
+        "VULNFLOW_API_TOKENS_JSON": json.dumps({
+            "artifact-admin": {"token": "artifact-admin-token-72-0-14-abcdef", "role": "admin", "projects": "*"}
         }),
         "VULNFLOW_CLUSTER_COORDINATION_ENABLED": "0",
         "VULNFLOW_JOB_WORKER_ENABLED": "0",
@@ -367,12 +372,12 @@ def _install_and_run(wheel: Path, version: str, workspace: Path) -> dict[str, An
         anonymous = requests.get(base_url + "/", timeout=3).status_code
         authenticated = requests.get(
             base_url + "/",
-            headers=_basic("artifact-admin", "artifact-admin-pass-72-0-6"),
+            headers={"Authorization": "Bearer artifact-admin-token-72-0-14-abcdef"},
             timeout=5,
         ).status_code
     finally:
         shutdown_ms = _terminate(process) if process.poll() is None else 0
-    database = data / "vulnflow.db"
+    database = default_project / "vulnflow.db"
     with sqlite3.connect(database) as connection:
         schema = int(connection.execute("PRAGMA user_version").fetchone()[0])
         integrity = str(connection.execute("PRAGMA integrity_check").fetchone()[0])
@@ -429,7 +434,7 @@ def run_rehearsal(*, keep_workspace: bool = False) -> dict[str, Any]:
             "installed_auth_default_closed": installed["anonymous_root_status"] == 401,
             "installed_authenticated_root": installed["authenticated_root_status"] == 200,
             "installed_sigterm_bounded": installed["shutdown_ms"] <= 12_000,
-            "installed_database_schema": installed["schema_version"] == EXPECTED_SCHEMA_VERSION,
+            "installed_database_schema": installed["schema_version"] == CURRENT_SCHEMA_VERSION,
             "installed_database_integrity": installed["sqlite_integrity"] == "ok",
         }
         passed = all(checks.values())

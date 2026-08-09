@@ -37,7 +37,7 @@ def main() -> None:
         with connect(db) as conn:
             version = int(conn.execute("PRAGMA user_version").fetchone()[0])
             columns = {row[1] for row in conn.execute("PRAGMA table_info(idempotency_records)")}
-        checks["schema_31_ledger_on_schema_32"] = version == CURRENT_SCHEMA_VERSION == 40
+        checks["schema_31_ledger_on_schema_32"] = version == CURRENT_SCHEMA_VERSION == 46
         checks["raw_key_column_absent"] = "idempotency_key" not in columns
 
         key = "smoke-job-key-0001"

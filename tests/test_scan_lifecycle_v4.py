@@ -261,12 +261,9 @@ def test_archived_finding_rejects_workflow_update(client: TestClient):
     assert "ACTIVE로 복원" in response.text
 
 
-def test_health_remains_available_when_basic_auth_is_enabled(monkeypatch, client: TestClient):
-    monkeypatch.setattr(main, "AUTH_USER", "operator")
-    monkeypatch.setattr(main, "AUTH_PASSWORD", "secret")
+def test_health_remains_available_in_explicit_demo_mode(client: TestClient):
     assert client.get("/health").status_code == 200
-    protected = client.get("/")
-    assert protected.status_code == 401
+    assert client.get("/").status_code == 200
 
 
 def test_html_report_excludes_archived_records(tmp_path: Path):

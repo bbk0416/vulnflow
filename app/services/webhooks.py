@@ -8,13 +8,15 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-import requests
-
 from app.core.retry import parse_retry_after, retryable_http_status
 from app.core.database_schema import CURRENT_APP_VERSION
 from app.core.db import utc_now
 from app.repositories.webhook_delivery import list_due_webhook_events, record_webhook_delivery
 from app.repositories.webhook_queue import enqueue_webhook_events
+from app.services.outbound_http import (
+    OutboundPolicyError, OutboundResolutionError, OutboundResponseTooLarge,
+    OutboundTransportError, request_outbound,
+)
 
 
 @dataclass(frozen=True)
@@ -49,6 +51,8 @@ def parse_webhook_endpoints(raw_json: str, *, allow_insecure_http: bool = False)
         parsed = urlparse(url)
         if parsed.scheme not in {"http", "https"} or not parsed.netloc:
             raise WebhookConfigError(f"{name}: http 또는 https URL이 필요합니다.")
+        if parsed.username is not None or parsed.password is not None or parsed.fragment:
+            raise WebhookConfigError(f"{name}: 사용자정보와 fragment가 없는 URL이 필요합니다.")
         if parsed.scheme == "http" and parsed.hostname not in {"127.0.0.1", "localhost", "::1"} and not allow_insecure_http:
             raise WebhookConfigError(f"{name}: 원격 웹훅은 HTTPS가 필요합니다.")
         if len(secret) < 16:
@@ -57,6 +61,8 @@ def parse_webhook_endpoints(raw_json: str, *, allow_insecure_http: bool = False)
         if not isinstance(raw_events, list) or not raw_events:
             raise WebhookConfigError(f"{name}: events는 비어 있지 않은 배열이어야 합니다.")
         events = frozenset(str(event).strip() for event in raw_events if str(event).strip())
+        if not events:
+            raise WebhookConfigError(f"{name}: events에는 하나 이상의 이벤트 이름이 필요합니다.")
         endpoints[name] = WebhookEndpoint(name=name, url=url, secret=secret, events=events)
     return endpoints
 
@@ -114,6 +120,9 @@ def deliver_due_events(
     timeout_seconds: int = 10,
     max_attempts: int = 5,
     limit: int = 50,
+    allow_private_networks: bool = False,
+    host_allowlist: str | tuple[str, ...] = (),
+    max_response_bytes: int = 1024 * 1024,
 ) -> dict[str, int]:
     summary = {"delivered": 0, "retry": 0, "failed": 0, "skipped": 0}
     for event in list_due_webhook_events(db_path, limit=limit):
@@ -142,20 +151,26 @@ def deliver_due_events(
             "X-VulnFlow-Signature": _signature(endpoint.secret, body),
         }
         try:
-            response = requests.post(
-                endpoint.url, data=body, headers=headers,
-                timeout=max(1, int(timeout_seconds)), allow_redirects=False,
+            response = request_outbound(
+                "POST", endpoint.url, body=body, headers=headers,
+                timeout_seconds=max(1, int(timeout_seconds)),
+                max_response_bytes=max_response_bytes,
+                allow_private_networks=allow_private_networks,
+                host_allowlist=host_allowlist,
             )
-        except requests.RequestException as exc:
+        except (OutboundPolicyError, OutboundResponseTooLarge) as exc:
             result = record_webhook_delivery(
-                db_path,
-                event_id=event["event_id"],
-                delivered=False,
-                response_status=getattr(getattr(exc, "response", None), "status_code", None),
-                error=str(exc)[:1000],
-                max_attempts=max_attempts,
-                retryable=True,
-                failure_kind="transport",
+                db_path, event_id=event["event_id"], delivered=False,
+                response_status=None, error=str(exc)[:1000], max_attempts=max_attempts,
+                retryable=False, failure_kind="outbound_policy",
+            )
+            summary["failed" if result.get("status") == "FAILED" else "retry"] += 1
+            continue
+        except (OutboundResolutionError, OutboundTransportError) as exc:
+            result = record_webhook_delivery(
+                db_path, event_id=event["event_id"], delivered=False,
+                response_status=None, error=str(exc)[:1000], max_attempts=max_attempts,
+                retryable=True, failure_kind="transport",
             )
             summary["failed" if result.get("status") == "FAILED" else "retry"] += 1
             continue

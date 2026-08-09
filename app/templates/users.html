@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}사용자 관리 · VulnFlow{% endblock %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <p class="eyebrow">ADMINISTRATION</p>
+    <h1>사용자 관리</h1>
+    <p>브라우저 로그인 계정과 활성 세션을 관리합니다.</p>
+  </div>
+</div>
+{% if notice_message %}<div class="notice success">{{ notice_message }}</div>{% endif %}
+{% if error_message %}<div class="notice danger" role="alert">{{ error_message }}</div>{% endif %}
+<section class="panel">
+  <h2>새 사용자 만들기</h2>
+  <form class="form-grid user-create-form" method="post" action="/admin/users">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+    <label>사용자 이름
+      <input name="username" minlength="3" maxlength="64" autocomplete="off" placeholder="operator01" required>
+    </label>
+    <label>역할
+      <select name="role" required>
+        {% for role in roles %}<option value="{{ role }}">{{ role }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="wide">초기 비밀번호
+      <input type="password" name="password" minlength="12" maxlength="256" autocomplete="new-password" required>
+      <small>12자 이상, 대문자·소문자·숫자·특수문자 중 3종류 이상</small>
+    </label>
+    <button class="primary" type="submit">사용자 생성</button>
+  </form>
+</section>
+<section class="panel">
+  <h2>등록된 사용자</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>사용자</th><th>역할</th><th>상태</th><th>마지막 로그인</th><th>세션</th><th>보안 상태</th><th>관리</th></tr></thead>
+      <tbody>
+      {% for user in users %}
+        <tr>
+          <td><strong>{{ user.username }}</strong><br><small>{{ user.created_at }}</small></td>
+          <td><span class="tag">{{ user.role }}</span></td>
+          <td>{% if user.is_active %}<span class="tag status-ok">활성</span>{% else %}<span class="tag red">비활성</span>{% endif %}</td>
+          <td>{{ user.last_login_at or '로그인 기록 없음' }}</td>
+          <td>{{ user.active_sessions }}개</td>
+          <td>
+            <span class="tag">활성 세션 {{ user.active_sessions }}개</span>
+          </td>
+          <td>
+            <details class="user-actions">
+              <summary>계정 관리</summary>
+              <div class="user-action-stack">
+                <form method="post" action="/admin/users/{{ user.username }}/status">
+                  <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                  <input type="hidden" name="active" value="{{ 0 if user.is_active else 1 }}">
+                  <button type="submit">{{ '비활성화' if user.is_active else '활성화' }}</button>
+                </form>
+                <form method="post" action="/admin/users/{{ user.username }}/unlock">
+                  <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                  <button type="submit">로그인 실패 기록 초기화</button>
+                </form>
+                <form method="post" action="/admin/users/{{ user.username }}/sessions/revoke">
+                  <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                  <button type="submit">세션 모두 종료</button>
+                </form>
+                <form class="form" method="post" action="/admin/users/{{ user.username }}/password">
+                  <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+                  <label>새 비밀번호<input type="password" name="password" minlength="12" maxlength="256" autocomplete="new-password" required></label>
+                  <button type="submit">비밀번호 변경</button>
+                </form>
+              </div>
+            </details>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7">등록된 사용자가 없습니다.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

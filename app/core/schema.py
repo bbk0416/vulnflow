@@ -214,6 +214,7 @@ CREATE TABLE IF NOT EXISTS idempotency_records (
     resource_id TEXT NOT NULL,
     response_json TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL,
+    last_seen_at TEXT NOT NULL DEFAULT '',
     expires_at TEXT NOT NULL,
     PRIMARY KEY(scope, key_sha256)
 );
@@ -406,6 +407,55 @@ CREATE TABLE IF NOT EXISTS integrity_proof_mirror_consistency_checkpoints (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS collaboration_integrations (
+    channel TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 0,
+    config_json TEXT NOT NULL DEFAULT '{}',
+    secret_ciphertext TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    CHECK(channel IN ('EMAIL','JIRA'))
+);
+
+CREATE TABLE IF NOT EXISTS collaboration_events (
+    event_id TEXT PRIMARY KEY,
+    channel TEXT NOT NULL,
+    event_type TEXT NOT NULL,
+    finding_id TEXT NOT NULL DEFAULT '',
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    status TEXT NOT NULL DEFAULT 'PENDING',
+    attempts INTEGER NOT NULL DEFAULT 0,
+    next_attempt_at TEXT NOT NULL,
+    last_attempt_at TEXT,
+    delivered_at TEXT,
+    response_status INTEGER,
+    last_error TEXT NOT NULL DEFAULT '',
+    external_key TEXT NOT NULL DEFAULT '',
+    external_url TEXT NOT NULL DEFAULT '',
+    dedupe_key TEXT NOT NULL DEFAULT '',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    CHECK(channel IN ('EMAIL','JIRA')),
+    CHECK(status IN ('PENDING','RETRY','SENDING','DELIVERED','FAILED','SKIPPED'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_collaboration_events_dedupe
+    ON collaboration_events(dedupe_key) WHERE dedupe_key<>'';
+CREATE INDEX IF NOT EXISTS idx_collaboration_events_due
+    ON collaboration_events(status,next_attempt_at,created_at);
+
+CREATE TABLE IF NOT EXISTS finding_external_links (
+    finding_id TEXT NOT NULL REFERENCES findings(finding_id) ON DELETE CASCADE,
+    provider TEXT NOT NULL,
+    external_key TEXT NOT NULL,
+    external_url TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY(finding_id,provider),
+    UNIQUE(provider,external_key)
+);
+
 CREATE TABLE IF NOT EXISTS webhook_events (
     event_id TEXT PRIMARY KEY,
     endpoint_name TEXT NOT NULL,
@@ -454,6 +504,73 @@ CREATE TABLE IF NOT EXISTS policy_activation_requests (
     FOREIGN KEY(active_policy_id_at_request) REFERENCES policy_versions(policy_id)
 );
 
+
+CREATE TABLE IF NOT EXISTS app_users (
+    username TEXT PRIMARY KEY COLLATE NOCASE,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL CHECK(role IN ('viewer','operator','approver','admin')),
+    is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
+    failed_attempts INTEGER NOT NULL DEFAULT 0,
+    locked_until TEXT NOT NULL DEFAULT '',
+    last_login_at TEXT NOT NULL DEFAULT '',
+    password_changed_at TEXT NOT NULL,
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS auth_sessions (
+    session_hash TEXT PRIMARY KEY,
+    username TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    revoked_at TEXT NOT NULL DEFAULT '',
+    user_agent_hash TEXT NOT NULL DEFAULT '',
+    client_hash TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY(username) REFERENCES app_users(username) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS auth_login_attempts (
+    attempt_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username_key TEXT NOT NULL,
+    client_key TEXT NOT NULL DEFAULT '',
+    succeeded INTEGER NOT NULL DEFAULT 0 CHECK(succeeded IN (0,1)),
+    created_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS projects (
+    project_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'ACTIVE' CHECK(status IN ('ACTIVE','INACTIVE')),
+    is_default INTEGER NOT NULL DEFAULT 0 CHECK(is_default IN (0,1)),
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS project_memberships (
+    project_id TEXT NOT NULL,
+    username TEXT NOT NULL COLLATE NOCASE,
+    created_by TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY(project_id,username),
+    FOREIGN KEY(project_id) REFERENCES projects(project_id) ON DELETE CASCADE,
+    FOREIGN KEY(username) REFERENCES app_users(username) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS pilot_project_profile (
+    singleton_id INTEGER PRIMARY KEY CHECK(singleton_id=1),
+    customer_name TEXT NOT NULL DEFAULT '',
+    engagement_name TEXT NOT NULL DEFAULT '',
+    contact_name TEXT NOT NULL DEFAULT '',
+    contact_email TEXT NOT NULL DEFAULT '',
+    scope_notes TEXT NOT NULL DEFAULT '',
+    default_due_days INTEGER NOT NULL DEFAULT 30 CHECK(default_due_days BETWEEN 1 AND 365),
+    report_footer TEXT NOT NULL DEFAULT '',
+    updated_by TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL DEFAULT ''
+);
 
 CREATE TABLE IF NOT EXISTS schema_migrations (
     version INTEGER PRIMARY KEY,

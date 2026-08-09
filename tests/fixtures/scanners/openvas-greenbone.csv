@@ -1,0 +1,3 @@
+IP,Hostname,Port,NVT Name,CVEs,CVSS,Summary,Solution,Solution Type
+192.0.2.20,openvas-fixture.example.test,443/tcp,Synthetic TLS issue,CVE-2026-95002,8.8,Synthetic issue,Upgrade the package,VendorFix
+192.0.2.21,inventory-fixture.example.test,0/tcp,Synthetic inventory item,,0.0,No CVE,Review manually,None

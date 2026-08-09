@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}읽기 전용 복구 모드 · VulnFlow{% endblock %}
+{% block content %}
+<section class="panel warning-zone recovery-mode-panel">
+  <h1>변경 요청이 차단되었습니다</h1>
+  <p>{{ detail }}</p>
+  <h2>감지된 문제</h2>
+  <ul>
+    {% for reason in recovery_mode.reasons %}<li>{{ reason }}</li>{% else %}<li>무결성 검사에 실패했습니다.</li>{% endfor %}
+  </ul>
+  {% if request.state.role == 'admin' %}
+  <p><a class="button-link" href="/system">시스템·복구 화면으로 이동</a></p>
+  {% else %}
+  <p>관리자에게 복구 모드 상태를 전달하세요.</p>
+  {% endif %}
+</section>
+{% endblock %}

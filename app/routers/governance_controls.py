@@ -53,6 +53,14 @@ ROUTE_NAMES = (
     "api_restore_recovery_bundle",
 )
 
+
+def _active_project_identity(request: Request) -> tuple[str, str]:
+    active = dict(getattr(request.state, "active_project", {}) or {})
+    return (
+        str(active.get("project_id") or "default"),
+        str(active.get("name") or "기본 프로젝트"),
+    )
+
 @router.get("/config-changes", response_class=HTMLResponse)
 def config_changes_page(request: Request, notice: str = ""):
     _require_role(request, "operator")
@@ -185,11 +193,13 @@ def export_recovery_bundle(request: Request):
     handle = tempfile.NamedTemporaryFile(prefix="vulnflow_recovery_", suffix=".zip", delete=False)
     handle.close()
     signing, backup_key_id, backup_key = _backup_signing()
+    project_id, project_name = _active_project_identity(request)
     create_recovery_bundle(
         DB_PATH, handle.name,
         config_audit=build_config_audit(db_path=DB_PATH, base_dir=BASE_DIR),
         signing_key=backup_key, signing_key_id=backup_key_id, signing_keys=signing.keys,
         audit_signing_keys=signing.keys, created_by=_actor(request), base_dir=BASE_DIR, evidence_dir=EVIDENCE_DIR,
+        project_id=project_id, project_name=project_name,
     )
     return FileResponse(
         handle.name, filename="vulnflow_recovery_bundle.zip", media_type="application/zip",
@@ -215,6 +225,7 @@ async def validate_recovery_bundle_ui(
             path, signing_keys=_signing_config().keys, audit_signing_keys=_signing_config().keys,
             require_signature=BACKUP_REQUIRE_SIGNATURE,
             current_schema_version=CURRENT_SCHEMA_VERSION, evidence_dir=EVIDENCE_DIR,
+            expected_project_id=_active_project_identity(request)[0],
         ))
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
@@ -247,14 +258,24 @@ async def restore_recovery_bundle_ui(
         with _exclusive_operation(RESTORE_LEASE_NAME, "복구 번들 복원"):
             if count_active_background_jobs(DB_PATH) > 0:
                 raise ConcurrencyError("실행 또는 대기 중인 백그라운드 작업이 있어 복원할 수 없습니다.")
-            if count_cluster_write_activities(_coordination_db_path()) > 0:
+            if (
+                CLUSTER_COORDINATION_ENABLED
+                and count_cluster_write_activities(
+                    _coordination_db_path(request.state.vulnflow_context)
+                ) > 0
+            ):
                 raise ConcurrencyError("처리 중인 쓰기 요청이 있어 복원할 수 없습니다.")
             restore_recovery_bundle(
                 DB_PATH, temp_path, actor=_actor(request), signing_keys=_signing_config().keys,
                 audit_signing_keys=_signing_config().keys, require_signature=BACKUP_REQUIRE_SIGNATURE,
                 current_schema_version=CURRENT_SCHEMA_VERSION, evidence_dir=EVIDENCE_DIR,
+                expected_project_id=_active_project_identity(request)[0],
             )
-            rescore_all(audit=False, actor=_actor(request))
+            rescore_all(
+                audit=False,
+                actor=_actor(request),
+                context=request.state.vulnflow_context,
+            )
     except ConcurrencyError as exc:
         raise HTTPException(409, str(exc)) from exc
     except ValueError as exc:
@@ -407,6 +428,7 @@ async def api_validate_recovery_bundle(request: Request, file: UploadFile = File
             path, signing_keys=_signing_config().keys, audit_signing_keys=_signing_config().keys,
             require_signature=BACKUP_REQUIRE_SIGNATURE,
             current_schema_version=CURRENT_SCHEMA_VERSION, evidence_dir=EVIDENCE_DIR,
+            expected_project_id=_active_project_identity(request)[0],
         )
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
@@ -434,14 +456,24 @@ async def api_restore_recovery_bundle(
         with _exclusive_operation(RESTORE_LEASE_NAME, "API 복구 번들 복원"):
             if count_active_background_jobs(DB_PATH) > 0:
                 raise ConcurrencyError("실행 또는 대기 중인 백그라운드 작업이 있어 복원할 수 없습니다.")
-            if count_cluster_write_activities(_coordination_db_path()) > 0:
+            if (
+                CLUSTER_COORDINATION_ENABLED
+                and count_cluster_write_activities(
+                    _coordination_db_path(request.state.vulnflow_context)
+                ) > 0
+            ):
                 raise ConcurrencyError("처리 중인 쓰기 요청이 있어 복원할 수 없습니다.")
             result = restore_recovery_bundle(
                 DB_PATH, path, actor=_actor(request), signing_keys=_signing_config().keys,
                 audit_signing_keys=_signing_config().keys, require_signature=BACKUP_REQUIRE_SIGNATURE,
                 current_schema_version=CURRENT_SCHEMA_VERSION, evidence_dir=EVIDENCE_DIR,
+                expected_project_id=_active_project_identity(request)[0],
             )
-            result["rescored"] = rescore_all(audit=False, actor=_actor(request))
+            result["rescored"] = rescore_all(
+                audit=False,
+                actor=_actor(request),
+                context=request.state.vulnflow_context,
+            )
             return result
     except ConcurrencyError as exc:
         raise HTTPException(409, str(exc)) from exc

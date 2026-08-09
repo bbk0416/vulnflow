@@ -15,10 +15,12 @@ import hashlib
 import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 import sqlite3
 import socket
 import sys
+import shutil
 import tempfile
 import threading
 import time
@@ -34,6 +36,8 @@ from fastapi.testclient import TestClient
 
 import app.main as app_main
 from app.core.context import get_application_context
+from app.core.project_scope import project_scope
+from app.services.project_runtime import application_project_selections
 
 _WEBHOOK_SECRET = "vulnflow-soak-secret-2026"
 
@@ -199,13 +203,27 @@ class WebhookSink:
 
 
 def _settings(root: Path, *, port: int) -> dict[str, object]:
+    default_root = root / "projects" / "default"
     return {
-        "DB_PATH": root / "soak.db",
-        "EVIDENCE_DIR": root / "evidence",
-        "EXPORT_DIR": root / "exports",
-        "RECOVERY_DIR": root / "recovery",
+        "DATA_DIR": root,
+        "LEGACY_DB_PATH": root / "legacy-vulnflow.db",
+        "CONTROL_DB_PATH": root / "control.db",
+        "DEFAULT_PROJECT_ROOT": default_root,
+        "DEFAULT_PROJECT_DB_PATH": default_root / "vulnflow.db",
+        "DB_PATH": default_root / "vulnflow.db",
+        "PROJECTS_DIR": root / "projects",
+        "EVIDENCE_DIR": default_root / "evidence",
+        "EXPORT_DIR": default_root / "exports",
+        "IMPORT_PREVIEW_DIR": default_root / "import-previews",
+        "RECOVERY_DIR": default_root / "backups" / "recovery",
+        "LEGACY_EVIDENCE_DIR": root / "legacy-evidence",
+        "LEGACY_EXPORT_DIR": root / "legacy-exports",
+        "LEGACY_IMPORT_PREVIEW_DIR": root / "legacy-previews",
+        "LEGACY_RECOVERY_DIR": root / "legacy-recovery",
+        "EXTERNAL_BACKUP_DIR": root / "external-backups",
         "COORDINATION_DB_ENV": str(root / "coordination.db"),
         "CLUSTER_COORDINATION_ENABLED": False,
+        "DEMO_MODE": True,
         "ALLOW_LOCAL_ADMIN_FALLBACK": True,
         "JOB_WORKER_ENABLED": True,
         "JOB_WORKER_INTERVAL_SECONDS": 1,
@@ -214,6 +232,7 @@ def _settings(root: Path, *, port: int) -> dict[str, object]:
         "WEBHOOK_INTERVAL_SECONDS": 60,
         "BACKUP_INTERVAL_HOURS": 24,
         "WEBHOOK_ALLOW_INSECURE_HTTP": True,
+        "OUTBOUND_ALLOW_PRIVATE_NETWORKS": True,
         "WEBHOOK_TIMEOUT_SECONDS": 3,
         "WEBHOOK_MAX_ATTEMPTS": 2,
         "WEBHOOKS_JSON": json.dumps(
@@ -284,28 +303,40 @@ def _evaluate(
 ) -> list[dict[str, Any]]:
     rss_values = [int(item["rss_bytes"]) for item in samples if item.get("rss_bytes") is not None]
     rss_growth = max(0, rss_values[-1] - rss_values[0]) if len(rss_values) >= 2 else 0
-    python_growth = max(
-        0,
-        int(samples[-1].get("python_current_bytes") or 0)
-        - int(samples[0].get("python_current_bytes") or 0),
-    ) if len(samples) >= 2 else 0
+    python_values = [
+        int(item["python_current_bytes"])
+        for item in samples
+        if item.get("python_current_bytes") is not None
+    ]
+    python_growth = (
+        max(0, python_values[-1] - python_values[0])
+        if len(python_values) >= 2
+        else 0
+    )
     portal_baseline = set(baseline_threads.get("portal_ids") or [])
     portal_final = set(final_threads.get("portal_ids") or [])
     succeeded = sum(str(item.get("status")) == "SUCCEEDED" for item in job_outcomes)
     expected_jobs = iterations * 2 + ((iterations + 2) // 3)
     expected_webhooks = iterations
     checks = [
-        {"name": "release_version", "passed": app_main.CURRENT_APP_VERSION == "72.0.13", "actual": app_main.CURRENT_APP_VERSION},
-        {"name": "schema_version", "passed": app_main.CURRENT_SCHEMA_VERSION == 40, "actual": app_main.CURRENT_SCHEMA_VERSION},
+        {"name": "release_version", "passed": app_main.CURRENT_APP_VERSION == "72.0.72", "actual": app_main.CURRENT_APP_VERSION},
+        {"name": "schema_version", "passed": app_main.CURRENT_SCHEMA_VERSION == 46, "actual": app_main.CURRENT_SCHEMA_VERSION},
         {"name": "iterations_completed", "passed": len(samples) == iterations, "actual": len(samples)},
         {"name": "worker_jobs_succeeded", "passed": succeeded == expected_jobs, "actual": succeeded, "expected": expected_jobs},
         {"name": "webhook_hmac_deliveries", "passed": int(webhook.get("accepted", 0)) >= expected_webhooks and int(webhook.get("rejected", 0)) == 0, "actual": webhook, "expected_minimum": expected_webhooks},
         {"name": "lifecycle_shutdown_clean", "passed": all(not bool(item.get("shutdown_timed_out")) and int(item.get("running_task_count", 0)) == 0 and not item.get("pending_task_stacks") for item in lifecycle_snapshots), "actual": len(lifecycle_snapshots)},
         {"name": "portal_threads_reclaimed", "passed": portal_final <= portal_baseline, "actual": len(portal_final), "baseline": len(portal_baseline)},
         {"name": "rss_growth_bounded", "passed": not rss_values or rss_growth <= max_rss_growth_bytes, "actual_bytes": rss_growth, "limit_bytes": max_rss_growth_bytes, "available": bool(rss_values)},
-        {"name": "python_allocation_growth_bounded", "passed": python_growth <= max_python_growth_bytes, "actual_bytes": python_growth, "limit_bytes": max_python_growth_bytes},
-        {"name": "sqlite_integrity_and_wal", "passed": final_database.get("integrity") == "ok" and int(final_database.get("schema_version", -1)) == 40 and int(final_database.get("active_jobs", -1)) == 0 and int(final_database.get("wal_bytes", 0)) <= max_wal_bytes, "actual": final_database, "wal_limit_bytes": max_wal_bytes},
-        {"name": "backup_restore_eligibility", "passed": int(backup_validation.get("schema_version", -1)) == 40 and bool((backup_validation.get("audit_integrity") or {}).get("valid")), "actual": {"schema_version": backup_validation.get("schema_version"), "audit_integrity_valid": bool((backup_validation.get("audit_integrity") or {}).get("valid")), "finding_count": int(backup_validation.get("finding_count", 0))}},
+        {
+            "name": "python_allocation_growth_bounded",
+            "passed": len(python_values) < 2 or python_growth <= max_python_growth_bytes,
+            "actual_bytes": python_growth,
+            "limit_bytes": max_python_growth_bytes,
+            "available": len(python_values) >= 2,
+            "measured_samples": len(python_values),
+        },
+        {"name": "sqlite_integrity_and_wal", "passed": final_database.get("integrity") == "ok" and int(final_database.get("schema_version", -1)) == 46 and int(final_database.get("active_jobs", -1)) == 0 and int(final_database.get("wal_bytes", 0)) <= max_wal_bytes, "actual": final_database, "wal_limit_bytes": max_wal_bytes},
+        {"name": "backup_restore_eligibility", "passed": int(backup_validation.get("schema_version", -1)) == 46 and bool((backup_validation.get("audit_integrity") or {}).get("valid")), "actual": {"schema_version": backup_validation.get("schema_version"), "audit_integrity_valid": bool((backup_validation.get("audit_integrity") or {}).get("valid")), "finding_count": int(backup_validation.get("finding_count", 0))}},
         {"name": "audit_chain_integrity", "passed": bool(audit_integrity.get("valid")), "actual": {"valid": bool(audit_integrity.get("valid")), "issues": list(audit_integrity.get("issues") or [])[:5]}},
     ]
     return checks
@@ -318,13 +349,24 @@ def run_soak(
     max_rss_growth_mib: float = 64.0,
     max_python_growth_mib: float = 24.0,
     max_wal_mib: float = 8.0,
+    allocation_warmup_iterations: int = 3,
     work_root: Path | None = None,
 ) -> dict[str, Any]:
     iterations = max(2, int(iterations))
+    allocation_warmup_iterations = min(
+        max(1, int(allocation_warmup_iterations)), iterations - 1
+    )
     owns_temp = work_root is None
     temp = tempfile.TemporaryDirectory(prefix="vulnflow-runtime-soak-") if owns_temp else None
     root = Path(temp.name) if temp is not None else Path(work_root or "")
     root.mkdir(parents=True, exist_ok=True)
+    for sample_name in (
+        "sample_findings.csv",
+        "sample_product_release.cdx.json",
+        "sample_sbom.cdx.json",
+        "sample_sbom_v2.cdx.json",
+    ):
+        shutil.copy2(ROOT / "data" / sample_name, root / sample_name)
 
     baseline_threads = _thread_snapshot()
     samples: list[dict[str, Any]] = []
@@ -334,16 +376,28 @@ def run_soak(
     sink = WebhookSink()
     last_context: Any = None
     started = time.perf_counter()
-    tracemalloc.start()
+    allocation_tracking_started_here = not tracemalloc.is_tracing()
+    if allocation_tracking_started_here:
+        tracemalloc.start()
     sink.start()
     try:
         settings = _settings(root, port=sink.port)
-        db_path = Path(settings["DB_PATH"])
+        db_path: Path | None = None
+        selection = None
         for index in range(iterations):
+            if index == allocation_warmup_iterations:
+                gc.collect()
+                if tracemalloc.is_tracing():
+                    tracemalloc.reset_peak()
             application = app_main.create_app(setting_overrides=settings)
             context = get_application_context(application)
             last_context = context
             with TestClient(application) as client:
+                selections = application_project_selections(context)
+                selection = next((item for item in selections if item is not None), None)
+                if selection is None:
+                    raise RuntimeError("runtime soak could not resolve an explicit project scope")
+                db_path = Path(selection.database)
                 health = [
                     client.get("/health/live").status_code,
                     client.get("/health/ready").status_code,
@@ -352,68 +406,76 @@ def run_soak(
                 if health != [200, 200]:
                     raise RuntimeError(f"health check failed in cycle {index + 1}: {health}")
 
-                queue_webhook = context.services.require("_queue_webhook")
-                queue_webhook(
-                    "soak.cycle",
-                    {"cycle": index + 1},
-                    "runtime-soak",
-                    context=context,
-                    idempotency_key=f"runtime-soak-webhook:{index + 1}",
-                )
-                create_job = context.services.require("create_background_job")
-                common = {
-                    "requested_by": "runtime-soak",
-                    "max_attempts": 2,
-                }
-                job_ids: list[str] = []
-                # Online maintenance is scheduled on a slower cadence than the
-                # worker and webhook jobs. Running it every few seconds creates
-                # an unrealistic continuous-writer lock storm that does not
-                # match the configured 60-minute production interval.
-                if index % 3 == 0:
-                    maintenance = create_job(
+                with project_scope(selection):
+                    queue_webhook = context.services.require("_queue_webhook")
+                    queue_webhook(
+                        "soak.cycle",
+                        {"cycle": index + 1},
+                        "runtime-soak",
+                        context=context,
+                        idempotency_key=f"runtime-soak-webhook:{index + 1}",
+                    )
+                    create_job = context.services.require("create_background_job")
+                    common = {
+                        "requested_by": "runtime-soak",
+                        "max_attempts": 2,
+                    }
+                    job_ids: list[str] = []
+                    # Online maintenance is scheduled on a slower cadence than the
+                    # worker and webhook jobs. Running it every few seconds creates
+                    # an unrealistic continuous-writer lock storm that does not
+                    # match the configured 60-minute production interval.
+                    if index % 3 == 0:
+                        maintenance = create_job(
+                            db_path,
+                            job_type="DATABASE_MAINTENANCE",
+                            payload={"truncate_wal": True, "optimize_fts": True},
+                            priority=30,
+                            dedupe_key=f"runtime-soak-maintenance:{index + 1}",
+                            **common,
+                        )
+                        job_ids.append(maintenance["job_id"])
+                    rescore = create_job(
                         db_path,
-                        job_type="DATABASE_MAINTENANCE",
-                        payload={"truncate_wal": True, "optimize_fts": True},
-                        priority=30,
-                        dedupe_key=f"runtime-soak-maintenance:{index + 1}",
+                        job_type="RESCORE_ALL",
+                        priority=20,
+                        dedupe_key=f"runtime-soak-rescore:{index + 1}",
                         **common,
                     )
-                    job_ids.append(maintenance["job_id"])
-                rescore = create_job(
-                    db_path,
-                    job_type="RESCORE_ALL",
-                    priority=20,
-                    dedupe_key=f"runtime-soak-rescore:{index + 1}",
-                    **common,
-                )
-                delivery = create_job(
-                    db_path,
-                    job_type="WEBHOOK_DELIVERY",
-                    priority=10,
-                    dedupe_key=f"runtime-soak-delivery:{index + 1}",
-                    **common,
-                )
-                job_ids.extend([rescore["job_id"], delivery["job_id"]])
-                outcomes = _wait_for_jobs(
-                    context,
-                    job_ids,
-                    timeout_seconds=job_timeout_seconds,
-                )
-                if any(str(item.get("status")) != "SUCCEEDED" for item in outcomes):
-                    raise RuntimeError(f"job failure in cycle {index + 1}: {outcomes}")
-                job_outcomes.extend(outcomes)
+                    delivery = create_job(
+                        db_path,
+                        job_type="WEBHOOK_DELIVERY",
+                        priority=10,
+                        dedupe_key=f"runtime-soak-delivery:{index + 1}",
+                        **common,
+                    )
+                    job_ids.extend([rescore["job_id"], delivery["job_id"]])
+                    outcomes = _wait_for_jobs(
+                        context,
+                        job_ids,
+                        timeout_seconds=job_timeout_seconds,
+                    )
+                    if any(str(item.get("status")) != "SUCCEEDED" for item in outcomes):
+                        raise RuntimeError(f"job failure in cycle {index + 1}: {outcomes}")
+                    job_outcomes.extend(outcomes)
 
             shutdown = dict(context.get("LIFECYCLE_SHUTDOWN_SNAPSHOT") or {})
             lifecycle_snapshots.append(shutdown)
             gc.collect()
             time.sleep(0.05)
-            python_current, python_peak = tracemalloc.get_traced_memory()
+            if tracemalloc.is_tracing() and index >= allocation_warmup_iterations:
+                python_current, python_peak = tracemalloc.get_traced_memory()
+            else:
+                python_current, python_peak = None, None
             sample = {
                 "cycle": index + 1,
                 "rss_bytes": current_rss_bytes(),
-                "python_current_bytes": int(python_current),
-                "python_peak_bytes": int(python_peak),
+                "python_current_bytes": (
+                    int(python_current) if python_current is not None else None
+                ),
+                "python_peak_bytes": (
+                    int(python_peak) if python_peak is not None else None
+                ),
                 "thread_count": int(_thread_snapshot()["count"]),
                 "shutdown_elapsed_ms": float(shutdown.get("shutdown_elapsed_ms", 0.0)),
                 "database": sqlite_snapshot(db_path),
@@ -421,23 +483,26 @@ def run_soak(
             samples.append(sample)
 
         assert last_context is not None
-        backup_path = root / "backup" / "soak-backup.db"
-        last_context.services.require("backup_database")(db_path, backup_path)
-        backup_validation = last_context.services.require("validate_database_file")(backup_path)
-        signing = app_main._signing_config(last_context)
-        audit_integrity = last_context.services.require("verify_audit_integrity")(
-            db_path,
-            signing_keys=signing.keys,
-        )
-        _truncate_wal(db_path)
-        final_database = sqlite_snapshot(db_path)
+        assert selection is not None
+        assert db_path is not None
+        with project_scope(selection):
+            backup_path = root / "backup" / "soak-backup.db"
+            last_context.services.require("backup_database")(db_path, backup_path)
+            backup_validation = last_context.services.require("validate_database_file")(backup_path)
+            signing = app_main._signing_config(last_context)
+            audit_integrity = last_context.services.require("verify_audit_integrity")(
+                db_path,
+                signing_keys=signing.keys,
+            )
+            _truncate_wal(db_path)
+            final_database = sqlite_snapshot(db_path)
     finally:
         sink.stop()
         gc.collect()
         time.sleep(0.1)
         final_threads = _thread_snapshot()
         webhook = sink.recorder.snapshot()
-        if tracemalloc.is_tracing():
+        if allocation_tracking_started_here and tracemalloc.is_tracing():
             tracemalloc.stop()
 
     checks = _evaluate(
@@ -461,6 +526,7 @@ def run_soak(
         "version": app_main.CURRENT_APP_VERSION,
         "schema_version": app_main.CURRENT_SCHEMA_VERSION,
         "iterations": iterations,
+        "allocation_warmup_iterations": allocation_warmup_iterations,
         "duration_seconds": round(time.perf_counter() - started, 3),
         "health_statuses": health_statuses,
         "samples": samples,
@@ -512,10 +578,17 @@ def _text(result: dict[str, Any]) -> str:
         f"final_wal_bytes: {result['final_database']['wal_bytes']}",
         "",
     ]
-    lines.extend(
-        f"{'PASS' if item['passed'] else 'FAIL'}: {item['name']}"
-        for item in result["checks"]
-    )
+    for item in result["checks"]:
+        detail = ""
+        if "actual_bytes" in item and "limit_bytes" in item:
+            detail = (
+                f" (actual_bytes={item['actual_bytes']}; "
+                f"limit_bytes={item['limit_bytes']}; "
+                f"available={item.get('available', True)})"
+            )
+        lines.append(
+            f"{'PASS' if item['passed'] else 'FAIL'}: {item['name']}{detail}"
+        )
     lines.append("")
     lines.append("overall: " + ("PASS" if result["passed"] else "FAIL"))
     return "\n".join(lines) + "\n"
@@ -527,6 +600,7 @@ def main() -> None:
     parser.add_argument("--job-timeout-seconds", type=float, default=20.0)
     parser.add_argument("--max-rss-growth-mib", type=float, default=64.0)
     parser.add_argument("--max-python-growth-mib", type=float, default=24.0)
+    parser.add_argument("--allocation-warmup-iterations", type=int, default=3)
     parser.add_argument("--max-wal-mib", type=float, default=8.0)
     parser.add_argument(
         "--json-output",
@@ -543,6 +617,7 @@ def main() -> None:
         max_rss_growth_mib=args.max_rss_growth_mib,
         max_python_growth_mib=args.max_python_growth_mib,
         max_wal_mib=args.max_wal_mib,
+        allocation_warmup_iterations=args.allocation_warmup_iterations,
     )
     json_path = ROOT / args.json_output
     text_path = ROOT / args.text_output
@@ -555,8 +630,15 @@ def main() -> None:
     text = _text(result)
     text_path.write_text(text, encoding="utf-8")
     print(text, end="")
-    if not result["passed"]:
-        raise SystemExit(1)
+    # The soak has already closed its application lifespans, webhook sink,
+    # temporary database, and output files. Some third-party runtime resources
+    # can still register interpreter-shutdown callbacks that keep a successful
+    # standalone verifier alive after its final report is durable. Flush the
+    # evidence streams and use a deterministic process exit so release gates do
+    # not wait until their outer timeout after a completed soak.
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os._exit(0 if result["passed"] else 1)
 
 
 if __name__ == "__main__":

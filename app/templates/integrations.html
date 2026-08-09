@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}이메일·Jira 연동 · VulnFlow{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">COLLABORATION</p><h1>이메일·Jira 연동</h1><p>현재 프로젝트의 담당자 알림과 외부 티켓 연결을 설정합니다.</p></div></div>
+{% if notice_message %}<div class="notice success">{{ notice_message }}</div>{% endif %}
+{% if error_message %}<div class="notice danger">{{ error_message }}</div>{% endif %}
+{% if not secret_key_ready %}<div class="notice danger"><strong>연동 마스터 키가 없습니다.</strong> 서버 환경에 <code>VULNFLOW_INTEGRATION_SECRET_KEY</code>를 32자 이상으로 설정한 뒤 재시작하세요.</div>{% endif %}
+{% if diagnostic %}<section class="panel diagnostic-panel {% if diagnostic.ok %}success{% else %}danger{% endif %}"><div class="section-heading"><div><p class="eyebrow">CONNECTION TEST</p><h2>{{ diagnostic.channel }} 연결 점검 {{ '통과' if diagnostic.ok else '실패' }}</h2><p>{{ diagnostic.message }}</p></div><span class="step-badge {% if diagnostic.ok %}success{% endif %}">{{ diagnostic.elapsed_ms }}ms</span></div><dl class="detail-list"><div><dt>단계</dt><dd>{{ diagnostic.stage }}</dd></div>{% for key,value in diagnostic.details.items() %}<div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>{% endfor %}</dl><p class="meta">연결 점검은 이메일을 보내거나 Jira 이슈를 만들지 않습니다.</p></section>{% endif %}
+<div class="grid2">
+<section class="panel">
+  <p class="eyebrow">EMAIL</p><h2>이메일 알림</h2>
+  <p>상태 변경, 검증 요청, 기한 임박·초과를 프로젝트 수신자에게 보냅니다.</p>
+  <form class="form" method="post" action="/integrations/email">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+    <label><input type="checkbox" name="enabled" value="true" {% if email.enabled %}checked{% endif %}> 이메일 알림 활성화</label>
+    <div class="form-row-two"><label>SMTP 호스트<input name="host" value="{{ email.config.host or '' }}" placeholder="smtp.example.com" required></label><label>포트<input type="number" name="port" min="1" max="65535" value="{{ email.config.port or 587 }}" required></label></div>
+    <label>보안 방식<select name="security">{% for item in smtp_modes %}<option value="{{ item }}" {% if (email.config.security or 'STARTTLS')==item %}selected{% endif %}>{{ item }}{% if item=='PLAIN' and not smtp_plain_allowed %} (현재 차단됨){% endif %}</option>{% endfor %}</select><small>운영 환경은 STARTTLS 또는 SSL을 사용하세요. PLAIN은 서버에서 명시적으로 허용한 개발 환경에서만 저장됩니다.</small></label>
+    {% if smtp_private_networks_allowed %}<div class="notice warning"><strong>사설망 SMTP가 허용되어 있습니다.</strong> 허용 호스트: <code>{{ smtp_host_allowlist or '미설정' }}</code></div>{% endif %}
+    <div class="form-row-two"><label>사용자명<input name="username" value="{{ email.config.username or '' }}"></label><label>비밀번호<input type="password" name="password" autocomplete="new-password" placeholder="{{ '변경할 때만 입력' if email.secret_configured else 'SMTP 비밀번호' }}"></label></div>
+    <label>발신 주소<input type="email" name="from_address" value="{{ email.config.from_address or '' }}" required></label>
+    <label>수신 주소<input name="recipients" value="{{ (email.config.recipients or [])|join(', ') }}" placeholder="security@example.com, infra@example.com" required><small>쉼표로 여러 주소를 구분합니다.</small></label>
+    <fieldset><legend>알림 이벤트</legend>{% set selected=email.config.events or [] %}{% for value,label in [('finding.workflow_changed','상태·담당자 변경'),('remediation.verification_requested','검증 요청'),('remediation.verification_decided','검증 결과'),('risk_acceptance.requested','위험수용 요청'),('risk_acceptance.decided','위험수용 결과'),('finding.due_soon','기한 임박'),('finding.overdue','기한 초과')] %}<label><input type="checkbox" name="events" value="{{ value }}" {% if value in selected %}checked{% endif %}> {{ label }}</label>{% endfor %}</fieldset>
+    <button class="primary" {% if not secret_key_ready %}disabled{% endif %}>이메일 설정 저장</button>
+  </form>
+  <form method="post" action="/integrations/email/test" class="inline-actions"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button type="submit" {% if not email.secret_configured and email.config.username %}disabled{% endif %}>저장된 설정 연결 점검</button></form>
+</section>
+<section class="panel">
+  <p class="eyebrow">JIRA CLOUD</p><h2>Jira 티켓 연동</h2>
+  <p>취약점 상세에서 티켓을 만들고, 이후 상태·검증 변경을 Jira 댓글로 남깁니다.</p>
+  <form class="form" method="post" action="/integrations/jira">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+    <label><input type="checkbox" name="enabled" value="true" {% if jira.enabled %}checked{% endif %}> Jira 연동 활성화</label>
+    <label>Jira Cloud 주소<input type="url" name="base_url" value="{{ jira.config.base_url or '' }}" placeholder="https://company.atlassian.net" required></label>
+    <label>Atlassian 계정 이메일<input type="email" name="email" value="{{ jira.config.email or '' }}" required></label>
+    <label>API 토큰<input type="password" name="api_token" autocomplete="new-password" placeholder="{{ '변경할 때만 입력' if jira.secret_configured else 'Atlassian API token' }}"></label>
+    <div class="form-row-two"><label>프로젝트 키<input name="project_key" value="{{ jira.config.project_key or '' }}" placeholder="SEC" required></label><label>이슈 유형<input name="issue_type" value="{{ jira.config.issue_type or 'Task' }}" required></label></div>
+    <fieldset><legend>연결된 티켓에 댓글로 남길 이벤트</legend>{% set selected=jira.config.events or [] %}{% for value,label in [('finding.workflow_changed','상태·담당자 변경'),('remediation.verification_requested','검증 요청'),('remediation.verification_decided','검증 결과'),('risk_acceptance.requested','위험수용 요청'),('risk_acceptance.decided','위험수용 결과')] %}<label><input type="checkbox" name="events" value="{{ value }}" {% if value in selected %}checked{% endif %}> {{ label }}</label>{% endfor %}</fieldset>
+    <button class="primary" {% if not secret_key_ready %}disabled{% endif %}>Jira 설정 저장</button>
+  </form>
+  <form method="post" action="/integrations/jira/test" class="inline-actions"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button type="submit" {% if not jira.secret_configured %}disabled{% endif %}>저장된 설정 연결 점검</button></form>
+</section>
+</div>
+<section class="panel"><div class="section-heading"><div><h2>최근 전송 기록</h2><p>실패한 전송은 설정된 횟수까지 자동 재시도합니다.</p></div><form method="post" action="/integrations/deliver"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>지금 전송 실행</button></form></div>
+<div class="table-wrap"><table><thead><tr><th>채널</th><th>이벤트</th><th>상태</th><th>대상</th><th>시각</th><th>오류</th></tr></thead><tbody>{% for item in events %}<tr><td>{{ item.channel }}</td><td>{{ item.event_type }}</td><td>{{ item.status }}</td><td>{{ item.finding_id or '-' }}{% if item.external_key %}<br><a href="{{ item.external_url }}" target="_blank" rel="noopener">{{ item.external_key }}</a>{% endif %}</td><td>{{ item.created_at }}</td><td>{{ item.last_error or '-' }}</td></tr>{% else %}<tr><td colspan="6">전송 기록이 없습니다.</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}

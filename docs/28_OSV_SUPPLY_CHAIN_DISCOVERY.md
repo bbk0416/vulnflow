@@ -49,7 +49,10 @@ querybatch는 OSV ID와 modified만 반환합니다. 로컬 레코드의 modifie
 ## 보안 경계
 
 - 원격 API는 HTTPS만 허용
-- 루프백 HTTP는 테스트에만 허용
+- DNS 결과 전체 검증과 IP 고정 연결을 적용
+- 원래 호스트로 TLS SNI·인증서 검증
+- 리다이렉트와 환경 프록시 사용 차단
+- 루프백·사설망은 명시적인 테스트 설정과 정확한 allowlist가 있을 때만 허용
 - 응답은 JSON 객체와 예상 결과 개수를 검증
 - 원본 OSV details는 Jinja autoescape 하에 표시
 - CVE alias가 없으면 finding 생성 차단
@@ -62,6 +65,9 @@ VULNFLOW_OSV_API_BASE=https://api.osv.dev
 VULNFLOW_OSV_TIMEOUT_SECONDS=15
 VULNFLOW_OSV_RETRIES=3
 VULNFLOW_OSV_BATCH_SIZE=100
+VULNFLOW_OSV_MAX_RESPONSE_BYTES=4194304
+VULNFLOW_OUTBOUND_ALLOW_PRIVATE_NETWORKS=0
+VULNFLOW_OUTBOUND_HOST_ALLOWLIST=api.osv.dev,www.cisa.gov,api.first.org,*.atlassian.net
 ```
 
 ## 검증
@@ -75,3 +81,6 @@ VULNFLOW_OSV_BATCH_SIZE=100
 - 실패 작업 재시도 멱등성
 - CVE alias 후보 확정과 finding 생성
 - CVE alias 없는 후보의 확정 차단
+- 루프백 기본 차단과 명시적 테스트 허용
+- 호스트 allowlist·응답 크기 제한
+- 실제 로컬 서버를 통한 DNS 고정 OSV querybatch·record 조회

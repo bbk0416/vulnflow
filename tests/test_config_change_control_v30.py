@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 import json
 import re
 import sqlite3
@@ -34,9 +33,8 @@ def _window(hours: int = 2) -> tuple[str, str]:
     return (now - timedelta(minutes=5)).isoformat(), (now + timedelta(hours=hours)).isoformat()
 
 
-def _auth(username: str, password: str) -> dict[str, str]:
-    token = base64.b64encode(f"{username}:{password}".encode()).decode()
-    return {"Authorization": f"Basic {token}"}
+def _auth(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
 
 
 def _csrf(client, path: str = "/config-changes", headers: dict[str, str] | None = None) -> str:
@@ -50,9 +48,9 @@ def _csrf(client, path: str = "/config-changes", headers: dict[str, str] | None 
 def test_schema_30_and_change_request_tables(tmp_path: Path):
     db = tmp_path / "vf.db"
     init_db(db)
-    assert CURRENT_SCHEMA_VERSION == 40
+    assert CURRENT_SCHEMA_VERSION == 46
     with connect(db) as conn:
-        assert int(conn.execute("PRAGMA user_version").fetchone()[0]) == 40
+        assert int(conn.execute("PRAGMA user_version").fetchone()[0]) == CURRENT_SCHEMA_VERSION == 46
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         assert "config_change_requests" in tables
         migration = conn.execute("SELECT name FROM schema_migrations WHERE version=30").fetchone()
@@ -160,18 +158,21 @@ def test_secret_target_rejected_and_metrics_counts(tmp_path: Path):
     text = Metrics().render_prometheus(config_change_pending=2, config_change_approved=1)
     assert "vulnflow_config_change_pending 2" in text
     assert "vulnflow_config_change_approved 1" in text
-    assert validate_database_file(db)["schema_version"] == 40
+    assert validate_database_file(db)["schema_version"] == 46
 
 
 def test_ui_request_approve_and_apply(client, monkeypatch):
-    monkeypatch.setattr(main, "AUTH_USERS_JSON", json.dumps({
-        "admin": {"password": "admin-pass", "role": "admin"},
-        "operator": {"password": "operator-pass", "role": "operator"},
-        "approver": {"password": "approver-pass", "role": "approver"},
+    admin_token = "admin-token-1234567890123456"
+    operator_token = "operator-token-123456789012"
+    approver_token = "approver-token-123456789012"
+    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({
+        "admin": {"token": admin_token, "role": "admin", "projects": "*"},
+        "operator": {"token": operator_token, "role": "operator", "projects": "*"},
+        "approver": {"token": approver_token, "role": "approver", "projects": "*"},
     }))
-    admin = _auth("admin", "admin-pass")
-    operator = _auth("operator", "operator-pass")
-    approver = _auth("approver", "approver-pass")
+    admin = _auth(admin_token)
+    operator = _auth(operator_token)
+    approver = _auth(approver_token)
     token = _csrf(client, "/system", admin)
     response = client.post(
         "/system/config-baseline", data={"csrf_token": token, "note": "initial"},
@@ -220,8 +221,8 @@ def test_bearer_api_change_control_flow(client, monkeypatch):
     operator_token = "operator-token-1234567890"
     approver_token = "approver-token-1234567890"
     monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({
-        "change-bot": {"token": operator_token, "role": "operator"},
-        "change-approver": {"token": approver_token, "role": "approver"},
+        "change-bot": {"token": operator_token, "role": "operator", "projects": "*"},
+        "change-approver": {"token": approver_token, "role": "approver", "projects": "*"},
     }))
     monkeypatch.setenv("VULNFLOW_COOKIE_SECURE", "1")
     start, end = _window()

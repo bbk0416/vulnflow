@@ -153,7 +153,7 @@ def test_bearer_can_queue_and_read_job(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         main,
         "AUTH_API_TOKENS_JSON",
-        '{"automation":{"token":"0123456789abcdef0123456789abcdef","role":"operator"}}',
+        '{"automation":{"token":"0123456789abcdef0123456789abcdef","role":"operator","projects":"*"}}',
     )
     monkeypatch.setattr(main, "JOB_WORKER_ENABLED", False)
     headers = {"Authorization": "Bearer 0123456789abcdef0123456789abcdef"}
@@ -171,7 +171,7 @@ def test_operator_cannot_queue_admin_job(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         main,
         "AUTH_API_TOKENS_JSON",
-        '{"automation":{"token":"0123456789abcdef0123456789abcdef","role":"operator"}}',
+        '{"automation":{"token":"0123456789abcdef0123456789abcdef","role":"operator","projects":"*"}}',
     )
     monkeypatch.setattr(main, "JOB_WORKER_ENABLED", False)
     headers = {"Authorization": "Bearer 0123456789abcdef0123456789abcdef"}
@@ -239,7 +239,7 @@ def test_job_api_redacts_import_rows(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         main,
         "AUTH_API_TOKENS_JSON",
-        '{"automation":{"token":"0123456789abcdef0123456789abcdef","role":"operator"}}',
+        '{"automation":{"token":"0123456789abcdef0123456789abcdef","role":"operator","projects":"*"}}',
     )
     monkeypatch.setattr(main, "JOB_WORKER_ENABLED", False)
     headers = {"Authorization": "Bearer 0123456789abcdef0123456789abcdef"}

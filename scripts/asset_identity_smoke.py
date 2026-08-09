@@ -38,12 +38,10 @@ def main() -> None:
         root = Path(temp_dir)
         os.environ["VULNFLOW_DB"] = str(root / "identity.sqlite3")
         os.environ["VULNFLOW_COORDINATION_DB"] = str(root / "coord.sqlite3")
-        os.environ["VULNFLOW_USERS_JSON"] = json.dumps({
-            "admin": {"password": "admin-pass", "role": "admin"}
-        })
         os.environ["VULNFLOW_API_TOKENS_JSON"] = json.dumps({
-            "identity-ci": {"token": OPERATOR_TOKEN, "role": "operator"},
-            "identity-approver": {"token": APPROVER_TOKEN, "role": "approver"},
+            "identity-ci": {"token": OPERATOR_TOKEN, "role": "operator", "projects": "*"},
+            "identity-approver": {"token": APPROVER_TOKEN, "role": "approver", "projects": "*"},
+            "identity-admin": {"token": "asset-identity-admin-token-12345", "role": "admin", "projects": "*"},
         })
         os.environ["VULNFLOW_RECOVERY_DIR"] = str(root / "recovery")
         os.environ["VULNFLOW_EVIDENCE_DIR"] = str(root / "evidence")
@@ -163,14 +161,14 @@ def main() -> None:
             assert rejected.status_code == 200, rejected.text
             assert rejected.json()["status"] == "REJECTED"
 
-            page = client.get("/asset-identities?status=", auth=("admin", "admin-pass"))
+            page = client.get("/asset-identities?status=", headers=bearer("asset-identity-admin-token-12345"))
             assert page.status_code == 200
             assert "shared-prod-host" in page.text and "shared-test-host" in page.text
 
         report = ROOT / "reports" / "asset_identity_verification.txt"
         report.parent.mkdir(parents=True, exist_ok=True)
         report.write_text(
-            "VulnFlow 72.0.13 governed asset merge smoke\n"
+            "VulnFlow 72.0.72 governed asset merge smoke\n"
             "weak identifier creates candidate without silent merge: PASS\n"
             "dry-run impact analysis: PASS\n"
             "operator request leaves assets unchanged: PASS\n"

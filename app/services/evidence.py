@@ -141,48 +141,80 @@ def list_evidence_custody_events(db_path: str | Path, evidence_id: str, *, limit
     return items
 
 
-def verify_evidence_custody_chain(db_path: str | Path, evidence_id: str) -> dict[str, Any]:
-    with connect(db_path) as conn:
-        artifact = conn.execute(
-            "SELECT evidence_id,custody_last_seq,custody_last_hash,current_custodian FROM verification_evidence_artifacts WHERE evidence_id=?",
-            (evidence_id,),
-        ).fetchone()
-        if artifact is None:
-            raise KeyError(evidence_id)
-        rows = conn.execute(
-            "SELECT * FROM evidence_custody_events WHERE evidence_id=? ORDER BY event_seq", (evidence_id,)
-        ).fetchall()
+def _verify_evidence_custody_rows(
+    artifact: dict[str, Any], rows: list[dict[str, Any]]
+) -> dict[str, Any]:
+    evidence_id = str(artifact["evidence_id"])
     prev_hash = CUSTODY_GENESIS_HASH
     expected_seq = 1
     issues: list[str] = []
     last_to = ""
     for row in rows:
-        if int(row["event_seq"]) != expected_seq:
+        event_seq = int(row["event_seq"])
+        if event_seq != expected_seq:
             issues.append(f"sequence_gap:{expected_seq}")
         if str(row["prev_hash"]) != prev_hash:
-            issues.append(f"prev_hash_mismatch:{row['event_seq']}")
+            issues.append(f"prev_hash_mismatch:{event_seq}")
         expected_hash = _custody_digest(
-            evidence_id=evidence_id, event_seq=int(row["event_seq"]), event_type=str(row["event_type"]),
+            evidence_id=evidence_id, event_seq=event_seq, event_type=str(row["event_type"]),
             actor=str(row["actor"]), from_custodian=str(row["from_custodian"]),
             to_custodian=str(row["to_custodian"]), purpose=str(row["purpose"]),
-            details_json=str(row["details_json"]), created_at=str(row["created_at"]), prev_hash=str(row["prev_hash"]),
+            details_json=str(row["details_json"]), created_at=str(row["created_at"]),
+            prev_hash=str(row["prev_hash"]),
         )
         if expected_hash != str(row["event_hash"]):
-            issues.append(f"event_hash_mismatch:{row['event_seq']}")
+            issues.append(f"event_hash_mismatch:{event_seq}")
         prev_hash = str(row["event_hash"])
         last_to = str(row["to_custodian"] or last_to)
-        expected_seq = int(row["event_seq"]) + 1
-    if int(artifact["custody_last_seq"] or 0) != len(rows):
+        expected_seq = event_seq + 1
+    if int(artifact.get("custody_last_seq") or 0) != len(rows):
         issues.append("artifact_last_seq_mismatch")
-    if str(artifact["custody_last_hash"] or "") != (prev_hash if rows else ""):
+    if str(artifact.get("custody_last_hash") or "") != (prev_hash if rows else ""):
         issues.append("artifact_last_hash_mismatch")
-    if rows and str(artifact["current_custodian"] or "") != last_to:
+    if rows and str(artifact.get("current_custodian") or "") != last_to:
         issues.append("current_custodian_mismatch")
     return {
         "valid": not issues, "evidence_id": evidence_id, "event_count": len(rows),
         "last_seq": len(rows), "last_hash": prev_hash if rows else "",
-        "current_custodian": artifact["current_custodian"], "issues": issues,
+        "current_custodian": artifact.get("current_custodian"), "issues": issues,
     }
+
+
+def verify_evidence_custody_chain(db_path: str | Path, evidence_id: str) -> dict[str, Any]:
+    with connect(db_path) as conn:
+        artifact_row = conn.execute(
+            "SELECT evidence_id,custody_last_seq,custody_last_hash,current_custodian "
+            "FROM verification_evidence_artifacts WHERE evidence_id=?",
+            (evidence_id,),
+        ).fetchone()
+        if artifact_row is None:
+            raise KeyError(evidence_id)
+        event_rows = conn.execute(
+            "SELECT * FROM evidence_custody_events WHERE evidence_id=? ORDER BY event_seq",
+            (evidence_id,),
+        ).fetchall()
+    return _verify_evidence_custody_rows(
+        dict(artifact_row), [dict(row) for row in event_rows]
+    )
+
+
+def _verify_all_evidence_custody_chains(
+    db_path: str | Path, artifacts: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    events_by_evidence: dict[str, list[dict[str, Any]]] = {}
+    with connect(db_path) as conn:
+        rows = conn.execute(
+            "SELECT * FROM evidence_custody_events ORDER BY evidence_id,event_seq"
+        ).fetchall()
+    for row in rows:
+        item = dict(row)
+        events_by_evidence.setdefault(str(item["evidence_id"]), []).append(item)
+    return [
+        _verify_evidence_custody_rows(
+            artifact, events_by_evidence.get(str(artifact["evidence_id"]), [])
+        )
+        for artifact in artifacts
+    ]
 
 
 def transfer_evidence_custody(db_path: str | Path, evidence_id: str, *, actor: str, to_custodian: str, purpose: str) -> dict[str, Any]:
@@ -681,19 +713,39 @@ def verify_evidence_artifact(evidence_dir: str | Path, artifact: dict[str, Any])
     }
 
 
+def _list_evidence_integrity_artifacts(db_path: str | Path) -> list[dict[str, Any]]:
+    with connect(db_path) as conn:
+        rows = conn.execute(
+            """SELECT evidence_id,stored_filename,size_bytes,sha256,status,scan_status,
+                      custody_last_seq,custody_last_hash,current_custodian
+                 FROM verification_evidence_artifacts
+                ORDER BY evidence_id"""
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def verify_evidence_store(db_path: str | Path, evidence_dir: str | Path) -> dict[str, Any]:
-    artifacts = list_evidence_artifacts(db_path, limit=2000)
-    checked = [verify_evidence_artifact(evidence_dir, item) for item in artifacts if item.get("status") != "PURGED"]
+    # Integrity verification must cover the complete evidence inventory. The UI list
+    # helper intentionally caps results, so using it here could misclassify valid
+    # files as unregistered once the repository grew past that cap.
+    artifacts = _list_evidence_integrity_artifacts(db_path)
+    active_artifacts = [item for item in artifacts if item.get("status") != "PURGED"]
+    checked = [verify_evidence_artifact(evidence_dir, item) for item in active_artifacts]
     invalid = [item for item in checked if not item["valid"]]
-    known = {str(item.get("stored_filename")) for item in artifacts if item.get("status") != "PURGED"}
+    known = {str(item.get("stored_filename")) for item in active_artifacts}
     root = Path(evidence_dir)
-    unexpected = sorted(path.name for path in root.glob("*") if path.is_file() and path.name not in known) if root.exists() else []
+    unexpected = (
+        sorted(path.name for path in root.iterdir() if path.is_file() and path.name not in known)
+        if root.exists() else []
+    )
     scan_counts: dict[str, int] = {}
     for artifact in artifacts:
         key = str(artifact.get("scan_status") or "PENDING")
         scan_counts[key] = scan_counts.get(key, 0) + 1
-    unsafe_count = sum(count for status, count in scan_counts.items() if status not in {"CLEAN", "WAIVED"})
-    custody = [verify_evidence_custody_chain(db_path, str(item.get("evidence_id"))) for item in artifacts]
+    unsafe_count = sum(
+        count for status, count in scan_counts.items() if status not in {"CLEAN", "WAIVED"}
+    )
+    custody = _verify_all_evidence_custody_chains(db_path, artifacts)
     invalid_custody = [item for item in custody if not item.get("valid")]
     return {
         "valid": not invalid and not unexpected and not invalid_custody,

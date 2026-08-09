@@ -796,6 +796,9 @@ def run_osv_scan(
     batch_size: int = 100,
     session=None,
     source_job_id: str | None = None,
+    allow_private_networks: bool = False,
+    host_allowlist: str | tuple[str, ...] = (),
+    max_response_bytes: int = 4 * 1024 * 1024,
 ) -> dict[str, Any]:
     from app.services.osv import cve_aliases, fixed_versions, query_components, severity_summary
 
@@ -837,6 +840,8 @@ def run_osv_scan(
         query_result = query_components(
             components, api_base=api_base, timeout=timeout, retries=retries, batch_size=batch_size,
             session=session, cached_records=_cached_osv_records(db_path),
+            allow_private_networks=allow_private_networks, host_allowlist=host_allowlist,
+            max_response_bytes=max_response_bytes,
         )
         query_by_component = {query.component_id: query for query in query_result["queries"]}
         component_ids = query_result["component_vulnerability_ids"]

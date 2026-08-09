@@ -1,10 +1,10 @@
 # 아키텍처
 
 ```text
-Basic 사용자 계정 ─┐
-Bearer API 토큰 ───┼──► viewer / operator / approver / admin 권한검사
-                   │
-스캐너·원천별 CSV ─┘
+DB 사용자 로그인 세션 ─┐
+Bearer API 토큰 ──────┼──► viewer / operator / approver / admin 권한검사
+                      │
+스캐너·원천별 CSV ────┘
        │  증분 / 스냅샷
        ▼
 입력 검증·정규화·안정 ID
@@ -58,11 +58,11 @@ CycloneDX A + CycloneDX B ─► 인벤토리 파싱·구성요소 차이 비교
 - `app/endpoint_workflows.py`: 요청 중심 정책·점수·위협정보·maintenance·job workflow 조립
 - `app/factory.py`: FastAPI instance와 router runtime 조립
 - `app/core/context*.py`: 앱별 불변 설정·서비스·transaction registry·진단 snapshot
-- `app/core/auth.py`: Basic 계정·Bearer token·명시적 loopback fallback 검증
+- `app/core/auth.py`: 로그인 주체·Bearer token·명시적 데모 loopback fallback 검증
 - `app/core/database_schema.py`: SQLite 초기화·migration·FTS·무결성 trigger
 - `app/repositories/`: finding·asset·audit·job·webhook·cluster·policy persistence
 - `app/services/`: scoring·정책·증거·복구·proof·worker·maintenance 실행 경계
-- `app/routers/`: findings·assets·evidence·governance·trust·exports·operations HTTP 경계
+- `app/routers/`: accounts·findings·assets·evidence·governance·trust·exports·operations HTTP 경계
 - `rules/`: 설명 가능한 우선순위 정책 YAML
 - `tests/`, `scripts/*_smoke.py`: 단위·통합·실제 프로세스·독립 검증
 

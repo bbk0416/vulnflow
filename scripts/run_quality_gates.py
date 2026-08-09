@@ -33,6 +33,10 @@ def main() -> None:
         _module_command("compileall", "-q", "app", "scripts", "tests"),
     )
     _run(
+        "static-security-boundary",
+        [sys.executable, "scripts/static_security_boundary_audit.py"],
+    )
+    _run(
         "ruff-fatal",
         _module_command(
             "ruff",

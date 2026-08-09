@@ -1,28 +1,41 @@
-# Public roadmap
+# VulnFlow product completion roadmap
 
-The roadmap prioritizes the vulnerability-management workflow and operational clarity over feature count.
+VulnFlow 72.0.72부터 현재 파일럿 범위의 **신규 기능 개발은 동결**합니다. 완성의 기준은 기능 수가 아니라 실제 취약점 운영 흐름이 고객 데이터와 사용자 업무에서 끝까지 작동하는지입니다.
 
-## Near-term priorities
+## 현재 코드 상태
 
-- simplify navigation and first-run guidance;
-- add browser-level end-to-end tests for the primary workflow;
-- improve accessibility and form validation;
-- add documented adapters for common synthetic scanner formats;
-- improve issue-to-remediation and evidence review ergonomics;
-- expand static analysis and public CI reporting.
+- 스캐너 결과 수집·정규화
+- 자산 식별과 우선순위
+- 담당자·기한·캠페인
+- 조치 기록과 검증 요청
+- 위험수용 승인
+- 증거·감사
+- 프로젝트 분리·백업·복구
+- 이메일·Jira 및 로컬 운영
 
-## Validation priorities
+위 범위는 코드상 구현돼 있으며, 72.0.72 이후에는 기능을 더 늘리지 않습니다.
 
-- clean Docker-engine build and Compose execution;
-- Windows execution verification;
-- longer endurance testing with concurrent imports, workers, exports, and backups;
-- public threat-intelligence endpoint integration tests where network access is available;
-- structured feedback from security practitioners using synthetic or authorized data.
+## 프로젝트를 “완성”으로 닫기 위한 남은 조건
 
-## Not currently claimed or planned as an immediate target
+1. **실제 스캐너 호환성** — 승인된 익명화 Nessus/Greenbone/CSV/XLSX 표본으로 import compatibility를 확인하고, 실패 형식만 최소 synthetic fixture로 환원합니다.
+2. **실사용 파일럿** — 보안 실무자가 기본 4단계 흐름을 사용해 업로드→담당자 지정→조치→검증을 완료하고, 막히는 UX만 수정합니다.
+3. **복구 실습 1회** — 실제 운영 후보 호스트에서 백업 생성부터 격리 복원까지 한 번 수행해 절차와 소요시간을 기록합니다.
+4. **배포 후보 고정** — 위 세 항목에서 release blocker가 없으면 해당 소스를 pilot release candidate로 고정합니다.
 
-- autonomous vulnerability impact determination;
-- internet-scale multi-tenant SaaS;
-- replacement for enterprise SIEM, SOAR, EDR, or vulnerability scanners;
-- production support SLA;
-- use of real military, government, customer, or company vulnerability data in the repository.
+## 더 이상 선제적으로 추가하지 않는 것
+
+- 새로운 trust/ledger/witness 계층
+- 새로운 검증 프레임워크
+- 기능 수를 늘리기 위한 관리 화면
+- 인터넷 규모 SaaS·분산 DB·대규모 멀티테넌시
+- 실제 요구가 확인되지 않은 SSO/ServiceNow/Teams/Slack 통합
+
+## 실제 파일럿에서 측정할 지표
+
+- 결과 업로드부터 첫 담당자 지정까지 걸린 시간
+- 도움 없이 완료한 핵심 작업 비율
+- 기한 초과 항목 감소율
+- 조치 증거를 찾는 데 걸린 시간
+- 기존 Excel 보고서 작성 대비 절감 시간
+
+이 지표에 영향을 주지 않는 기능은 현재 제품 범위에 추가하지 않습니다.

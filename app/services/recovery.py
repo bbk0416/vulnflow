@@ -21,7 +21,9 @@ from app.core.db import connect
 from app.repositories.audit import verify_audit_integrity
 from app.services.database_lifecycle import backup_database, restore_database, validate_database_file
 
-RECOVERY_FORMAT = "vulnflow-recovery/1"
+RECOVERY_FORMAT = "vulnflow-recovery/2"
+LEGACY_RECOVERY_FORMAT = "vulnflow-recovery/1"
+PROJECT_DATABASE_ROLE = "project-data"
 MAX_BUNDLE_FILES = 2048
 MAX_BUNDLE_UNCOMPRESSED = 1024 * 1024 * 1024
 REQUIRED_FILES = {"manifest.json", "database.sqlite3", "config-audit.json", "audit-integrity.json", "SHA256SUMS.txt"}
@@ -70,11 +72,26 @@ def build_config_audit(
 ) -> dict[str, Any]:
     """Return a redacted configuration posture report. Secrets and full webhook URLs are never included."""
     values = dict(os.environ if env is None else env)
-    users = _json_object(values.get("VULNFLOW_USERS_JSON", ""))
+    plaintext_users = _json_object(values.get("VULNFLOW_USERS_JSON", ""))
     tokens = _json_object(values.get("VULNFLOW_API_TOKENS_JSON", ""))
     webhooks = _json_object(values.get("VULNFLOW_WEBHOOKS_JSON", ""))
     legacy_auth = bool(values.get("VULNFLOW_AUTH_USER", "") or values.get("VULNFLOW_AUTH_PASSWORD", ""))
-    auth_configured = bool(users or tokens or legacy_auth)
+    plaintext_auth_configured = bool(plaintext_users or legacy_auth)
+    database_user_count = 0
+    if db_path and Path(db_path).is_file():
+        try:
+            with connect(db_path) as conn:
+                table = conn.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='app_users'"
+                ).fetchone()
+                if table:
+                    database_user_count = int(
+                        conn.execute(
+                            "SELECT COUNT(*) FROM app_users WHERE is_active=1"
+                        ).fetchone()[0]
+                    )
+        except Exception:
+            database_user_count = 0
 
     def as_bool(name: str, default: bool = False) -> bool:
         raw = str(values.get(name, "1" if default else "0")).strip().lower()
@@ -137,10 +154,21 @@ def build_config_audit(
     settings = {
         "app_version": _app_version(base_dir),
         "authentication": {
-            "configured": auth_configured,
-            "local_fallback_enabled": not auth_configured,
-            "basic_user_count": len(users) + (1 if legacy_auth else 0),
+            "configured": bool(
+                database_user_count
+                or tokens
+                or (
+                    as_bool("VULNFLOW_DEMO_MODE")
+                    and as_bool("VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK")
+                )
+            ),
+            "database_user_count": database_user_count,
             "api_token_count": len(tokens),
+            "local_fallback_enabled": bool(
+                as_bool("VULNFLOW_DEMO_MODE")
+                and as_bool("VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK")
+            ),
+            "plaintext_auth_rejected": plaintext_auth_configured,
         },
         "cookies": {"secure": as_bool("VULNFLOW_COOKIE_SECURE")},
         "workers": {
@@ -202,6 +230,18 @@ def build_config_audit(
         "recovery": {
             "scheduled_interval_hours": as_int("VULNFLOW_BACKUP_INTERVAL_HOURS", 0),
             "retention_count": as_int("VULNFLOW_BACKUP_RETENTION_COUNT", 10),
+            "external_backup_configured": bool(
+                str(values.get("VULNFLOW_EXTERNAL_BACKUP_DIR", "")).strip()
+            ),
+            "external_directory_name": (
+                Path(str(values.get("VULNFLOW_EXTERNAL_BACKUP_DIR", ""))).name
+                if str(values.get("VULNFLOW_EXTERNAL_BACKUP_DIR", "")).strip()
+                else None
+            ),
+            "external_retention_count": as_int(
+                "VULNFLOW_EXTERNAL_BACKUP_RETENTION_COUNT", 30
+            ),
+            "isolated_restore_drill_supported": True,
             "bundle_signing_configured": bool(signing_config.backup_active_key_id),
             "active_key_id": signing_config.backup_active_key_id,
             "restore_signature_required": as_bool("VULNFLOW_BACKUP_REQUIRE_SIGNATURE"),
@@ -211,12 +251,43 @@ def build_config_audit(
             "allow_insecure_http": as_bool("VULNFLOW_WEBHOOK_ALLOW_INSECURE_HTTP"),
             "endpoints": webhook_summary,
         },
+        "outbound_http": {
+            "private_networks_allowed": as_bool("VULNFLOW_OUTBOUND_ALLOW_PRIVATE_NETWORKS"),
+            "host_allowlist_count": len([
+                item for item in str(values.get("VULNFLOW_OUTBOUND_HOST_ALLOWLIST", "") or "").split(",")
+                if item.strip()
+            ]),
+            "max_response_bytes": as_int("VULNFLOW_OUTBOUND_MAX_RESPONSE_BYTES", 1024 * 1024),
+            "dns_pinning_enabled": True,
+            "environment_proxy_ignored": True,
+        },
+        "outbound_smtp": {
+            "private_networks_allowed": as_bool("VULNFLOW_SMTP_ALLOW_PRIVATE_NETWORKS"),
+            "host_allowlist_count": len([
+                item for item in str(values.get("VULNFLOW_SMTP_HOST_ALLOWLIST", "") or "").split(",")
+                if item.strip()
+            ]),
+            "plain_allowed": as_bool("VULNFLOW_SMTP_ALLOW_PLAIN"),
+            "dns_pinning_enabled": True,
+            "tls_hostname_verification_enabled": True,
+        },
+        "threat_intelligence": {
+            "providers": ["CISA KEV", "FIRST EPSS"],
+            "timeout_seconds": as_int("VULNFLOW_INTEL_TIMEOUT_SECONDS", 30),
+            "retries": as_int("VULNFLOW_INTEL_RETRIES", 3),
+            "max_response_bytes": as_int("VULNFLOW_INTEL_MAX_RESPONSE_BYTES", 8 * 1024 * 1024),
+            "dns_pinning_enabled": True,
+            "environment_proxy_ignored": True,
+        },
         "supply_chain_intelligence": {
             "provider": "OSV.dev",
             "api_scheme": str(values.get("VULNFLOW_OSV_API_BASE", "https://api.osv.dev")).split(":", 1)[0].lower(),
             "timeout_seconds": as_int("VULNFLOW_OSV_TIMEOUT_SECONDS", 15),
             "retries": as_int("VULNFLOW_OSV_RETRIES", 3),
             "batch_size": as_int("VULNFLOW_OSV_BATCH_SIZE", 100),
+            "max_response_bytes": as_int("VULNFLOW_OSV_MAX_RESPONSE_BYTES", 4 * 1024 * 1024),
+            "dns_pinning_enabled": True,
+            "environment_proxy_ignored": True,
             "candidate_review_required": True,
         },
         "pagination": {
@@ -235,9 +306,14 @@ def build_config_audit(
     def warning(code: str, severity: str, message: str) -> None:
         findings.append({"code": code, "severity": severity, "message": message})
 
-    if not auth_configured:
-        warning("AUTH_LOCAL_FALLBACK", "HIGH", "인증 설정이 없어 루프백 로컬 관리자 fallback이 활성화됩니다.")
-    if auth_configured and not settings["cookies"]["secure"]:
+    authentication = settings["authentication"]
+    if plaintext_auth_configured:
+        warning("PLAINTEXT_AUTH_REJECTED", "HIGH", "제거된 평문 환경변수 사용자 설정이 감지되어 시작 시 거부됩니다.")
+    if authentication["local_fallback_enabled"]:
+        warning("AUTH_LOCAL_FALLBACK", "HIGH", "명시적 로컬 데모 관리자 fallback이 활성화되어 있습니다.")
+    elif not authentication["configured"]:
+        warning("AUTH_MISSING", "HIGH", "활성 DB 사용자 계정 또는 API token이 없습니다.")
+    if authentication["configured"] and not settings["cookies"]["secure"]:
         warning("COOKIE_NOT_SECURE", "MEDIUM", "인증 사용 중 Secure 쿠키가 비활성화되어 있습니다.")
     if not settings["workers"]["enabled"]:
         warning("JOB_WORKER_DISABLED", "HIGH", "백그라운드 워커가 비활성화되어 영속 작업이 실행되지 않습니다.")
@@ -250,6 +326,10 @@ def build_config_audit(
         warning("SCHEDULER_LEASE_TOO_SHORT", "HIGH", "스케줄러 임대는 하트비트 주기의 2배 이상이어야 합니다.")
     if settings["webhooks"]["allow_insecure_http"]:
         warning("INSECURE_WEBHOOK_HTTP", "HIGH", "원격 평문 HTTP 웹훅이 허용되어 있습니다.")
+    if settings["outbound_http"]["private_networks_allowed"]:
+        warning("OUTBOUND_PRIVATE_NETWORKS", "HIGH", "HTTP 외부 연동에서 사설·로컬 네트워크 접근이 허용되어 있습니다.")
+    if settings["webhooks"]["configured_count"] and not settings["outbound_http"]["host_allowlist_count"]:
+        warning("OUTBOUND_ALLOWLIST_MISSING", "MEDIUM", "웹훅 목적지 호스트 allowlist가 설정되지 않았습니다.")
     if signing_config_error:
         warning("SIGNING_KEYRING_INVALID", "HIGH", signing_config_error)
     if proof_signing_config_error:
@@ -310,6 +390,21 @@ def build_config_audit(
         warning("EVIDENCE_CLEAN_NOT_REQUIRED", "HIGH", "검사 완료 전 증거 다운로드와 조치 검증 사용이 허용됩니다.")
     if settings["recovery"]["retention_count"] < 2:
         warning("BACKUP_RETENTION_LOW", "MEDIUM", "복구 번들 보존 개수가 2개 미만입니다.")
+    if (
+        settings["recovery"]["scheduled_interval_hours"] > 0
+        and not settings["recovery"]["external_backup_configured"]
+    ):
+        warning(
+            "EXTERNAL_BACKUP_MISSING",
+            "MEDIUM",
+            "예약 복구 번들이 서버 로컬에만 저장됩니다. 별도 마운트 또는 백업 볼륨을 설정하세요.",
+        )
+    if settings["recovery"]["external_retention_count"] < 2:
+        warning(
+            "EXTERNAL_BACKUP_RETENTION_LOW",
+            "MEDIUM",
+            "외부 복구 번들 보존 개수가 2개 미만입니다.",
+        )
     if not settings["pagination"]["cursor_signing_key_configured"]:
         warning("CURSOR_SIGNING_KEY_EPHEMERAL", "LOW", "고정 커서 서명 키가 없어 재시작·다중 프로세스 간 페이지 커서가 유지되지 않을 수 있습니다.")
 
@@ -541,18 +636,34 @@ def create_recovery_bundle(
     created_by: str = "system",
     base_dir: str | Path | None = None,
     evidence_dir: str | Path | None = None,
+    project_id: str = "default",
+    project_name: str = "",
+    database_role: str = PROJECT_DATABASE_ROLE,
 ) -> dict[str, Any]:
     if signing_key_id and not signing_key:
         raise ValueError("복구 번들 key_id에는 서명 키가 필요합니다.")
     if signing_key_id and not KEY_ID_RE.fullmatch(signing_key_id):
         raise ValueError("복구 번들 서명 키 ID 형식이 올바르지 않습니다.")
+    normalized_project_id = str(project_id or "").strip().lower()
+    if not normalized_project_id or not all(
+        char.islower() or char.isdigit() or char in {"-", "_"}
+        for char in normalized_project_id
+    ):
+        raise ValueError("복구 번들 프로젝트 ID 형식이 올바르지 않습니다.")
+    normalized_role = str(database_role or "").strip().lower()
+    if normalized_role != PROJECT_DATABASE_ROLE:
+        raise ValueError("복구 번들 database_role은 project-data여야 합니다.")
     destination = Path(destination)
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="vulnflow_recovery_") as temp_name:
         temp = Path(temp_name)
         database = temp / "database.sqlite3"
         backup_database(db_path, database)
-        database_summary = validate_database_file(database)
+        database_summary = validate_database_file(
+            database,
+            expected_project_id=normalized_project_id,
+            expected_database_role=normalized_role,
+        )
         policy = _active_policy(database)
         audit = config_audit or build_config_audit(db_path=db_path, base_dir=base_dir)
         (temp / "config-audit.json").write_text(
@@ -574,6 +685,11 @@ def create_recovery_bundle(
             "created_at": utc_now(),
             "created_by": created_by,
             "app_version": _app_version(base_dir),
+            "project": {
+                "project_id": normalized_project_id,
+                "project_name": str(project_name or "").strip(),
+                "database_role": normalized_role,
+            },
             "schema": get_schema_info(database),
             "database": database_summary | {
                 "filename": database.name,
@@ -676,6 +792,9 @@ def validate_recovery_bundle(
     require_signature: bool = False,
     current_schema_version: int | None = None,
     evidence_dir: str | Path | None = None,
+    expected_project_id: str = "",
+    expected_database_role: str = PROJECT_DATABASE_ROLE,
+    allow_legacy_unscoped: bool = False,
 ) -> dict[str, Any]:
     bundle = Path(bundle_path)
     if not bundle.is_file() or bundle.stat().st_size == 0:
@@ -716,8 +835,25 @@ def validate_recovery_bundle(
                 raise ValueError("manifest.json 형식이 올바르지 않습니다.") from exc
             if not isinstance(manifest, dict):
                 raise ValueError("manifest.json은 JSON 객체여야 합니다.")
-            if manifest.get("format") != RECOVERY_FORMAT:
+            bundle_format = str(manifest.get("format") or "")
+            if bundle_format not in {RECOVERY_FORMAT, LEGACY_RECOVERY_FORMAT}:
                 raise ValueError("지원하지 않는 복구 번들 형식입니다.")
+            project_meta = manifest.get("project") if isinstance(manifest.get("project"), dict) else {}
+            bundle_project_id = str(project_meta.get("project_id") or "").strip().lower()
+            bundle_database_role = str(project_meta.get("database_role") or "").strip().lower()
+            expected_id = str(expected_project_id or "").strip().lower()
+            expected_role = str(expected_database_role or PROJECT_DATABASE_ROLE).strip().lower()
+            if bundle_format == RECOVERY_FORMAT:
+                if not bundle_project_id or bundle_database_role != PROJECT_DATABASE_ROLE:
+                    raise ValueError("복구 번들 프로젝트 식별정보가 없거나 올바르지 않습니다.")
+            elif expected_id and not allow_legacy_unscoped:
+                raise ValueError("프로젝트 식별정보가 없는 구형 복구 번들은 이 경로에서 복원할 수 없습니다.")
+            if expected_id and bundle_project_id and bundle_project_id != expected_id:
+                raise ValueError(
+                    f"다른 프로젝트의 복구 번들입니다: expected={expected_id}, actual={bundle_project_id}"
+                )
+            if expected_role and bundle_database_role and bundle_database_role != expected_role:
+                raise ValueError("복구 번들의 데이터베이스 역할이 현재 복원 대상과 일치하지 않습니다.")
             signed = bool(manifest.get("signed"))
             signature_file = temp / "manifest.hmac"
             if not signed and signature_file.exists():
@@ -767,6 +903,11 @@ def validate_recovery_bundle(
                 "valid": True,
                 "bundle_sha256": sha256_file(bundle),
                 "manifest": manifest,
+                "project": {
+                    "project_id": bundle_project_id,
+                    "project_name": str(project_meta.get("project_name") or ""),
+                    "database_role": bundle_database_role,
+                },
                 "database": db_summary,
                 "signed": signed,
                 "signing_key_id": resolved_signing_key_id,
@@ -793,6 +934,8 @@ def restore_recovery_bundle(
     require_signature: bool = False,
     current_schema_version: int | None = None,
     evidence_dir: str | Path | None = None,
+    expected_project_id: str = "",
+    allow_legacy_unscoped: bool = False,
 ) -> dict[str, Any]:
     validation = validate_recovery_bundle(
         bundle_path,
@@ -800,6 +943,8 @@ def restore_recovery_bundle(
         audit_signing_key=audit_signing_key, audit_signing_keys=audit_signing_keys,
         require_signature=require_signature,
         current_schema_version=current_schema_version, evidence_dir=evidence_dir,
+        expected_project_id=expected_project_id,
+        allow_legacy_unscoped=allow_legacy_unscoped,
     )
     if int((validation.get("evidence") or {}).get("artifact_count") or 0) > 0 and evidence_dir is None:
         raise ValueError("증거 파일이 포함된 복구 번들에는 evidence_dir이 필요합니다.")
@@ -825,7 +970,14 @@ def restore_recovery_bundle(
                 evidence_root.mkdir(parents=True, exist_ok=True)
             replaced_evidence = True
         try:
-            restored = restore_database(db_path, temp / "database.sqlite3", actor=actor)
+            restored = restore_database(
+                db_path,
+                temp / "database.sqlite3",
+                actor=actor,
+                expected_project_id=str(expected_project_id or validation.get("project", {}).get("project_id") or ""),
+                expected_database_role=PROJECT_DATABASE_ROLE,
+                allow_unscoped=allow_legacy_unscoped,
+            )
         except Exception:
             if replaced_evidence and evidence_root is not None:
                 shutil.rmtree(evidence_root, ignore_errors=True)
@@ -889,6 +1041,8 @@ def create_scheduled_recovery_bundle(
     actor: str,
     base_dir: str | Path | None = None,
     evidence_dir: str | Path | None = None,
+    project_id: str = "default",
+    project_name: str = "",
 ) -> dict[str, Any]:
     root = Path(directory)
     root.mkdir(parents=True, exist_ok=True)
@@ -902,6 +1056,8 @@ def create_scheduled_recovery_bundle(
         created_by=actor,
         base_dir=base_dir,
         evidence_dir=evidence_dir,
+        project_id=project_id,
+        project_name=project_name,
     )
     result["pruned"] = prune_recovery_bundles(root, keep_count=max(1, int(retention_count)))
     return result

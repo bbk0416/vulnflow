@@ -13,13 +13,13 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 import requests
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page, expect, sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-ADMIN = {"username": "admin-capture", "password": "admin-capture-password"}
-OPERATOR = {"username": "operator-capture", "password": "operator-capture-password"}
+ADMIN = {"username": "admin-capture", "password": "Admin-Capture-Password-42!"}
+OPERATOR = {"username": "operator-capture", "password": "Operator-Capture-Password-42!"}
 SCREENSHOTS = (
     "dashboard.png",
     "finding-detail.png",
@@ -55,13 +55,18 @@ def _wait_until_ready(base_url: str, process: subprocess.Popen[str]) -> None:
 def _page(browser: Browser, base_url: str, credentials: dict[str, str]) -> tuple[Page, object]:
     context = browser.new_context(
         base_url=base_url,
-        http_credentials=credentials,
         viewport={"width": 1440, "height": 1000},
         device_scale_factor=1,
         locale="ko-KR",
         reduced_motion="reduce",
     )
-    return context.new_page(), context
+    page = context.new_page()
+    page.goto("/login")
+    page.locator("input[name='username']").fill(credentials["username"])
+    page.locator("input[name='password']").fill(credentials["password"])
+    page.get_by_role("button", name="로그인").click()
+    expect(page).to_have_url(base_url + "/")
+    return page, context
 
 
 def _capture(page: Page, relative_url: str, output: Path) -> None:
@@ -85,7 +90,7 @@ def _create_pending_approval(database: Path) -> None:
 def _render_server_html(page: Page, base_url: str, route: str, output: Path) -> None:
     response = requests.get(
         f"{base_url}{route}",
-        auth=(ADMIN["username"], ADMIN["password"]),
+        headers={"Authorization": "Bearer capture-admin-token-123456789"},
         timeout=10,
     )
     response.raise_for_status()
@@ -107,6 +112,12 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory(prefix="vulnflow-public-capture-") as temp:
         data_dir = Path(temp) / "data"
+        database = data_dir / "vulnflow.db"
+        from app.core.database_schema import init_db
+        from app.services.accounts import create_user
+        init_db(database)
+        create_user(database, username=ADMIN["username"], password=ADMIN["password"], role="admin", actor="capture-bootstrap")
+        create_user(database, username=OPERATOR["username"], password=OPERATOR["password"], role="operator", actor="capture-bootstrap")
         port = _free_port()
         base_url = f"http://127.0.0.1:{port}"
         env = os.environ.copy()
@@ -115,19 +126,13 @@ def main() -> None:
                 "PYTHONUNBUFFERED": "1",
                 "VULNFLOW_BASE_DIR": str(ROOT),
                 "VULNFLOW_DATA_DIR": str(data_dir),
-                "VULNFLOW_DB": str(data_dir / "vulnflow.db"),
+                "VULNFLOW_DB": str(database),
                 "VULNFLOW_EVIDENCE_DIR": str(data_dir / "evidence"),
                 "VULNFLOW_EXPORT_DIR": str(data_dir / "exports"),
                 "VULNFLOW_RECOVERY_DIR": str(data_dir / "recovery"),
-                "VULNFLOW_USERS_JSON": json.dumps(
-                    {
-                        ADMIN["username"]: {"password": ADMIN["password"], "role": "admin"},
-                        OPERATOR["username"]: {
-                            "password": OPERATOR["password"],
-                            "role": "operator",
-                        },
-                    }
-                ),
+                "VULNFLOW_DEMO_MODE": "1",
+                "VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK": "0",
+                "VULNFLOW_API_TOKENS_JSON": json.dumps({"capture-admin": {"token": "capture-admin-token-123456789", "role": "admin", "projects": "*"}}),
                 "VULNFLOW_JOB_WORKER_ENABLED": "0",
                 "VULNFLOW_CLUSTER_COORDINATION_ENABLED": "0",
                 "VULNFLOW_WEBHOOK_INTERVAL_SECONDS": "0",
@@ -166,7 +171,7 @@ def main() -> None:
                     launch_options["executable_path"] = executable
                 browser = playwright.chromium.launch(**launch_options)
                 try:
-                    _create_pending_approval(data_dir / "vulnflow.db")
+                    _create_pending_approval(database)
                     page, context = _page(browser, base_url, ADMIN)
                     try:
                         routes = (

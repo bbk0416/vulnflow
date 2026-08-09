@@ -8,16 +8,23 @@ from pathlib import Path
 from fastapi import FastAPI
 
 from app.application_runtime_common import Namespace, runtime_callback
-from app.core.auth import parse_accounts, parse_api_tokens
+from app.core.auth import parse_api_tokens
 from app.core.context import get_application_context
 from app.core.transactions import transaction_scope
+from app.routers import release_runtime_application
 from app.services.lifecycle_runtime import LifecycleSupervisor, coordination_db_path
+from app.services.project_startup import initialize_project_stores
+from app.services.runtime_dependency_policy import enforce_runtime_dependencies
+from app.services.security_profile import enforce_security_profile
+from app.services.storage_layout import prepare_split_storage
 
 
 @asynccontextmanager
 async def lifespan_scoped(application: FastAPI, *, namespace: Namespace):
     context = get_application_context(application)
     refresh_router_dependencies = runtime_callback(namespace, "_refresh_router_dependencies")
+    context.app = application
+    context.namespace["app"] = application
     runtime_service = runtime_callback(namespace, "_runtime_service")
     refresh_router_dependencies(context)
 
@@ -25,19 +32,77 @@ async def lifespan_scoped(application: FastAPI, *, namespace: Namespace):
     tokens_json = str(context.get("AUTH_API_TOKENS_JSON", "") or "")
     legacy_user = str(context.get("AUTH_USER", "") or "")
     legacy_password = str(context.get("AUTH_PASSWORD", "") or "")
+    demo_mode = bool(context.get("DEMO_MODE", False))
     allow_local_fallback = bool(context.get("ALLOW_LOCAL_ADMIN_FALLBACK", False))
-    accounts = parse_accounts(users_json) if users_json else {}
-    tokens = parse_api_tokens(tokens_json) if tokens_json else {}
-    if bool(legacy_user) != bool(legacy_password):
-        raise RuntimeError("VULNFLOW_AUTH_USER와 VULNFLOW_AUTH_PASSWORD는 함께 설정해야 합니다.")
-    if not accounts and not tokens and not (legacy_user and legacy_password) and not allow_local_fallback:
+
+    control_db = Path(context.get("CONTROL_DB_PATH"))
+    default_db = Path(context.get("DEFAULT_PROJECT_DB_PATH"))
+    evidence_dir = Path(context.get("DEFAULT_EVIDENCE_DIR"))
+    export_dir = Path(context.get("DEFAULT_EXPORT_DIR"))
+    preparation = prepare_split_storage(
+        control_database=control_db,
+        default_project_database=default_db,
+        legacy_database=Path(context.get("LEGACY_DB_PATH")),
+        data_directory=Path(context.get("DATA_DIR")),
+        directory_migrations=(
+            (Path(context.get("LEGACY_EVIDENCE_DIR")), evidence_dir),
+            (Path(context.get("LEGACY_EXPORT_DIR")), export_dir),
+            (
+                Path(context.get("LEGACY_IMPORT_PREVIEW_DIR")),
+                Path(context.get("DEFAULT_IMPORT_PREVIEW_DIR")),
+            ),
+            (Path(context.get("LEGACY_RECOVERY_DIR")), Path(context.get("DEFAULT_RECOVERY_DIR"))),
+        ),
+        init_db_fn=runtime_service(context, "init_db"),
+    )
+    context.set("STORAGE_PREPARATION", preparation.as_dict())
+    evidence_dir.mkdir(parents=True, exist_ok=True)
+    export_dir.mkdir(parents=True, exist_ok=True)
+
+    if users_json or legacy_user or legacy_password:
         raise RuntimeError(
-            "인증 계정 또는 API token이 없습니다. 로컬 loopback 전용 개발 실행에서만 "
-            "VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK=1을 명시하세요."
+            "평문 환경변수 사용자 인증은 제거되었습니다. "
+            "python -m scripts.manage_users --db <제어DB경로> create 명령으로 DB 사용자 계정을 만드세요."
+        )
+    tokens = parse_api_tokens(tokens_json) if tokens_json else {}
+    profile_report = enforce_security_profile(
+        context.settings.as_dict() if context.settings is not None else context.namespace,
+        tokens=tokens,
+    )
+    context.set("SECURITY_PROFILE_REPORT", profile_report.as_dict())
+    dependency_report = enforce_runtime_dependencies(
+        policy=str(context.get("RUNTIME_DEPENDENCY_POLICY", "off") or "off"),
+    )
+    context.set("RUNTIME_DEPENDENCY_REPORT", dependency_report.as_dict())
+    for finding in dependency_report.findings:
+        context.logger.warning(
+            "runtime dependency finding",
+            extra={
+                "code": finding.code,
+                "package": finding.package,
+                "expected": finding.expected,
+                "actual": finding.actual,
+            },
+        )
+    if not profile_report.passed:
+        for finding in profile_report.findings:
+            context.logger.warning(
+                "security profile finding",
+                extra={"profile": profile_report.profile, "code": finding.code},
+            )
+    if allow_local_fallback and not demo_mode:
+        raise RuntimeError(
+            "VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK은 VULNFLOW_DEMO_MODE=1인 로컬 데모에서만 사용할 수 있습니다."
+        )
+    active_users = int(runtime_service(context, "count_active_users")(control_db))
+    if active_users == 0 and not tokens and not allow_local_fallback:
+        raise RuntimeError(
+            "활성 사용자 계정 또는 API token이 없습니다. 먼저 "
+            "python -m scripts.manage_users --db <제어DB경로> create --username admin --role admin 명령을 실행하세요."
         )
 
     signing = runtime_callback(namespace, "_signing_config")(context)
-    audit_key_id, audit_key = signing.active("audit")
+    signing.active("audit")
     signing.active("backup")
     endpoints = runtime_service(context, "parse_webhook_endpoints")(
         str(context.get("WEBHOOKS_JSON", "") or ""),
@@ -52,62 +117,28 @@ async def lifespan_scoped(application: FastAPI, *, namespace: Namespace):
             "VULNFLOW_EVIDENCE_SCANNER_MODE는 builtin, clamscan, disabled 중 하나여야 합니다."
         )
 
-    db_path = context.get("DB_PATH")
-    evidence_dir = Path(context.get("EVIDENCE_DIR"))
-    export_dir = Path(context.get("EXPORT_DIR"))
-    runtime_service(context, "init_db")(db_path)
-    evidence_dir.mkdir(parents=True, exist_ok=True)
-    export_dir.mkdir(parents=True, exist_ok=True)
-    runtime_service(context, "reconcile_export_artifacts")(
-        db_path, export_dir, actor="system-startup"
+    startup = initialize_project_stores(
+        context,
+        signing=signing,
+        ensure_policy_registry=runtime_callback(namespace, "_ensure_policy_registry"),
+        load_sample_rows=runtime_callback(namespace, "_load_sample_rows"),
+        rescore_all=runtime_callback(namespace, "rescore_all"),
     )
-    evidence_integrity = runtime_service(context, "verify_evidence_store")(
-        db_path, evidence_dir
-    )
-    if not evidence_integrity.get("valid"):
-        raise RuntimeError("증거 저장소 무결성 검증 실패")
-    integrity = runtime_service(context, "verify_audit_integrity")(
-        db_path, signing_keys=signing.keys
-    )
-    if not integrity.get("valid"):
-        raise RuntimeError(
-            "감사 체인 무결성 검증 실패: " + "; ".join(integrity.get("issues") or [])
-        )
+    supervisor = LifecycleSupervisor(context)
+    context.set("LIFECYCLE_SUPERVISOR", supervisor)
 
     if bool(context.get("CLUSTER_COORDINATION_ENABLED")):
         runtime_service(context, "init_coordination_db")(coordination_db_path(context))
-    runtime_callback(namespace, "_ensure_policy_registry")(context)
-    sample_path = Path(context.get("SAMPLE_PATH"))
-    if runtime_service(context, "count_findings")(db_path) == 0 and sample_path.exists():
-        runtime_service(context, "upsert_findings")(
-            db_path,
-            runtime_callback(namespace, "_load_sample_rows")(sample_path),
-            actor="system-seed",
+    if int(startup.get("healthy_count") or 0) > 0:
+        supervisor.start()
+    else:
+        context.coordination_state["is_leader"] = False
+        context.coordination_state["scheduler_token"] = None
+        context.logger.critical(
+            "all active projects entered read-only recovery mode",
+            extra={"degraded_count": startup.get("degraded_count", 0)},
         )
-    runtime_callback(namespace, "rescore_all")(audit=False, context=context)
 
-    if audit_key:
-        current_integrity = runtime_service(context, "verify_audit_integrity")(
-            db_path, signing_keys=signing.keys
-        )
-        checkpoints = current_integrity.get("checkpoints") or []
-        latest = checkpoints[-1] if checkpoints else {}
-        if (
-            not checkpoints
-            or int(latest.get("chain_seq") or -1)
-            != int(current_integrity.get("last_seq") or 0)
-            or str(latest.get("key_id") or "") != str(audit_key_id or "")
-        ):
-            runtime_service(context, "create_audit_checkpoint")(
-                db_path,
-                signing_key=audit_key,
-                signing_key_id=audit_key_id,
-                actor="system-startup",
-            )
-
-    supervisor = LifecycleSupervisor(context)
-    context.set("LIFECYCLE_SUPERVISOR", supervisor)
-    supervisor.start()
     try:
         yield
     finally:
@@ -128,6 +159,9 @@ async def lifespan_scoped(application: FastAPI, *, namespace: Namespace):
 async def application_lifespan(application: FastAPI, *, namespace: Namespace):
     context = get_application_context(application)
     assert context.transaction_registry is not None
-    with transaction_scope(context.transaction_registry):
-        async with lifespan_scoped(application, namespace=namespace):
-            yield
+    try:
+        with transaction_scope(context.transaction_registry):
+            async with lifespan_scoped(application, namespace=namespace):
+                yield
+    finally:
+        release_runtime_application(context)

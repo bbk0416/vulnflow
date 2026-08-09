@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bbk-vulnflow"
-version = "72.0.13"
+version = "72.0.72"
 description = "Single-host vulnerability management and integrity verification project"
 readme = "README.md"
 requires-python = ">=3.12,<3.14"
@@ -28,8 +28,8 @@ dependencies = [
   "jinja2==3.1.6",
   "python-multipart==0.0.31",
   "PyYAML==6.0.3",
-  "requests==2.33.0",
-  "cryptography==48.0.1",
+  "cryptography==50.0.0",
+  "openpyxl==3.1.5",
 ]
 
 [project.scripts]
@@ -46,6 +46,7 @@ app = [
   "templates/*.html",
   "static/*",
   "resources/*.yml",
+  "resources/*.json",
 ]
 
 [tool.ruff]
@@ -59,6 +60,10 @@ select = ["E9", "F63", "F7", "F82"]
 # These router modules intentionally resolve runtime dependencies through
 # install_dependencies(); only their injected-global F821 findings are ignored.
 [tool.ruff.lint.per-file-ignores]
+"app/routers/accounts.py" = ["F821"]
+"app/routers/imports.py" = ["F821"]
+"app/routers/integrations.py" = ["F821"]
+"app/routers/projects.py" = ["F821"]
 "app/routers/trust.py" = ["F821"]
 "app/routers/trust_observability.py" = ["F821"]
 

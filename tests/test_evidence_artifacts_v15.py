@@ -69,7 +69,7 @@ def test_schema_v15_has_immutable_evidence_table(tmp_path: Path):
         version = conn.execute("PRAGMA user_version").fetchone()[0]
         columns = {row[1] for row in conn.execute("PRAGMA table_info(verification_evidence_artifacts)")}
         triggers = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='trigger'")}
-    assert version == CURRENT_SCHEMA_VERSION == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert {"evidence_id", "verification_id", "finding_id", "stored_filename", "sha256", "status"} <= columns
     assert {"verification_evidence_core_immutable", "verification_evidence_no_delete"} <= triggers
 

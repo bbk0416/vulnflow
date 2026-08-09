@@ -49,7 +49,7 @@ def main() -> None:
         (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     )
     app_version = _assignment_string(
-        ROOT / "app/core/database_schema.py",
+        ROOT / "app/core/schema_versions.py",
         "CURRENT_APP_VERSION",
     )
     citation_version = _single_regex(
@@ -70,6 +70,7 @@ def main() -> None:
         ROOT / "requirements-dev.lock"
     ).read_text(encoding="utf-8").splitlines()[0]
 
+    runtime_manifest = json.loads((ROOT / "app/resources/runtime_dependency_lock.json").read_text(encoding="utf-8"))
     bom = json.loads((ROOT / "bom.cdx.json").read_text(encoding="utf-8"))
     component = (bom.get("metadata") or {}).get("component") or {}
     dependencies = bom.get("dependencies") or []
@@ -93,6 +94,7 @@ def main() -> None:
         ("citation_version", citation_version == version),
         ("docker_image_version", docker_version == version),
         ("runtime_lock_header", runtime_header.startswith(f"# VulnFlow {version}")),
+        ("runtime_dependency_manifest_version", str(runtime_manifest.get("application_version") or "") == version),
         (
             "development_lock_header",
             development_header.startswith(f"# VulnFlow {version}"),

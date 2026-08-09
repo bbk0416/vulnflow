@@ -1,27 +1,25 @@
-# 72.0.13 Submission Stabilization
+# 72.0.15 Scanner Import Stabilization
 
-This release adds no new vulnerability-management domain capability. It corrects submission-facing consistency and quality gaps found during an independent whole-project review.
+This release adds the customer-facing scanner import wizard while preserving the existing canonical CSV automation endpoint and SQLite schema 41.
 
-## Canonical version presentation
+## Import boundary
 
-- The web header reads `CURRENT_APP_VERSION` through a Jinja global.
-- The OSV client User-Agent uses the same application version.
-- Dependency lock headers, test summaries, and release metadata are checked by `submission_readiness_smoke.py`.
+- Nessus `.nessus`, OpenVAS/Greenbone CSV and XML, generic CSV, and XLSX are parsed into canonical finding rows.
+- Browser uploads are staged in actor-bound preview sessions outside static paths.
+- Operators review detected format, field mapping, normalized rows, and validation errors before any database mutation.
+- Incremental imports may explicitly skip invalid rows; full snapshots fail closed when any row is invalid.
 
-## Evidence baseline semantics
+## Parser safety
 
-The built-in scanner detects the EICAR test marker only. A non-detection is stored as `BASELINE_ONLY`, not `CLEAN`. Download and verification approval require either:
+- XML DTD and entity declarations are rejected.
+- XLSX ZIP metadata is checked before workbook parsing.
+- Upload size, normalized row count, field lengths, preview lifetime, and preview-session count are bounded.
+- Temporary preview files use restricted permissions and are deleted after successful application or expiry.
 
-- `CLEAN` from the configured external scanner, or
-- an explicit administrator `WAIVED` decision with a recorded reason.
+## Release consistency
 
-Historical `builtin-baseline` rows incorrectly marked `CLEAN` are reclassified during database initialization.
+- `openpyxl` and `et_xmlfile` are pinned in runtime and development locks and recorded in the CycloneDX SBOM.
+- `submission_readiness_smoke.py`, release metadata checks, dependency lock checks, and the public SHA-256 manifest remain required.
+- The public core suite now contains 273 tests, including 9 scanner-import regression tests.
 
-## Test and coverage evidence
-
-- The complete pytest inventory is recorded in `reports/full_pytest_verification.txt`.
-- Application line coverage is measured by `scripts/coverage_verification.py`.
-- The release floor is 75% line coverage.
-- The scheduled/manual `full-release` GitHub Actions workflow runs full release verification and coverage separately from the fast push/pull-request workflow.
-
-Coverage is a regression indicator, not proof that all security properties or operational conditions are tested.
+The parser fixtures are synthetic. Passing these tests does not claim vendor certification or compatibility with every scanner release and customized export template.

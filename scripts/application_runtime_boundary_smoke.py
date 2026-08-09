@@ -29,7 +29,8 @@ def main_smoke() -> None:
             "RECOVERY_DIR": root / "recovery",
             "COORDINATION_DB_ENV": str(root / "coordination.db"),
             "CLUSTER_COORDINATION_ENABLED": False,
-        "ALLOW_LOCAL_ADMIN_FALLBACK": True,
+        "DEMO_MODE": True,
+            "ALLOW_LOCAL_ADMIN_FALLBACK": True,
             "JOB_WORKER_ENABLED": False,
             "MAINTENANCE_INTERVAL_MINUTES": 1,
             "WEBHOOK_INTERVAL_SECONDS": 1,
@@ -43,19 +44,19 @@ def main_smoke() -> None:
         stopped = context.runtime_snapshot()
 
     checks = {
-        "version_72_0_6": main.CURRENT_APP_VERSION == "72.0.13",
-        "schema_40": main.CURRENT_SCHEMA_VERSION == 40,
+        "version_72_0_7": main.CURRENT_APP_VERSION == "72.0.72",
+        "schema_42": main.CURRENT_SCHEMA_VERSION == 46,
         "architecture_pass": architecture["status"] == "PASS",
         "main_budget": by_path["app/main.py"]["lines"] <= 760,
         "runtime_budget": by_path["app/application_runtime.py"]["lines"] <= 360,
         "runtime_does_not_import_main": "app.main" not in by_path["app/application_runtime.py"]["internal_imports"],
-        "route_count_241": sum(int(item.get("routes") or 0) for item in architecture["modules"]) == 241,
+        "route_count_261": sum(int(item.get("routes") or 0) for item in architecture["modules"]) == 261,
         "health_round_trip": response.status_code == 200 and response.headers.get("X-Request-ID") == "v67-smoke",
         "lifecycle_running": running.get("lifecycle_state") == "RUNNING",
         "lifecycle_stopped": stopped.get("lifecycle_state") == "STOPPED" and stopped.get("lifecycle_shutdown_timed_out") is False,
     }
     payload = {
-        "title": "VulnFlow 72.0.13 application runtime boundary verification",
+        "title": "VulnFlow 72.0.72 application runtime boundary verification",
         "version": main.CURRENT_APP_VERSION,
         "checks": [{"name": name, "passed": passed} for name, passed in checks.items()],
         "result": f"{sum(checks.values())}/{len(checks)}",

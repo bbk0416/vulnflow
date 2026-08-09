@@ -9,7 +9,9 @@
 | approver | 가능 | 가능 | 승인·반려 가능 | 불가 |
 | admin | 가능 | 가능 | 직접 처리·승인 가능 | 가능 |
 
-`VULNFLOW_USERS_JSON`에 브라우저 사용자별 비밀번호와 역할을 지정합니다. 자동화는 별도의 `VULNFLOW_API_TOKENS_JSON` Bearer 토큰을 사용하며, 쓰기 API는 Basic 인증을 허용하지 않습니다. 설정하지 않으면 루프백 로컬 실행의 `local-user / admin`으로 동작합니다. 기존 `VULNFLOW_AUTH_USER`, `VULNFLOW_AUTH_PASSWORD`는 단일 admin 계정 호환용입니다.
+브라우저 사용자는 SQLite `app_users` 테이블에서 관리하며 비밀번호는 scrypt 해시로만 저장합니다. 최초 관리자는 `python -m scripts.manage_users --db ./data/vulnflow.db create --username admin --role admin`으로 생성합니다. 로그인 후에는 원문을 저장하지 않는 불투명 세션 쿠키를 사용하고, 기본 5회 연속 실패 시 15분 잠금, 비활성화 시 전체 세션 종료, 비밀번호 변경 시 기존 세션 폐기를 적용합니다. 관리자 화면 `/admin/users`에서 계정 생성·활성화·비활성화·잠금 해제·비밀번호 초기화·세션 종료를 수행합니다.
+
+자동화는 별도의 `VULNFLOW_API_TOKENS_JSON` Bearer 토큰을 사용하며, 쓰기 API는 Bearer 인증만 허용합니다. HTTP Basic과 과거 평문 `VULNFLOW_USERS_JSON`, `VULNFLOW_AUTH_USER`, `VULNFLOW_AUTH_PASSWORD`는 거부됩니다. 사용자 또는 API 토큰이 없으면 기본적으로 시작을 거부합니다. `VULNFLOW_DEMO_MODE=1`과 `VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK=1`을 함께 명시한 직접 loopback 데모에서만 `local-user / admin` fallback을 사용할 수 있고, 프록시 전달 헤더가 있는 요청에는 적용되지 않습니다.
 
 ## 위험수용 흐름
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-VulnFlow is maintained as a frozen portfolio baseline. New product features are not planned. Maintenance is limited to reproducible defects, security advisories, dependency compatibility and public-documentation corrections.
+VulnFlow is an early product-pilot codebase. Changes should prioritize a smaller customer-facing remediation workflow, reproducible defects, security hardening, deployment compatibility, and public-documentation accuracy. This repository does not yet represent a supported commercial service.
 
 ## Dependency updates
 
@@ -19,7 +19,7 @@ A repository maintenance change must pass:
 
 - release metadata consistency;
 - public SHA-256 manifest verification;
-- the 243-test public regression suite;
+- the 302-test public regression suite;
 - architecture review;
 - public submission readiness;
 - Chromium workflow E2E through GitHub Actions;
@@ -29,7 +29,7 @@ The exact reviewed pull-request HEAD is squash-merged only after all required ch
 
 ## Support boundary
 
-The repository is not a commercial support channel. Public issue creation or Discussions may be restricted. Documentation and reproducible public-code corrections may be proposed through pull requests when repository controls allow them. Security vulnerabilities must follow `SECURITY.md`.
+The repository does not provide a commercial support SLA. Public issue creation or Discussions may be restricted. Documentation and reproducible public-code corrections may be proposed through pull requests when repository controls allow them. Security vulnerabilities must follow `SECURITY.md`.
 
 ## Release boundary
 

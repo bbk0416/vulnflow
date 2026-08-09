@@ -56,7 +56,7 @@ def test_signed_recovery_bundle_validates_and_redacts_config(tmp_path: Path):
     upsert_findings(db, [_row("REC-1")], audit=False)
     env = {
         "VULNFLOW_USERS_JSON": json.dumps({"admin": {"password": "TOP-SECRET", "role": "admin"}}),
-        "VULNFLOW_API_TOKENS_JSON": json.dumps({"ci": {"token": "TOKEN-SECRET-123456", "role": "operator"}}),
+        "VULNFLOW_API_TOKENS_JSON": json.dumps({"ci": {"token": "TOKEN-SECRET-123456", "role": "operator", "projects": "*"}}),
         "VULNFLOW_WEBHOOKS_JSON": json.dumps({"ops": {"url": "https://user:pass@example.test/private", "secret": "WEBHOOK-SECRET", "events": ["*"]}}),
         "VULNFLOW_BACKUP_SIGNING_KEY": "signing-key",
         "VULNFLOW_COOKIE_SECURE": "1",
@@ -157,7 +157,7 @@ def test_future_schema_database_is_rejected(tmp_path: Path):
 def test_configuration_audit_flags_insecure_defaults():
     audit = build_config_audit({}, db_path="vulnflow.db", base_dir=Path(__file__).resolve().parents[1])
     codes = {item["code"] for item in audit["findings"]}
-    assert "AUTH_LOCAL_FALLBACK" in codes
+    assert "AUTH_MISSING" in codes
     assert "BACKUP_UNSIGNED" in codes
     assert "SCHEDULED_BACKUP_DISABLED" in codes
     assert audit["posture"] == "attention"
@@ -177,7 +177,7 @@ def test_system_ui_and_recovery_export(client: TestClient):
 
 def test_recovery_validate_api_requires_admin_bearer(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(main, "DB_PATH", tmp_path / "api.sqlite3")
-    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({"admin-api": {"token": "a" * 32, "role": "admin"}}))
+    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({"admin-api": {"token": "a" * 32, "role": "admin", "projects": "*"}}))
     with TestClient(main.app) as client:
         bundle = client.get("/export/recovery-bundle.zip", headers={"Authorization": "Bearer " + "a" * 32})
         assert bundle.status_code == 200
@@ -212,7 +212,7 @@ def test_recovery_backup_background_job(tmp_path: Path, monkeypatch):
 def test_api_recovery_restore_reverts_workflow(tmp_path: Path, monkeypatch):
     token = "r" * 32
     monkeypatch.setattr(main, "DB_PATH", tmp_path / "api-restore.sqlite3")
-    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({"admin-api": {"token": token, "role": "admin"}}))
+    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({"admin-api": {"token": token, "role": "admin", "projects": "*"}}))
     monkeypatch.setattr(main, "BACKUP_SIGNING_KEY", "api-restore-signing-key-123")
     monkeypatch.setattr(main, "BACKUP_REQUIRE_SIGNATURE", True)
     headers = {"Authorization": f"Bearer {token}"}

@@ -88,8 +88,8 @@ def main() -> None:
             parsed = parse_cyclonedx_json(io.BytesIO(json.dumps(payload).encode()))
             doc = store_cyclonedx_document(str(db), parsed, source_filename="portal.cdx.json", actor="smoke")
             base = f"http://127.0.0.1:{server.server_address[1]}"
-            first = run_osv_scan(str(db), doc["sbom_id"], actor="operator", api_base=base, source_job_id="JOB-SMOKE-1")
-            second = run_osv_scan(str(db), doc["sbom_id"], actor="operator", api_base=base, source_job_id="JOB-SMOKE-2")
+            first = run_osv_scan(str(db), doc["sbom_id"], actor="operator", api_base=base, source_job_id="JOB-SMOKE-1", allow_private_networks=True, host_allowlist="127.0.0.1")
+            second = run_osv_scan(str(db), doc["sbom_id"], actor="operator", api_base=base, source_job_id="JOB-SMOKE-2", allow_private_networks=True, host_allowlist="127.0.0.1")
             matches = list_osv_matches(str(db), sbom_id=doc["sbom_id"])
             confirmed = decide_osv_match(str(db), matches[0]["match_id"], decision="CONFIRM", reason="smoke", actor="operator")
             finding = next(row for row in list_findings(db) if row["finding_id"] == confirmed["finding_id"])

@@ -1,0 +1,2 @@
+﻿Host;Hostname;Port;NVT Name;CVEs;Severity;Summary;Solution
+198.51.100.30;;22/tcp;Synthetic SSH issue;CVE-2026-96003;7.2;Synthetic issue;Upgrade SSH

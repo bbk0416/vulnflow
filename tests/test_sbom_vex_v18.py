@@ -67,7 +67,7 @@ def test_schema_v18_has_supply_chain_tables(tmp_path: Path):
     with sqlite3.connect(db) as conn:
         version = conn.execute("PRAGMA user_version").fetchone()[0]
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-    assert version == CURRENT_SCHEMA_VERSION == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert {"sbom_documents", "sbom_components", "sbom_finding_links", "vex_statements"} <= tables
 
 
@@ -84,7 +84,7 @@ def test_v17_database_migrates_supply_chain_tables(tmp_path: Path):
     with sqlite3.connect(db) as conn:
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         version = conn.execute("PRAGMA user_version").fetchone()[0]
-    assert version == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert {"sbom_documents", "sbom_components", "sbom_finding_links", "vex_statements"} <= tables
 
 

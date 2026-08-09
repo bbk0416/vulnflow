@@ -61,8 +61,8 @@ def main() -> None:
         finding = storage.get_finding(db, "F-V65-SMOKE") or {}
 
     checks = {
-        "version_72_0_6": storage.CURRENT_APP_VERSION == "72.0.13",
-        "schema_40": storage.CURRENT_SCHEMA_VERSION == 40,
+        "version_72_0_7": storage.CURRENT_APP_VERSION == "72.0.72",
+        "schema_42": storage.CURRENT_SCHEMA_VERSION == 46,
         "ingestion_identity": finding_writes.upsert_findings is finding_ingestion.upsert_findings,
         "workflow_identity": finding_writes.update_workflow is finding_workflow.update_workflow,
         "approval_identity": finding_writes.create_risk_approval_request is finding_approvals.create_risk_approval_request,
@@ -77,7 +77,7 @@ def main() -> None:
         "architecture_pass": architecture["status"] == "PASS" and not architecture["cycles"],
     }
     payload = {
-        "title": "VulnFlow 72.0.13 finding write repository boundary verification",
+        "title": "VulnFlow 72.0.72 finding write repository boundary verification",
         "version": storage.CURRENT_APP_VERSION,
         "checks": [{"name": name, "passed": passed} for name, passed in checks.items()],
         "result": f"{sum(checks.values())}/{len(checks)}",

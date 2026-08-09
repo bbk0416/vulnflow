@@ -112,6 +112,83 @@ def normalize_finding_row(
     return score_callback(row)
 
 
+def prepare_findings_rows(
+    raw_rows: list[dict[str, Any]],
+    *,
+    scanner_source: str,
+    allow_empty: bool,
+    db_path: Any,
+    list_findings_fn: Callable[..., list[dict[str, Any]]],
+    list_assets_fn: Callable[..., list[dict[str, Any]]],
+    normalize_callback: Callable[[dict[str, Any], int, str], dict[str, Any]],
+    rescore_callback: Callable[[dict[str, Any]], dict[str, Any]],
+    source_rows: list[int] | None = None,
+    collect_errors: bool = False,
+) -> dict[str, Any]:
+    existing_map = {row["finding_id"]: row for row in list_findings_fn(db_path)}
+    asset_rows = list_assets_fn(db_path, status="", limit=5000)
+    assets_by_external = {
+        str(a.get("external_asset_id") or "").casefold(): a
+        for a in asset_rows if str(a.get("external_asset_id") or "").strip()
+    }
+    assets_by_name = {
+        str(a.get("asset_name") or "").casefold(): a
+        for a in asset_rows if str(a.get("asset_name") or "").strip()
+    }
+    preserve_on_update = {
+        "status", "owner", "due_date", "exception_expiry",
+        "risk_acceptance_reason", "risk_acceptance_approver", "notes",
+        "epss", "epss_percentile", "kev", "intel_source", "intel_updated_at", "resolved_at",
+        "first_seen_at", "first_scored_at",
+    }
+    rows: list[dict[str, Any]] = []
+    errors: list[dict[str, Any]] = []
+    ids: set[str] = set()
+    for idx, raw in enumerate(raw_rows):
+        if idx >= MAX_CSV_ROWS:
+            message = f"가져오기는 최대 {MAX_CSV_ROWS:,}건까지 지원합니다."
+            if collect_errors:
+                errors.append({"row_number": idx + 2, "message": message, "raw": {}})
+                break
+            raise ValueError(message)
+        source_row = source_rows[idx] if source_rows and idx < len(source_rows) else idx + 2
+        raw_row = dict(raw)
+        inventory_asset = assets_by_external.get(str(raw_row.get("asset_id") or "").strip().casefold())
+        if inventory_asset is None:
+            inventory_asset = assets_by_name.get(str(raw_row.get("asset_name") or "").strip().casefold())
+        if inventory_asset and str(inventory_asset.get("source") or "") == "inventory":
+            raw_row["asset_ref_id"] = inventory_asset.get("asset_ref_id")
+            raw_row["asset_name"] = inventory_asset.get("asset_name") or raw_row.get("asset_name")
+            raw_row["environment"] = inventory_asset.get("environment") or raw_row.get("environment")
+            raw_row["asset_criticality"] = inventory_asset.get("criticality")
+            raw_row["data_sensitivity"] = inventory_asset.get("data_sensitivity")
+            raw_row["internet_exposed"] = inventory_asset.get("internet_exposed")
+        try:
+            # normalize_finding_row uses index+2 in its messages; preserve the source row where possible.
+            normalize_index = max(0, int(source_row) - 2)
+            row = normalize_callback(raw_row, normalize_index, scanner_source)
+            existing = existing_map.get(row["finding_id"])
+            if existing:
+                for field in preserve_on_update:
+                    row[field] = existing.get(field)
+                row = rescore_callback(row)
+            if row["finding_id"] in ids:
+                raise ValueError(f"업로드 파일 내 finding_id 중복: {row['finding_id']}")
+            ids.add(row["finding_id"])
+            rows.append(row)
+        except ValueError as exc:
+            if not collect_errors:
+                raise
+            errors.append({
+                "row_number": source_row,
+                "message": str(exc),
+                "raw": {str(key): str(value or "")[:500] for key, value in raw_row.items()},
+            })
+    if not rows and not allow_empty and not errors:
+        raise ValueError("파일에 데이터 행이 없습니다.")
+    return {"rows": rows, "errors": errors}
+
+
 def parse_findings_csv(
     content: bytes,
     *,
@@ -127,54 +204,19 @@ def parse_findings_csv(
         reader = csv.DictReader(io.StringIO(content.decode("utf-8-sig")))
         if not reader.fieldnames:
             raise ValueError("CSV 헤더가 없습니다.")
-        existing_map = {row["finding_id"]: row for row in list_findings_fn(db_path)}
-        asset_rows = list_assets_fn(db_path, status="", limit=5000)
-        assets_by_external = {
-            str(a.get("external_asset_id") or "").casefold(): a
-            for a in asset_rows if str(a.get("external_asset_id") or "").strip()
-        }
-        assets_by_name = {
-            str(a.get("asset_name") or "").casefold(): a
-            for a in asset_rows if str(a.get("asset_name") or "").strip()
-        }
-        preserve_on_update = {
-            "status", "owner", "due_date", "exception_expiry",
-            "risk_acceptance_reason", "risk_acceptance_approver", "notes",
-            "epss", "epss_percentile", "kev", "intel_source", "intel_updated_at", "resolved_at",
-            "first_seen_at", "first_scored_at",
-        }
-        rows: list[dict[str, Any]] = []
-        ids: set[str] = set()
+        raw_rows: list[dict[str, Any]] = []
         for idx, raw in enumerate(reader):
             if idx >= MAX_CSV_ROWS:
                 raise ValueError(f"CSV는 최대 {MAX_CSV_ROWS:,}행까지 지원합니다.")
-            raw_row = dict(raw)
-            inventory_asset = assets_by_external.get(str(raw_row.get("asset_id") or "").strip().casefold())
-            if inventory_asset is None:
-                inventory_asset = assets_by_name.get(str(raw_row.get("asset_name") or "").strip().casefold())
-            if inventory_asset and str(inventory_asset.get("source") or "") == "inventory":
-                raw_row["asset_ref_id"] = inventory_asset.get("asset_ref_id")
-                raw_row["asset_name"] = inventory_asset.get("asset_name") or raw_row.get("asset_name")
-                raw_row["environment"] = inventory_asset.get("environment") or raw_row.get("environment")
-                raw_row["asset_criticality"] = inventory_asset.get("criticality")
-                raw_row["data_sensitivity"] = inventory_asset.get("data_sensitivity")
-                raw_row["internet_exposed"] = inventory_asset.get("internet_exposed")
-            row = normalize_callback(raw_row, idx, scanner_source)
-            existing = existing_map.get(row["finding_id"])
-            if existing:
-                for field in preserve_on_update:
-                    row[field] = existing.get(field)
-                row = rescore_callback(row)
-            if row["finding_id"] in ids:
-                raise ValueError(f"업로드 파일 내 finding_id 중복: {row['finding_id']}")
-            ids.add(row["finding_id"])
-            rows.append(row)
-        if not rows and not allow_empty:
-            raise ValueError("CSV에 데이터 행이 없습니다.")
-        return rows
+            raw_rows.append(dict(raw))
+        result = prepare_findings_rows(
+            raw_rows, scanner_source=scanner_source, allow_empty=allow_empty, db_path=db_path,
+            list_findings_fn=list_findings_fn, list_assets_fn=list_assets_fn,
+            normalize_callback=normalize_callback, rescore_callback=rescore_callback,
+        )
+        return result["rows"]
     except (UnicodeDecodeError, csv.Error) as exc:
         raise ValueError(str(exc)) from exc
-
 
 def parse_assets_csv(content: bytes) -> list[dict[str, Any]]:
     try:

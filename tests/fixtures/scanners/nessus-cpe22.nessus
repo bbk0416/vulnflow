@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<NessusClientData_v2>
+  <Report name="Synthetic Nessus CPE 2.2 fixture">
+    <ReportHost name="198.51.100.10">
+      <HostProperties>
+        <tag name="host-ip">198.51.100.10</tag>
+        <tag name="host-uuid">fixture-host-uuid</tag>
+      </HostProperties>
+      <ReportItem port="8443" svc_name="https" protocol="tcp" severity="4" pluginID="210001" pluginName="Synthetic Widget issue">
+        <cve>CVE-2026-96001</cve>
+        <cpe>cpe:/a:acme:widget_server:1.2.3</cpe>
+        <cvss4_base_score>9.3</cvss4_base_score>
+        <synopsis>Synthetic CPE 2.2 issue.</synopsis>
+        <solution>Upgrade Widget Server.</solution>
+      </ReportItem>
+    </ReportHost>
+  </Report>
+</NessusClientData_v2>

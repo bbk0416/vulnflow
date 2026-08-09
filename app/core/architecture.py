@@ -16,9 +16,23 @@ HARD_LINE_BUDGETS = {
     "app/application_lifespan.py": 180,
     "app/http_runtime.py": 260,
     "app/endpoint_workflows.py": 500,
-    "app/application_services.py": 650,
+    "app/application_services.py": 120,
+    "app/service_registry/__init__.py": 80,
+    "app/service_registry/common.py": 80,
+    "app/service_registry/foundation.py": 220,
+    "app/service_registry/repositories.py": 300,
+    "app/service_registry/workflow.py": 220,
+    "app/service_registry/governance.py": 260,
+    "app/service_registry/runtime.py": 120,
+    "app/service_registry/collaboration.py": 40,
+    "app/service_registry/catalog.py": 120,
     "app/core/storage.py": 160,
-    "app/core/database_schema.py": 750,
+    "app/core/database_schema.py": 220,
+    "app/core/database_backfills.py": 120,
+    "app/core/database_migrations.py": 360,
+    "app/core/database_search.py": 80,
+    "app/core/database_triggers.py": 260,
+    "app/core/schema_versions.py": 30,
     "app/services/database_lifecycle.py": 540,
     "app/factory.py": 120,
     "app/core/context.py": 130,
@@ -47,8 +61,43 @@ HARD_LINE_BUDGETS = {
     "app/services/operation_guard.py": 220,
     "app/services/request_processing.py": 360,
     "app/services/view_models.py": 80,
+    "app/services/finding_imports.py": 220,
+    "app/services/finding_import_common.py": 180,
+    "app/services/finding_import_tabular.py": 180,
+    "app/services/finding_import_scanners.py": 80,
+    "app/services/finding_import_xml.py": 160,
+    "app/services/finding_import_nessus.py": 240,
+    "app/services/finding_import_openvas.py": 260,
+    "app/services/finding_import_preview.py": 180,
+    "app/services/collaboration.py": 520,
+    "app/services/collaboration_email.py": 120,
+    "app/services/outbound_http.py": 380,
+    "app/services/outbound_json.py": 180,
+    "app/services/service_invocation.py": 40,
+    "app/services/outbound_smtp.py": 180,
+    "app/services/collaboration_registry.py": 80,
+    "app/services/collaboration_lifecycle.py": 80,
+    "app/services/integration_diagnostics.py": 100,
+    "app/services/integration_diagnostics_common.py": 40,
+    "app/services/integration_diagnostics_email.py": 140,
+    "app/services/integration_diagnostics_jira.py": 180,
+    "app/services/scanner_compatibility.py": 40,
+    "app/services/scanner_compatibility_evaluation.py": 100,
+    "app/services/scanner_compatibility_report.py": 240,
+    "app/services/scanner_anonymization.py": 180,
+    "app/services/scanner_anonymization_common.py": 180,
+    "app/services/scanner_anonymization_tabular.py": 180,
+    "app/services/scanner_anonymization_xml.py": 180,
+    "app/services/pilot_readiness.py": 180,
     "app/routers/__init__.py": 150,
+    "app/router_cloning.py": 120,
+    "app/effective_routes.py": 100,
+    "app/router_dependencies.py": 40,
+    "app/routers/accounts.py": 360,
     "app/routers/findings.py": 800,
+    "app/routers/imports.py": 360,
+    "app/routers/integrations.py": 260,
+    "app/routers/pilot.py": 220,
     "app/routers/supply_chain.py": 800,
     "app/routers/assets.py": 800,
     "app/routers/evidence.py": 800,
@@ -70,6 +119,8 @@ HARD_LINE_BUDGETS = {
     "app/repositories/webhooks.py": 60,
     "app/repositories/webhook_queue.py": 220,
     "app/repositories/webhook_delivery.py": 220,
+    "app/repositories/collaboration.py": 420,
+    "app/repositories/pilot.py": 180,
     "app/repositories/cluster.py": 400,
     "app/repositories/policies.py": 350,
     "app/repositories/findings.py": 100,
@@ -87,9 +138,14 @@ HARD_LINE_BUDGETS = {
 }
 
 ROUTER_ROUTE_BUDGET = 50
-EXPECTED_ROUTE_COUNT = 241
+EXPECTED_ROUTE_COUNT = 276
 REQUIRED_ROUTER_MODULES = {
+    "app/routers/accounts.py",
+    "app/routers/projects.py",
     "app/routers/findings.py",
+    "app/routers/imports.py",
+    "app/routers/integrations.py",
+    "app/routers/pilot.py",
     "app/routers/supply_chain.py",
     "app/routers/assets.py",
     "app/routers/evidence.py",
@@ -115,6 +171,8 @@ REQUIRED_REPOSITORY_MODULES = {
     "app/repositories/webhooks.py",
     "app/repositories/webhook_queue.py",
     "app/repositories/webhook_delivery.py",
+    "app/repositories/collaboration.py",
+    "app/repositories/pilot.py",
     "app/repositories/cluster.py",
     "app/repositories/policies.py",
     "app/repositories/findings.py",
@@ -288,12 +346,32 @@ def build_architecture_report(root: str | Path) -> dict[str, Any]:
         violations.append("API request models remain in main.py: " + ", ".join(api_classes))
 
     for required in (
-        "app/core/schema.py", "app/core/database_schema.py", "app/core/settings.py", "app/core/runtime.py", "app/core/context.py",
+        "app/core/schema.py", "app/core/database_schema.py", "app/core/database_backfills.py",
+        "app/core/database_migrations.py", "app/core/database_search.py",
+        "app/core/database_triggers.py", "app/core/schema_versions.py",
+        "app/core/settings.py", "app/core/runtime.py", "app/core/context.py",
         "app/core/transactions.py", "app/core/retry.py",
         "app/services/database_lifecycle.py", "app/services/proof_trust.py", "app/services/proof_transitions.py", "app/services/proof_trust_resolver.py", "app/services/proof_revocation.py", "app/services/proof_checkpoint.py", "app/services/proof_witness.py", "app/services/proof_transparency.py", "app/services/proof_mirror.py", "app/services/proof_consistency.py", "app/services/integrity_proofs.py", "app/services/integrity_proof_common.py", "app/services/integrity_proof_bundle.py", "app/services/integrity_proof_verifier.py", "app/api/models.py", "app/factory.py", "app/services/job_runtime.py", "app/services/job_dispatch.py", "app/services/job_worker_runtime.py",
         "app/services/lifecycle_runtime.py", "app/services/lifecycle_resources.py", "app/services/operation_guard.py",
         "app/application_services.py", "app/application_runtime.py", "app/application_runtime_common.py", "app/application_lifespan.py", "app/http_runtime.py", "app/endpoint_workflows.py",
+        "app/service_registry/__init__.py", "app/service_registry/common.py", "app/service_registry/foundation.py",
+        "app/service_registry/repositories.py", "app/service_registry/workflow.py",
+        "app/service_registry/governance.py", "app/service_registry/runtime.py",
+        "app/service_registry/collaboration.py", "app/service_registry/catalog.py",
         "app/services/request_processing.py", "app/services/view_models.py",
+        "app/services/finding_import_common.py", "app/services/finding_import_tabular.py",
+        "app/services/finding_import_scanners.py", "app/services/finding_import_xml.py",
+        "app/services/finding_import_nessus.py", "app/services/finding_import_openvas.py",
+        "app/services/finding_import_preview.py",
+        "app/services/outbound_json.py",
+        "app/services/service_invocation.py",
+        "app/services/integration_diagnostics.py",
+        "app/services/integration_diagnostics_common.py",
+        "app/services/integration_diagnostics_email.py",
+        "app/services/integration_diagnostics_jira.py",
+        "app/services/scanner_compatibility.py",
+        "app/services/scanner_compatibility_evaluation.py",
+        "app/services/scanner_compatibility_report.py",
     ):
         if required not in by_path:
             violations.append(f"required architecture module missing: {required}")
@@ -315,7 +393,7 @@ def build_architecture_report(root: str | Path) -> dict[str, Any]:
     main_internal_imports = set((by_path.get("app/main.py") or {}).get("internal_imports") or [])
     allowed_main_imports = {
         "app.api.models", "app.application_lifespan", "app.http_runtime", "app.application_services", "app.endpoint_workflows", "app.core.context",
-        "app.core.runtime", "app.core.settings", "app.factory", "app.routers",
+        "app.core.runtime", "app.core.settings", "app.factory", "app.routers", "app.application_runtime_common",
         "app.services.request_processing", "app.services.view_models",
     }
     unexpected_main_imports = sorted(main_internal_imports - allowed_main_imports)
@@ -388,6 +466,44 @@ def build_architecture_report(root: str | Path) -> dict[str, Any]:
     application_service_imports = set((by_path.get("app/application_services.py") or {}).get("internal_imports") or [])
     if "app.main" in application_service_imports:
         violations.append("application service registry imports app.main compatibility module")
+    unexpected_service_root_imports = sorted(application_service_imports - {"app.service_registry"})
+    if unexpected_service_root_imports:
+        violations.append(
+            "application service composition root owns domain imports: "
+            + ", ".join(unexpected_service_root_imports)
+        )
+    registry_paths = (
+        "app/service_registry/foundation.py",
+        "app/service_registry/repositories.py",
+        "app/service_registry/workflow.py",
+        "app/service_registry/governance.py",
+        "app/service_registry/runtime.py",
+        "app/service_registry/collaboration.py", "app/service_registry/catalog.py",
+    )
+    for registry_path in registry_paths:
+        registry_imports = set((by_path.get(registry_path) or {}).get("internal_imports") or [])
+        if "app.main" in registry_imports:
+            violations.append(f"service registry group imports app.main: {registry_path}")
+
+    finding_import_facade_imports = set(
+        (by_path.get("app/services/finding_imports.py") or {}).get("internal_imports") or []
+    )
+    expected_finding_import_modules = {
+        "app.core.settings",
+        "app.services.finding_import_common",
+        "app.services.finding_import_preview",
+        "app.services.finding_import_scanners",
+        "app.services.finding_import_tabular",
+    }
+    unexpected_finding_imports = sorted(finding_import_facade_imports - expected_finding_import_modules)
+    if unexpected_finding_imports:
+        violations.append(
+            "finding import facade owns parser dependencies: " + ", ".join(unexpected_finding_imports)
+        )
+    finding_import_text = (root_path / "app" / "services" / "finding_imports.py").read_text(encoding="utf-8")
+    for forbidden in ("from openpyxl", "xml.etree", "zipfile", "gzip.open"):
+        if forbidden in finding_import_text:
+            violations.append(f"finding import facade retained parser/storage implementation: {forbidden}")
     if "install_application_services(globals())" not in main_text:
         violations.append("main.py does not install the application service registry")
     extracted_main_helpers = {
@@ -551,6 +667,23 @@ def build_architecture_report(root: str | Path) -> dict[str, Any]:
     routers_init_text = (root_path / "app" / "routers" / "__init__.py").read_text(encoding="utf-8")
     if "class RouterRuntime" not in routers_init_text or "def _clone_router_module(" not in routers_init_text:
         violations.append("isolated router runtime boundary missing")
+    router_dependencies_text = (root_path / "app" / "router_dependencies.py").read_text(encoding="utf-8")
+    pilot_router_text = (root_path / "app" / "routers" / "pilot.py").read_text(encoding="utf-8")
+    if "def application_context(" not in router_dependencies_text or "get_application_context(request.app)" not in router_dependencies_text:
+        violations.append("request-scoped router application-context dependency missing")
+    if "CONTEXT_ROUTER_MODULES = (pilot,)" not in routers_init_text:
+        violations.append("pilot context-router migration registry missing")
+    if "if module in CONTEXT_ROUTER_MODULES:\n            app.include_router(module.router)" not in routers_init_text:
+        violations.append("context routers do not use FastAPI public include API")
+    if "if module in CONTEXT_ROUTER_MODULES:\n            app.router.include_router(module.router)" in routers_init_text:
+        violations.append("context routers use lower-level application router include implementation")
+    effective_routes_text = (root_path / "app" / "effective_routes.py").read_text(encoding="utf-8") if (root_path / "app" / "effective_routes.py").exists() else ""
+    if "iter_route_contexts" not in effective_routes_text or "def effective_api_routes(" not in effective_routes_text:
+        violations.append("effective FastAPI route-context inventory boundary missing")
+    if "Depends(application_context)" not in pilot_router_text:
+        violations.append("pilot router does not use request-scoped FastAPI context dependency")
+    if "globals()[name] = value" in pilot_router_text:
+        violations.append("pilot router still mutates module dependency globals")
     if "class RequestRuntime" not in context_text or "def get_request_runtime(" not in context_text:
         violations.append("request runtime boundary missing")
     job_runtime_text = (root_path / "app" / "services" / "job_runtime.py").read_text(encoding="utf-8") if (root_path / "app" / "services" / "job_runtime.py").exists() else ""

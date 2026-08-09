@@ -67,7 +67,7 @@ def test_v25_database_migrates_export_schema(tmp_path: Path):
             "SELECT name,app_version FROM schema_migrations WHERE version=26"
         ).fetchone()
         columns = {row[1] for row in conn.execute("PRAGMA table_info(export_artifacts)")}
-    assert version == CURRENT_SCHEMA_VERSION == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert migration == ("snapshot_export_artifacts", "26.0.0")
     assert {"artifact_id", "sha256", "expires_at", "downloaded_count"} <= columns
 
@@ -166,7 +166,7 @@ def test_export_api_queues_job_and_lists_artifacts(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         main,
         "AUTH_API_TOKENS_JSON",
-        '{"automation":{"token":"0123456789abcdef0123456789abcdef","role":"operator"}}',
+        '{"automation":{"token":"0123456789abcdef0123456789abcdef","role":"operator","projects":"*"}}',
     )
     headers = {"Authorization": "Bearer 0123456789abcdef0123456789abcdef"}
     with TestClient(main.app) as client:

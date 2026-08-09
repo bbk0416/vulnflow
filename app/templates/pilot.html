@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}파일럿 시작 센터 · VulnFlow{% endblock %}
+{% block content %}
+<div class="page-heading pilot-heading">
+  <div>
+    <p class="eyebrow">PILOT LAUNCH CENTER</p>
+    <h1>파일럿 시작 센터</h1>
+    <p>{{ project.name }}를 고객에게 열기 전 필수 설정과 운영 준비 상태를 한곳에서 확인합니다.</p>
+  </div>
+  <div class="heading-actions">
+    <a class="button-link primary" href="/export/executive-report.html">경영진 보고서 받기</a>
+    <a class="button-link" href="/upload">스캐너 결과 가져오기</a>
+  </div>
+</div>
+{% if notice_message %}<div class="notice success">{{ notice_message }}</div>{% endif %}
+{% if error_message %}<div class="notice danger" role="alert">{{ error_message }}</div>{% endif %}
+
+<section class="pilot-readiness-banner {% if readiness.launch_ready %}ready{% else %}pending{% endif %}">
+  <div>
+    <span>필수 준비 {{ readiness.required_passed }}/{{ readiness.required_total }}</span>
+    <h2>{{ '파일럿 시작 가능' if readiness.launch_ready else '필수 설정이 남아 있습니다' }}</h2>
+    <p>전체 준비도 {{ readiness.score_percent }}% · 권장 항목 {{ readiness.recommended_passed }}/{{ readiness.recommended_total }}</p>
+  </div>
+  <div class="readiness-score" aria-label="전체 준비도 {{ readiness.score_percent }}퍼센트">{{ readiness.score_percent }}<small>%</small></div>
+</section>
+
+<section class="panel" id="checklist">
+  <div class="section-heading"><div><h2>운영 준비 체크리스트</h2><p>필수 항목을 모두 통과하면 파일럿 시작 가능 상태가 됩니다.</p></div></div>
+  <div class="pilot-check-grid">
+  {% for check in readiness.checks %}
+    <article class="pilot-check {% if check.passed %}passed{% else %}pending{% endif %}">
+      <div class="pilot-check-status">{{ '✓' if check.passed else '!' }}</div>
+      <div><strong>{{ check.label }}</strong><p>{{ check.detail }}</p><span>{{ '필수' if check.required else '권장' }}</span></div>
+      {% if not check.passed %}<a href="{{ check.action_url }}">설정하기</a>{% endif %}
+    </article>
+  {% endfor %}
+  </div>
+</section>
+
+<section class="panel" id="profile">
+  <div class="section-heading">
+    <div><h2>고객사·프로젝트 정보</h2><p>경영진 보고서와 파일럿 운영 화면에 사용합니다.</p></div>
+  </div>
+  <form class="form-grid pilot-profile-form" method="post" action="/pilot/profile">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+    <label>고객사 이름<input name="customer_name" maxlength="120" value="{{ profile.customer_name }}" placeholder="예: A사" required></label>
+    <label>프로젝트 이름<input name="engagement_name" maxlength="160" value="{{ profile.engagement_name }}" placeholder="예: 2026 상반기 취약점 조치관리" required></label>
+    <label>고객 담당자<input name="contact_name" maxlength="120" value="{{ profile.contact_name }}" placeholder="예: 홍길동 팀장"></label>
+    <label>담당자 이메일<input type="email" name="contact_email" maxlength="254" value="{{ profile.contact_email }}" placeholder="security@example.com"></label>
+    <label>기본 조치기한<input type="number" name="default_due_days" min="1" max="365" value="{{ profile.default_due_days }}"><small>보고서에 표시되는 기본 운영 기준입니다.</small></label>
+    <label class="wide">진단 범위·전제<textarea name="scope_notes" rows="5" maxlength="4000" placeholder="대상 시스템, 제외 범위, 결과 기준일 등을 적으세요.">{{ profile.scope_notes }}</textarea></label>
+    <label class="wide">보고서 하단 문구<textarea name="report_footer" rows="3" maxlength="1000" placeholder="보안등급, 배포 제한, 문의처 등을 적으세요.">{{ profile.report_footer }}</textarea></label>
+    <button class="primary" type="submit">프로젝트 정보 저장</button>
+  </form>
+</section>
+
+<section class="panel pilot-next-actions">
+  <h2>권장 진행 순서</h2>
+  <ol class="onboarding-steps pilot-steps">
+    <li><span>1</span><div><strong>프로젝트 정보 저장</strong><small>고객사와 진단 범위를 먼저 확정합니다.</small></div></li>
+    <li><span>2</span><div><strong>스캐너 결과 가져오기</strong><small>Nessus·OpenVAS·CSV·XLSX를 미리보기 후 반영합니다.</small></div></li>
+    <li><span>3</span><div><strong>사용자와 알림 연결</strong><small>담당자를 배정하고 이메일 또는 Jira를 연결합니다.</small></div></li>
+    <li><span>4</span><div><strong>백업·복원 확인</strong><small>복구 번들을 만들고 격리 복원 리허설을 실행합니다.</small></div></li>
+    <li><span>5</span><div><strong>보고서 전달</strong><small>현재 조치현황을 고객용 HTML 보고서로 내려받습니다.</small></div></li>
+  </ol>
+</section>
+{% endblock %}

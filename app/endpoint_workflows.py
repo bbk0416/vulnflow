@@ -19,6 +19,9 @@ from typing import Any, MutableMapping
 
 from fastapi import HTTPException, Request
 
+from app.core.project_scope import active_project
+from app.services.service_invocation import call_with_supported_options
+
 
 STATUS_TRANSITIONS = {
     "OPEN": frozenset({"OPEN", "IN_PROGRESS", "MITIGATED", "RISK_ACCEPTED", "CLOSED"}),
@@ -28,8 +31,11 @@ STATUS_TRANSITIONS = {
     "CLOSED": frozenset({"CLOSED", "OPEN"}),
 }
 
+
+
 NOTICE_MESSAGES = {
-    "upload_ok": "취약점 CSV를 반영했습니다.",
+    "upload_ok": "취약점 결과를 반영했습니다.",
+    "upload_partial": "유효한 취약점만 반영했습니다. 제외된 행은 가져오기 오류 CSV에서 확인하세요.",
     "intel_ok": "CISA KEV·FIRST EPSS 정보를 갱신했습니다.",
     "intel_partial": "일부 위협정보만 갱신했습니다. 세부 오류는 감사 이력과 서버 메시지를 확인하세요.",
     "workflow_ok": "조치 워크플로를 저장하고 재평가했습니다.",
@@ -78,6 +84,7 @@ NOTICE_MESSAGES = {
     "config_change_requested": "구성 변경 승인 요청을 생성했습니다.",
     "config_change_decided": "구성 변경 승인 요청을 처리했습니다.",
     "config_change_applied": "승인된 구성 변경을 새 기준선으로 승격했습니다.",
+    "jira_queued": "Jira 티켓 생성 작업을 예약했습니다.",
 }
 
 
@@ -163,6 +170,9 @@ class EndpointWorkflows:
         destination = ns["RECOVERY_DIR"] / "asset-merges" / f"{safe_id}_{stamp}.zip"
         destination.parent.mkdir(parents=True, exist_ok=True)
         signing, backup_key_id, backup_key = self.backup_signing()
+        selection = active_project()
+        project_id = selection.project_id if selection is not None else "default"
+        project_name = selection.name if selection is not None else "기본 프로젝트"
         return ns["create_recovery_bundle"](
             ns["DB_PATH"], destination,
             config_audit=ns["build_config_audit"](
@@ -170,6 +180,7 @@ class EndpointWorkflows:
             ),
             signing_key=backup_key, signing_key_id=backup_key_id, signing_keys=signing.keys,
             audit_signing_keys=signing.keys, created_by=actor, base_dir=ns["BASE_DIR"], evidence_dir=ns["EVIDENCE_DIR"],
+            project_id=project_id, project_name=project_name,
         )
 
     def load_sample_rows(self, path: Path, normalize_callback: Any) -> list[dict[str, Any]]:
@@ -204,10 +215,22 @@ class EndpointWorkflows:
 
     def active_policy_record(self) -> dict[str, Any] | None:
         ns = self.namespace
-        if not Path(ns["DB_PATH"]).is_file():
+        db_value = ns["DB_PATH"]
+        # Standalone normalization/export helpers may run outside an HTTP or
+        # worker project scope.  Optional policy lookup must not silently fall
+        # back to the default customer database in that case.
+        from app.core.project_scope import ProjectScopedPath, active_project
+
+        if (
+            isinstance(db_value, ProjectScopedPath)
+            and db_value.require_scope
+            and active_project() is None
+        ):
+            return None
+        if not Path(db_value).is_file():
             return None
         try:
-            return ns["get_active_policy_version"](ns["DB_PATH"])
+            return ns["get_active_policy_version"](db_value)
         except Exception:
             return None
 
@@ -236,19 +259,31 @@ class EndpointWorkflows:
     def principal(self, request: Request):
         ns = self.namespace
         context = ns["get_application_context"](request.app)
-        users_json = context.get("AUTH_USERS_JSON", ns["AUTH_USERS_JSON"])
         api_tokens_json = context.get("AUTH_API_TOKENS_JSON", ns["AUTH_API_TOKENS_JSON"])
-        legacy_user = context.get("AUTH_USER", ns["AUTH_USER"])
-        legacy_password = context.get("AUTH_PASSWORD", ns["AUTH_PASSWORD"])
-        allow_local_fallback = bool(
-            context.get("ALLOW_LOCAL_ADMIN_FALLBACK", ns["ALLOW_LOCAL_ADMIN_FALLBACK"])
+        session_cookie = str(context.get("AUTH_SESSION_COOKIE", ns["AUTH_SESSION_COOKIE"]))
+        session_token = request.cookies.get(session_cookie, "")
+        demo_mode = bool(context.get("DEMO_MODE", ns.get("DEMO_MODE", False)))
+        proxy_headers_present = any(
+            request.headers.get(name)
+            for name in ("forwarded", "x-forwarded-for", "x-real-ip", "x-client-ip")
+        )
+        allow_local_fallback = (
+            demo_mode
+            and bool(context.get("ALLOW_LOCAL_ADMIN_FALLBACK", ns["ALLOW_LOCAL_ADMIN_FALLBACK"]))
+            and not proxy_headers_present
         )
         client_host = request.client.host if request.client is not None else ""
         return ns["authenticate_request"](
-            request.headers.get("authorization", ""), users_json=users_json,
-            api_tokens_json=api_tokens_json, legacy_user=legacy_user,
-            legacy_password=legacy_password, allow_local_fallback=allow_local_fallback,
+            request.headers.get("authorization", ""),
+            api_tokens_json=api_tokens_json,
+            session_token=session_token,
+            db_path=context.get("CONTROL_DB_PATH", context.get("DB_PATH", ns["DB_PATH"])),
+            authenticate_session_fn=ns["authenticate_session"],
+            allow_local_fallback=allow_local_fallback,
             client_host=client_host,
+        user_agent=request.headers.get("user-agent", ""),
+        session_binding=str(context.get("AUTH_SESSION_BINDING", "off") or "off"),
+        session_idle_minutes=int(context.get("AUTH_SESSION_IDLE_MINUTES", 0) or 0),
         )
 
     @staticmethod
@@ -261,14 +296,22 @@ class EndpointWorkflows:
         context: Any | None = None, idempotency_key: str | None = None,
     ) -> list[str]:
         runtime = self.runtime_context(context)
-        endpoints = dict(runtime.get("WEBHOOK_ENDPOINTS", {}) or {})
-        if not endpoints:
-            return []
-        return self.runtime_service(runtime, "queue_event")(
-            runtime.get("DB_PATH"), endpoints=endpoints, event_type=event_type,
-            payload=payload, actor=actor, idempotency_key=idempotency_key,
-            idempotency_retention_days=int(runtime.get("IDEMPOTENCY_RETENTION_DAYS", 30)),
+        queued = self.runtime_service(runtime, "queue_event_for_integrations")(
+            runtime.get("DB_PATH"),
+            event_type=event_type,
+            payload=payload,
+            actor=actor,
+            app_base_url=str(runtime.get("PUBLIC_BASE_URL", "") or ""),
+            idempotency_key=str(idempotency_key or ""),
         )
+        endpoints = dict(runtime.get("WEBHOOK_ENDPOINTS", {}) or {})
+        if endpoints:
+            queued.extend(self.runtime_service(runtime, "queue_event")(
+                runtime.get("DB_PATH"), endpoints=endpoints, event_type=event_type,
+                payload=payload, actor=actor, idempotency_key=idempotency_key,
+                idempotency_retention_days=int(runtime.get("IDEMPOTENCY_RETENTION_DAYS", 30)),
+            ))
+        return queued
 
     def require_role(self, request: Request, minimum: str) -> None:
         if not self.namespace["has_role"](getattr(request.state, "role", "viewer"), minimum):
@@ -339,15 +382,26 @@ class EndpointWorkflows:
         updates: dict[str, dict[str, Any]] = {cve: {} for cve in cves}
         sources: list[str] = []
         errors: list[str] = []
+        intel_options = {
+            "timeout": int(runtime.get("INTEL_TIMEOUT_SECONDS", 30)),
+            "retries": int(runtime.get("INTEL_RETRIES", 3)),
+            "max_response_bytes": int(runtime.get("INTEL_MAX_RESPONSE_BYTES", 8 * 1024 * 1024)),
+            "allow_private_networks": bool(runtime.get("OUTBOUND_ALLOW_PRIVATE_NETWORKS", False)),
+            "host_allowlist": str(runtime.get("OUTBOUND_HOST_ALLOWLIST", "") or ""),
+        }
         try:
-            kev_catalog = self.runtime_service(runtime, "fetch_kev_catalog")()
+            kev_catalog = call_with_supported_options(
+                self.runtime_service(runtime, "fetch_kev_catalog"), **intel_options
+            )
             for cve in cves:
                 updates[cve]["kev"] = cve in kev_catalog
             sources.append("CISA KEV")
         except ns["IntelligenceError"] as exc:
             errors.append(str(exc))
         try:
-            epss_map = self.runtime_service(runtime, "fetch_epss")(cves)
+            epss_map = call_with_supported_options(
+                self.runtime_service(runtime, "fetch_epss"), cves, **intel_options
+            )
             for cve, values in epss_map.items():
                 updates[cve]["epss"] = values.get("epss")
                 updates[cve]["epss_percentile"] = values.get("percentile")

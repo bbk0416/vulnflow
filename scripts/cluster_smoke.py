@@ -99,7 +99,7 @@ def _start(port: int, instance_id: str, db: Path, coord: Path, log: Path) -> sub
         "VULNFLOW_MAINTENANCE_INTERVAL_MINUTES": "0",
         "VULNFLOW_BACKUP_INTERVAL_HOURS": "0",
         "VULNFLOW_WEBHOOKS_JSON": "",
-        "VULNFLOW_API_TOKENS_JSON": json.dumps({"admin": {"token": TOKEN, "role": "admin"}}),
+        "VULNFLOW_API_TOKENS_JSON": json.dumps({"admin": {"token": TOKEN, "role": "admin", "projects": "*"}}),
         "VULNFLOW_LOG_LEVEL": "WARNING",
     })
     handle = log.open("wb")

@@ -66,8 +66,8 @@ def main() -> None:
         if applied["status"] != "APPLIED" or evaluate_drift(db, target)["status"] != "IN_SYNC":
             raise SystemExit("approved target was not promoted to the active baseline")
         validation = validate_database_file(db)
-        if validation["schema_version"] != 40:
-            raise SystemExit("schema 40 restore validation failed")
+        if validation["schema_version"] != 42:
+            raise SystemExit("schema 43 restore validation failed")
         result = {
             "request_id": request["request_id"],
             "self_approval_blocked": self_approval_blocked,
@@ -83,7 +83,7 @@ def main() -> None:
             json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8"
         )
         (reports / "config_change_control_verification.txt").write_text(
-            "VulnFlow 72.0.13 configuration change control verification\n"
+            "VulnFlow 72.0.72 configuration change control verification\n"
             f"self approval blocked: {result['self_approval_blocked']}\n"
             f"approved window: {result['approved_window_status']}\n"
             f"additional drift: {result['unexpected_drift_status']}\n"

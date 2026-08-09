@@ -58,7 +58,7 @@ def test_schema_v15_contains_verification_tables_and_columns(tmp_path: Path):
         columns = {row[1] for row in conn.execute("PRAGMA table_info(findings)")}
         tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
         version = conn.execute("PRAGMA user_version").fetchone()[0]
-    assert version == 40
+    assert version == main.CURRENT_SCHEMA_VERSION == 46
     assert {
         "resolution_state",
         "resolution_requested_at",
@@ -215,5 +215,10 @@ def test_web_routes_and_direct_close_restriction(client: TestClient):
         },
     )
     assert close.status_code == 400
-    assert client.get("/verifications").status_code == 200
+    page = client.get("/verifications")
+    assert page.status_code == 200
+    assert "검증할 항목부터 처리하세요." in page.text
+    assert "검토 대기" in page.text
+    assert "재스캔 미탐지" in page.text or "재시험" in page.text or "수동 증거" in page.text
+    assert client.get("/verifications?status=PENDING").status_code == 200
     assert client.get("/api/v1/verifications").status_code == 200

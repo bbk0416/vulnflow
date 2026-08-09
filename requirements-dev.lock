@@ -1,5 +1,10 @@
-# VulnFlow 72.0.13 development dependency lock.
+# VulnFlow 72.0.72 development dependency lock.
 -r requirements.lock
+certifi==2026.5.20
+charset-normalizer==3.4.7
+idna==3.17
+urllib3==2.7.0
+requests==2.33.0
 httpcore==1.0.9
 httpx==0.28.1
 iniconfig==2.3.0

@@ -10,6 +10,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from app.core.storage import init_db, validate_database_file
+from app.services.accounts import create_user
 from app.services.config_drift import create_baseline, evaluate_drift, list_baselines, record_drift_check
 from app.services.recovery import build_config_audit
 
@@ -19,9 +20,15 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="vulnflow_config_drift_") as temp:
         db = Path(temp) / "vulnflow.db"
         init_db(db)
+        create_user(
+            db,
+            username="admin",
+            password="Baseline-Admin-2026!",
+            role="admin",
+            actor="config-drift-smoke",
+        )
         approved_env = {
-            "VULNFLOW_USERS_JSON": '{"admin":{"password":"baseline-secret","role":"admin"}}',
-            "VULNFLOW_API_TOKENS_JSON": '{"ci":{"token":"token-secret","role":"operator"}}',
+            "VULNFLOW_API_TOKENS_JSON": '{"ci":{"token":"token-secret","role":"operator","projects":"*"}}',
             "VULNFLOW_WEBHOOKS_JSON": '{"ops":{"url":"https://user:pass@example.test/private","secret":"hook-secret","events":["workflow.changed"]}}',
             "VULNFLOW_COOKIE_SECURE": "1",
             "VULNFLOW_BACKUP_REQUIRE_SIGNATURE": "1",
@@ -35,7 +42,7 @@ def main() -> None:
         baseline = create_baseline(db, approved, actor="admin", note="smoke approved baseline")
         baseline_text = json.dumps(baseline["snapshot"], ensure_ascii=False, sort_keys=True)
         leaked = [
-            value for value in ("baseline-secret", "token-secret", "hook-secret", "user:pass", "/private")
+            value for value in ("Baseline-Admin-2026!", "token-secret", "hook-secret", "user:pass", "/private")
             if value in baseline_text
         ]
         if leaked:
@@ -58,8 +65,8 @@ def main() -> None:
         if evaluate_drift(db, changed)["status"] != "IN_SYNC":
             raise SystemExit("re-baselined configuration is not in sync")
         validation = validate_database_file(db)
-        if validation["schema_version"] != 40:
-            raise SystemExit("schema 40 restore validation failed")
+        if validation["schema_version"] != 42:
+            raise SystemExit("schema 43 restore validation failed")
 
         result = {
             "baseline_id": baseline["baseline_id"],
@@ -79,7 +86,7 @@ def main() -> None:
             json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8"
         )
         (reports / "config_drift_verification.txt").write_text(
-            "VulnFlow 72.0.13 configuration baseline and drift verification\n"
+            "VulnFlow 72.0.72 configuration baseline and drift verification\n"
             "redacted baseline: passed\n"
             f"initial status: {result['initial_status']}\n"
             f"high-risk drift: {result['drift_status']} / {result['drift_severity']} / {result['change_count']} changes\n"

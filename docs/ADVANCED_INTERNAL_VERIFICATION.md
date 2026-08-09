@@ -1,6 +1,6 @@
 # Advanced verification retained in the internal release
 
-VulnFlow의 내부 72.0.13 기준본에는 다음 검증 계층이 추가로 존재합니다.
+VulnFlow의 내부 72.0.11 기준본에는 다음 검증 계층이 추가로 존재합니다.
 
 - 555개 전체 자동시험
 - 애플리케이션 line coverage 79.96%

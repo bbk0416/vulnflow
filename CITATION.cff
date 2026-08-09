@@ -5,8 +5,8 @@ type: software
 authors:
   - family-names: "Bae"
     given-names: "Byeong-gwon"
-version: "72.0.13"
-date-released: "2026-07-29"
+version: "72.0.72"
+date-released: "2026-08-07"
 license: MIT
 abstract: "A FastAPI and SQLite project that models vulnerability finding normalization, prioritization, remediation, approval, evidence, audit, backup, and recovery workflows using synthetic data."
 keywords:

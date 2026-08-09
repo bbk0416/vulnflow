@@ -24,7 +24,7 @@ def build_app(root: Path, name: str, token: str):
             "COORDINATION_DB_ENV": str(root / f"{name}-coordination.sqlite3"),
             "INSTANCE_ID": f"smoke-{name}",
             "AUTH_USERS_JSON": "",
-            "AUTH_API_TOKENS_JSON": json.dumps({name: {"token": token, "role": "admin"}}),
+            "AUTH_API_TOKENS_JSON": json.dumps({name: {"token": token, "role": "admin", "projects": "*"}}),
             "JOB_WORKER_ENABLED": False,
             "MAINTENANCE_INTERVAL_MINUTES": 0,
             "WEBHOOKS_JSON": "",
@@ -74,7 +74,7 @@ def main_smoke() -> dict[str, object]:
             assert active_cluster_lease(guard_a.coordination_db_path, lease_name) is None
 
         return {
-            "version": "72.0.13",
+            "version": "72.0.72",
             "blocked_app_status": blocked.status_code,
             "independent_app_status": allowed.status_code,
             "router_guards_distinct": guard_a is not guard_b,
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     )
     text = "\n".join(
         [
-            "VulnFlow 72.0.13 context-bound operation guard verification",
+            "VulnFlow 72.0.72 context-bound operation guard verification",
             "",
             f"restore barrier isolated: {'PASS' if result['blocked_app_status'] == 503 and result['independent_app_status'] == 200 else 'FAIL'}",
             f"router guards distinct: {'PASS' if result['router_guards_distinct'] else 'FAIL'}",

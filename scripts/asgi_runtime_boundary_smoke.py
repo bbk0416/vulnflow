@@ -32,7 +32,8 @@ def main_smoke() -> None:
             "RECOVERY_DIR": root / "recovery",
             "COORDINATION_DB_ENV": str(root / "coordination.db"),
             "CLUSTER_COORDINATION_ENABLED": False,
-        "ALLOW_LOCAL_ADMIN_FALLBACK": True,
+        "DEMO_MODE": True,
+            "ALLOW_LOCAL_ADMIN_FALLBACK": True,
             "JOB_WORKER_ENABLED": False,
             "MAINTENANCE_INTERVAL_MINUTES": 1,
             "WEBHOOK_INTERVAL_SECONDS": 1,
@@ -46,8 +47,8 @@ def main_smoke() -> None:
         stopped = context.runtime_snapshot()
 
     checks = {
-        "version_72_0_6": main.CURRENT_APP_VERSION == "72.0.13",
-        "schema_40": main.CURRENT_SCHEMA_VERSION == 40,
+        "version_72_0_7": main.CURRENT_APP_VERSION == "72.0.72",
+        "schema_42": main.CURRENT_SCHEMA_VERSION == 46,
         "architecture_pass": architecture["status"] == "PASS",
         "facade_budget": by_path["app/application_runtime.py"]["lines"] <= 60,
         "lifespan_budget": by_path["app/application_lifespan.py"]["lines"] <= 180,
@@ -65,7 +66,7 @@ def main_smoke() -> None:
         "lifecycle_stopped": stopped.get("lifecycle_state") == "STOPPED" and stopped.get("lifecycle_shutdown_timed_out") is False,
     }
     payload = {
-        "title": "VulnFlow 72.0.13 split ASGI runtime boundary verification",
+        "title": "VulnFlow 72.0.72 split ASGI runtime boundary verification",
         "version": main.CURRENT_APP_VERSION,
         "checks": [{"name": name, "passed": passed} for name, passed in checks.items()],
         "result": f"{sum(checks.values())}/{len(checks)}",

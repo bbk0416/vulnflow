@@ -21,3 +21,11 @@ data/backups/
 INITIAL_CREDENTIALS.json
 *_PRIVATE_KEY*
 reports/
+data/projects/
+data/import-previews/
+data/recovery/
+
+data/control.db
+data/split-storage-v1.json
+deploy/certs/*.pem
+!deploy/certs/README.md

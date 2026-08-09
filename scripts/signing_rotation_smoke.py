@@ -32,9 +32,8 @@ def env_for(db: Path, keys: dict[str, str], audit_id: str, backup_id: str) -> di
         "VULNFLOW_WEBHOOK_INTERVAL_SECONDS": "0",
         "VULNFLOW_MAINTENANCE_INTERVAL_MINUTES": "0",
         "VULNFLOW_BACKUP_INTERVAL_HOURS": "0",
-        "VULNFLOW_USERS_JSON": json.dumps({"admin": {"password": "rotation-pass", "role": "admin"}}),
         "VULNFLOW_API_TOKENS_JSON": json.dumps({
-            "rotation-admin": {"token": "rotation-admin-token-123456", "role": "admin"}
+            "rotation-admin": {"token": "rotation-admin-token-123456", "role": "admin", "projects": "*"}
         }),
         "VULNFLOW_SIGNING_KEYS_JSON": json.dumps(keys),
         "VULNFLOW_AUDIT_ACTIVE_KEY_ID": audit_id,
@@ -89,7 +88,6 @@ def main() -> int:
         "backup-new": "rotation-new-backup-secret-long",
     }
     bearer = {"Authorization": "Bearer rotation-admin-token-123456"}
-    basic = ("admin", "rotation-pass")
 
     with tempfile.TemporaryDirectory(prefix="vulnflow_key_rotation_") as temp_name:
         root = Path(temp_name)
@@ -106,7 +104,7 @@ def main() -> int:
                 integrity = client.get(f"http://127.0.0.1:{first_port}/api/v1/audit/integrity", headers=bearer)
                 assert integrity.status_code == 200
                 assert integrity.json()["checkpoints"][-1]["key_id"] == "audit-old"
-                exported = client.get(f"http://127.0.0.1:{first_port}/export/recovery-bundle.zip", auth=basic)
+                exported = client.get(f"http://127.0.0.1:{first_port}/export/recovery-bundle.zip", headers=bearer)
                 assert exported.status_code == 200
                 bundle.write_bytes(exported.content)
         finally:
@@ -140,20 +138,34 @@ def main() -> int:
         third_port = free_port()
         third = start_server(env_for(db, only_new, "audit-new", "backup-new"), third_port)
         try:
-            deadline = time.time() + 12
-            while time.time() < deadline and third.poll() is None:
+            deadline = time.time() + 20
+            health_payload = None
+            ready_status = None
+            while time.time() < deadline:
+                if third.poll() is not None:
+                    output = third.stdout.read() if third.stdout else ""
+                    raise RuntimeError(f"recovery-mode server exited unexpectedly: {third.returncode}\n{output}")
+                try:
+                    health = httpx.get(f"http://127.0.0.1:{third_port}/health", timeout=0.5)
+                    ready = httpx.get(f"http://127.0.0.1:{third_port}/health/ready", timeout=0.5)
+                    if health.status_code == 200:
+                        health_payload = health.json()
+                        ready_status = ready.status_code
+                        break
+                except httpx.HTTPError:
+                    pass
                 time.sleep(0.1)
-            if third.poll() is None:
-                raise AssertionError("server unexpectedly started after removing a referenced audit key")
-            output = third.stdout.read() if third.stdout else ""
-            assert "key unavailable" in output or "감사 체인 무결성" in output
+            assert health_payload is not None, "recovery-mode health endpoint did not become available"
+            assert health_payload.get("status") == "degraded", health_payload
+            assert health_payload.get("recovery_mode", {}).get("active") is True, health_payload
+            assert ready_status == 503, ready_status
         finally:
             stop(third)
 
     print("old key checkpoint: verified")
     print("new active key checkpoint: created")
     print("old recovery bundle under new keyring: verified")
-    print("referenced old key removal: startup rejected")
+    print("referenced old key removal: read-only recovery mode entered")
     print("signing rotation smoke passed: 4 checks")
     return 0
 

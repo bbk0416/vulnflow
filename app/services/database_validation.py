@@ -333,6 +333,141 @@ def _validate_schema_v39_to_v40(conn: sqlite3.Connection, tables: set[str], sche
                 + ", ".join(sorted(forbidden_consistency_columns))
             )
 
+
+def _validate_schema_v41(conn: sqlite3.Connection, tables: set[str], schema_version: int) -> None:
+    if schema_version < 41:
+        return
+    required = {"app_users", "auth_sessions", "auth_login_attempts"}
+    missing = required - tables
+    if missing:
+        raise ValueError("41 이상 백업 사용자 인증 테이블이 없습니다: " + ", ".join(sorted(missing)))
+    user_columns = {row[1] for row in conn.execute("PRAGMA table_info(app_users)").fetchall()}
+    required_user_columns = {
+        "username", "password_hash", "role", "is_active", "failed_attempts", "locked_until",
+        "last_login_at", "password_changed_at", "created_by", "created_at", "updated_at",
+    }
+    missing_user = required_user_columns - user_columns
+    if missing_user:
+        raise ValueError("41 이상 백업 app_users 필수 컬럼이 없습니다: " + ", ".join(sorted(missing_user)))
+    forbidden = {"password", "plaintext_password", "session_token"} & user_columns
+    if forbidden:
+        raise ValueError("사용자 테이블에 평문 인증정보 컬럼이 있습니다: " + ", ".join(sorted(forbidden)))
+    session_columns = {row[1] for row in conn.execute("PRAGMA table_info(auth_sessions)").fetchall()}
+    required_session = {
+        "session_hash", "username", "created_at", "expires_at", "revoked_at",
+        "user_agent_hash", "client_hash",
+    }
+    missing_session = required_session - session_columns
+    if missing_session:
+        raise ValueError("41 이상 백업 auth_sessions 필수 컬럼이 없습니다: " + ", ".join(sorted(missing_session)))
+    forbidden_session = {"session_token", "raw_token", "cookie"} & session_columns
+    if forbidden_session:
+        raise ValueError("세션 테이블에 원문 세션 값 컬럼이 있습니다: " + ", ".join(sorted(forbidden_session)))
+
+def _validate_schema_v42(conn: sqlite3.Connection, tables: set[str], schema_version: int) -> None:
+    if schema_version < 42:
+        return
+    required = {"projects", "project_memberships"}
+    missing = required - tables
+    if missing:
+        raise ValueError("42 이상 백업 프로젝트 분리 테이블이 없습니다: " + ", ".join(sorted(missing)))
+    project_columns = {row[1] for row in conn.execute("PRAGMA table_info(projects)").fetchall()}
+    required_project = {
+        "project_id", "name", "slug", "status", "is_default",
+        "created_by", "created_at", "updated_at",
+    }
+    missing_project = required_project - project_columns
+    if missing_project:
+        raise ValueError("42 이상 백업 projects 필수 컬럼이 없습니다: " + ", ".join(sorted(missing_project)))
+    default_count = int(conn.execute("SELECT COUNT(*) FROM projects WHERE is_default=1").fetchone()[0])
+    if default_count != 1:
+        raise ValueError("42 이상 백업에는 기본 프로젝트가 정확히 하나 있어야 합니다.")
+    membership_columns = {row[1] for row in conn.execute("PRAGMA table_info(project_memberships)").fetchall()}
+    required_membership = {"project_id", "username", "created_by", "created_at"}
+    missing_membership = required_membership - membership_columns
+    if missing_membership:
+        raise ValueError(
+            "42 이상 백업 project_memberships 필수 컬럼이 없습니다: "
+            + ", ".join(sorted(missing_membership))
+        )
+
+
+def _validate_schema_v43(conn: sqlite3.Connection, tables: set[str], schema_version: int) -> None:
+    if schema_version < 43:
+        return
+    required = {"collaboration_integrations", "collaboration_events", "finding_external_links"}
+    missing = required - tables
+    if missing:
+        raise ValueError(
+            "43 이상 백업 협업 연동 테이블이 없습니다: " + ", ".join(sorted(missing))
+        )
+    integration_columns = {
+        row[1] for row in conn.execute("PRAGMA table_info(collaboration_integrations)").fetchall()
+    }
+    required_integration = {
+        "channel", "enabled", "config_json", "secret_ciphertext", "updated_by", "updated_at",
+    }
+    missing_integration = required_integration - integration_columns
+    if missing_integration:
+        raise ValueError(
+            "43 이상 백업 collaboration_integrations 필수 컬럼이 없습니다: "
+            + ", ".join(sorted(missing_integration))
+        )
+    forbidden_integration = {"password", "api_token", "plaintext_secret"} & integration_columns
+    if forbidden_integration:
+        raise ValueError(
+            "협업 연동 테이블에 평문 비밀정보 컬럼이 있습니다: "
+            + ", ".join(sorted(forbidden_integration))
+        )
+    event_columns = {
+        row[1] for row in conn.execute("PRAGMA table_info(collaboration_events)").fetchall()
+    }
+    required_event = {
+        "event_id", "channel", "event_type", "finding_id", "payload_json", "status",
+        "attempts", "next_attempt_at", "last_error", "dedupe_key", "created_by", "created_at",
+    }
+    missing_event = required_event - event_columns
+    if missing_event:
+        raise ValueError(
+            "43 이상 백업 collaboration_events 필수 컬럼이 없습니다: "
+            + ", ".join(sorted(missing_event))
+        )
+    link_columns = {
+        row[1] for row in conn.execute("PRAGMA table_info(finding_external_links)").fetchall()
+    }
+    required_link = {
+        "finding_id", "provider", "external_key", "external_url", "status",
+        "created_by", "created_at", "updated_at",
+    }
+    missing_link = required_link - link_columns
+    if missing_link:
+        raise ValueError(
+            "43 이상 백업 finding_external_links 필수 컬럼이 없습니다: "
+            + ", ".join(sorted(missing_link))
+        )
+
+
+def _validate_schema_v44(conn: sqlite3.Connection, tables: set[str], schema_version: int) -> None:
+    if schema_version < 44:
+        return
+    if "pilot_project_profile" not in tables:
+        raise ValueError("44 이상 백업에 pilot_project_profile 테이블이 없습니다.")
+    columns = {
+        row[1] for row in conn.execute("PRAGMA table_info(pilot_project_profile)").fetchall()
+    }
+    required = {
+        "singleton_id", "customer_name", "engagement_name", "contact_name",
+        "contact_email", "scope_notes", "default_due_days", "report_footer",
+        "updated_by", "updated_at",
+    }
+    missing = required - columns
+    if missing:
+        raise ValueError(
+            "44 이상 백업 pilot_project_profile 필수 컬럼이 없습니다: "
+            + ", ".join(sorted(missing))
+        )
+
+
 def _validate_restore_triggers(conn: sqlite3.Connection, tables: set[str], schema_version: int) -> None:
     trigger_names = {str(row[0]) for row in conn.execute("SELECT name FROM sqlite_master WHERE type='trigger'").fetchall()}
     allowed_triggers = {
@@ -387,5 +522,9 @@ def validate_schema_contents(
     _validate_schema_v32_to_v35_and_core(conn, tables, schema_version)
     _validate_schema_v36_to_v38(conn, tables, schema_version)
     _validate_schema_v39_to_v40(conn, tables, schema_version)
+    _validate_schema_v41(conn, tables, schema_version)
+    _validate_schema_v42(conn, tables, schema_version)
+    _validate_schema_v43(conn, tables, schema_version)
+    _validate_schema_v44(conn, tables, schema_version)
     _validate_restore_triggers(conn, tables, schema_version)
     return _collect_restore_counts(conn, tables)

@@ -70,7 +70,7 @@ def test_schema_v16_has_scan_columns_and_job_type(tmp_path: Path):
     with sqlite3.connect(db) as conn:
         version = conn.execute("PRAGMA user_version").fetchone()[0]
         columns = {row[1] for row in conn.execute("PRAGMA table_info(verification_evidence_artifacts)")}
-    assert version == CURRENT_SCHEMA_VERSION == 40
+    assert version == CURRENT_SCHEMA_VERSION == 46
     assert {
         "scan_status", "scan_engine", "scan_signature", "scan_details", "scanned_at",
         "scan_error", "scan_waived_by", "scan_waived_at", "scan_waiver_reason",

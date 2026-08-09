@@ -21,7 +21,7 @@ def main_smoke() -> int:
     architecture = build_architecture_report(ROOT)
     module_map = {item["path"]: item for item in architecture["modules"]}
     checks = {
-        "version_72_0_6": CURRENT_APP_VERSION == "72.0.13",
+        "version_72_0_7": CURRENT_APP_VERSION == "72.0.72",
         "core_routes_9": len(core) == 9,
         "observability_routes_14": len(observers) == 14,
         "route_names_disjoint": core.isdisjoint(observers),
@@ -29,13 +29,13 @@ def main_smoke() -> int:
         "inventory_observability": inventory.get("trust_observability") == trust_observability.ROUTE_NAMES,
         "main_core_identity": all(getattr(main, name) is getattr(trust, name) for name in core),
         "main_observability_identity": all(getattr(main, name) is getattr(trust_observability, name) for name in observers),
-        "route_count_241": architecture["route_count"] == 241,
+        "route_count_261": architecture["route_count"] == 261,
         "architecture_pass": architecture["status"] == "PASS"
             and module_map["app/routers/trust.py"]["lines"] <= 260
             and module_map["app/routers/trust_observability.py"]["lines"] <= 340,
     }
     report = {
-        "title": "VulnFlow 72.0.13 trust router boundary verification",
+        "title": "VulnFlow 72.0.72 trust router boundary verification",
         "version": CURRENT_APP_VERSION,
         "checks": checks,
         "passed": sum(checks.values()),

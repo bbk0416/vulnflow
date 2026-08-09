@@ -1,0 +1,56 @@
+{
+  "generic-korean-cp949.csv": {
+    "detected_format": "csv",
+    "importable_rows": 1,
+    "status": "READY",
+    "unsupported_source_items": 0
+  },
+  "generic.xlsx": {
+    "detected_format": "xlsx",
+    "importable_rows": 1,
+    "status": "READY",
+    "unsupported_source_items": 0
+  },
+  "nessus-basic.nessus": {
+    "detected_format": "nessus",
+    "importable_rows": 1,
+    "status": "REVIEW",
+    "unsupported_source_items": 1
+  },
+  "nessus-cpe22.nessus": {
+    "detected_format": "nessus",
+    "importable_rows": 1,
+    "status": "READY",
+    "unsupported_source_items": 0
+  },
+  "openvas-duplicate.xml": {
+    "detected_format": "openvas_xml",
+    "importable_rows": 2,
+    "status": "REVIEW",
+    "unsupported_source_items": 0
+  },
+  "openvas-greenbone.csv": {
+    "detected_format": "openvas_csv",
+    "importable_rows": 1,
+    "status": "REVIEW",
+    "unsupported_source_items": 1
+  },
+  "openvas-refs.xml": {
+    "detected_format": "openvas_xml",
+    "importable_rows": 1,
+    "status": "READY",
+    "unsupported_source_items": 0
+  },
+  "openvas-report.xml": {
+    "detected_format": "openvas_xml",
+    "importable_rows": 1,
+    "status": "READY",
+    "unsupported_source_items": 0
+  },
+  "openvas-semicolon.csv": {
+    "detected_format": "openvas_csv",
+    "importable_rows": 1,
+    "status": "READY",
+    "unsupported_source_items": 0
+  }
+}

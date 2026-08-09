@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<get_reports_response>
+  <report><report><results>
+    <result id="synthetic-r1">
+      <name>Synthetic PostgreSQL issue</name>
+      <host>192.0.2.30<hostname>openvas-xml.example.test</hostname></host>
+      <port>5432/tcp</port>
+      <nvt oid="1.3.6.1.4.1.synthetic">
+        <name>Synthetic PostgreSQL issue</name>
+        <cve>CVE-2026-95003</cve>
+        <cvss_base>7.5</cvss_base>
+      </nvt>
+      <description>Upgrade the affected database package.</description>
+    </result>
+  </results></report></report>
+</get_reports_response>

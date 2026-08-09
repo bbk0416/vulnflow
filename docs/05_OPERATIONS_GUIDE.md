@@ -2,7 +2,7 @@
 
 ## 1. 최초 실행
 
-애플리케이션은 `data/vulnflow.db`를 생성하고 데이터가 없으면 합성 샘플을 적재합니다. 실제 운영 전 샘플은 초기화하거나 별도 DB 경로를 지정합니다.
+애플리케이션은 `data/vulnflow.db`를 생성하고 운영 모드에서는 빈 데이터베이스로 시작합니다. 합성 샘플은 명시적인 데모 모드에서만 적재됩니다. 최초 실행 전에 관리자 계정과 프로젝트별 저장 경로를 확인합니다.
 
 ## 2. 스캐너 원천 설정
 
@@ -34,7 +34,9 @@ ACTIVE 또는 STALE 항목에서 OPEN, IN_PROGRESS, MITIGATED, RISK_ACCEPTED, CL
 
 ## 6. 백업·복원
 
-정기적으로 SQLite 백업을 내려받습니다. 복원 시 파일 무결성·필수 스키마·트리거 포함 여부를 검사하고, 현재 DB를 `data/backups`에 자동 보관합니다.
+프로젝트별 복구 ZIP을 정기 생성하고, 가능하면 `VULNFLOW_EXTERNAL_BACKUP_DIR`을 별도 드라이브 또는 NAS mount로 지정합니다. 외부 복사본은 프로젝트별 디렉터리에 원자적으로 기록되고 SHA-256 sidecar로 검증됩니다. 같은 물리 디스크의 다른 폴더는 오프사이트 백업이 아닙니다.
+
+`관리자 메뉴 → 고객사·프로젝트`에서 로컬 또는 외부 번들의 격리 복원 리허설을 주기적으로 실행합니다. 리허설은 임시 DB·증거 저장소에 실제 복원해 SQLite·감사 체인·증거 무결성을 확인하지만 라이브 데이터를 변경하지 않습니다. 실제 복원은 별도 확인 문구와 쓰기 차단, 실행 중 작업 확인, 사전 안전 백업을 거쳐 수행합니다.
 
 
 ## 작업 큐 운영
@@ -47,7 +49,7 @@ ACTIVE 또는 STALE 항목에서 OPEN, IN_PROGRESS, MITIGATED, RISK_ACCEPTED, CL
 
 ## 다중 프로세스 운영
 
-- 모든 프로세스는 같은 `VULNFLOW_DB`와 `VULNFLOW_COORDINATION_DB`를 사용합니다.
+- 모든 프로세스는 같은 `VULNFLOW_CONTROL_DB`, `VULNFLOW_DEFAULT_PROJECT_DB`, 프로젝트 저장소와 `VULNFLOW_COORDINATION_DB`를 사용합니다. `VULNFLOW_DB`는 72.0.24 이하 단일 DB 업그레이드 시 보존되는 원본 경로입니다.
 - 각 프로세스의 `VULNFLOW_INSTANCE_ID`는 고유해야 합니다.
 - `/cluster`에서 ACTIVE 인스턴스, scheduler leader, fencing token, 쓰기 activity를 확인합니다.
 - leader 프로세스가 종료되면 TTL 이후 follower가 자동 승계합니다.

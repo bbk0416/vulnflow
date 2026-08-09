@@ -120,7 +120,7 @@ def test_restore_lease_blocks_other_write_requests(tmp_path: Path, monkeypatch):
     coord = tmp_path / "coord.sqlite3"
     monkeypatch.setattr(main, "DB_PATH", db)
     monkeypatch.setattr(main, "COORDINATION_DB_ENV", str(coord))
-    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({"admin": {"token": token, "role": "admin"}}))
+    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({"admin": {"token": token, "role": "admin", "projects": "*"}}))
     monkeypatch.setattr(main, "JOB_WORKER_ENABLED", False)
     headers = {"Authorization": f"Bearer {token}"}
     with TestClient(main.app) as client:
@@ -139,7 +139,7 @@ def test_cluster_api_reports_instance_and_scheduler_lease(tmp_path: Path, monkey
     coord = tmp_path / "coord.sqlite3"
     monkeypatch.setattr(main, "DB_PATH", db)
     monkeypatch.setattr(main, "COORDINATION_DB_ENV", str(coord))
-    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({"admin": {"token": token, "role": "admin"}}))
+    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({"admin": {"token": token, "role": "admin", "projects": "*"}}))
     monkeypatch.setattr(main, "JOB_WORKER_ENABLED", False)
     headers = {"Authorization": f"Bearer {token}"}
     with TestClient(main.app) as client:
@@ -157,15 +157,18 @@ def test_cluster_ui_is_admin_only(tmp_path: Path, monkeypatch):
     coord = tmp_path / "coord.sqlite3"
     monkeypatch.setattr(main, "DB_PATH", db)
     monkeypatch.setattr(main, "COORDINATION_DB_ENV", str(coord))
-    monkeypatch.setattr(main, "AUTH_USERS_JSON", json.dumps({
-        "viewer": {"password": "viewer-pass-123", "role": "viewer"},
-        "admin": {"password": "admin-pass-123", "role": "admin"},
+    viewer_token = "viewer-cluster-token-12345678"
+    admin_token = "admin-cluster-token-123456789"
+    monkeypatch.setattr(main, "AUTH_USERS_JSON", "")
+    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({
+        "viewer": {"token": viewer_token, "role": "viewer", "projects": "*"},
+        "admin": {"token": admin_token, "role": "admin", "projects": "*"},
     }))
     monkeypatch.setattr(main, "JOB_WORKER_ENABLED", False)
     with TestClient(main.app) as client:
-        viewer = client.get("/cluster", auth=("viewer", "viewer-pass-123"))
+        viewer = client.get("/cluster", headers={"Authorization": f"Bearer {viewer_token}"})
         assert viewer.status_code == 403
-        admin = client.get("/cluster", auth=("admin", "admin-pass-123"))
+        admin = client.get("/cluster", headers={"Authorization": f"Bearer {admin_token}"})
         assert admin.status_code == 200
         assert "인스턴스 조정" in admin.text
 
@@ -189,7 +192,7 @@ def test_successful_write_request_cleans_cluster_activity(tmp_path: Path, monkey
     coord = tmp_path / "coord.sqlite3"
     monkeypatch.setattr(main, "DB_PATH", db)
     monkeypatch.setattr(main, "COORDINATION_DB_ENV", str(coord))
-    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({"operator": {"token": token, "role": "operator"}}))
+    monkeypatch.setattr(main, "AUTH_API_TOKENS_JSON", json.dumps({"operator": {"token": token, "role": "operator", "projects": "*"}}))
     monkeypatch.setattr(main, "JOB_WORKER_ENABLED", False)
     with TestClient(main.app) as client:
         response = client.post(

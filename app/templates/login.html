@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>로그인 · VulnFlow</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-card" aria-labelledby="login-title">
+      <div class="login-brand">
+        <strong>VulnFlow</strong>
+        <span>취약점 조치관리</span>
+      </div>
+      <div>
+        <p class="eyebrow">SECURE SIGN IN</p>
+        <h1 id="login-title">계정으로 로그인</h1>
+        <p class="login-help">관리자가 만든 VulnFlow 사용자 계정을 사용하세요.</p>
+      </div>
+      {% if notice_message %}<div class="notice success">{{ notice_message }}</div>{% endif %}
+      {% if error_message %}<div class="notice danger" role="alert">{{ error_message }}</div>{% endif %}
+      <form class="form login-form" method="post" action="/login">
+        <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+        <input type="hidden" name="next" value="{{ next_path }}">
+        <label>사용자 이름
+          <input name="username" value="{{ username }}" autocomplete="username" maxlength="64" required autofocus>
+        </label>
+        <label>비밀번호
+          <input type="password" name="password" autocomplete="current-password" maxlength="256" required>
+        </label>
+        <button class="primary login-submit" type="submit">로그인</button>
+      </form>
+      <p class="login-footnote">비밀번호는 서버 설정 파일이 아니라 암호화 해시로 데이터베이스에 저장됩니다.</p>
+    </section>
+  </main>
+</body>
+</html>

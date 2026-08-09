@@ -1,6 +1,6 @@
 # Public repository scope
 
-이 패키지는 채용 검토와 기술 공개를 위한 공개용 소스 저장소입니다.
+이 패키지는 제품 파일럿 검토와 기술 공개를 위한 공개용 소스 저장소입니다.
 
 ## 포함
 
@@ -8,13 +8,49 @@
 - 합성 샘플 데이터와 정책
 - 핵심 운영 문서
 - 대표 화면과 아키텍처 이미지
-- 핵심 업무 흐름을 검증하는 240개 회귀시험과 Chromium 브라우저 E2E 3개
+- 핵심 업무 흐름을 검증하는 663개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
+- 프로젝트별 SMTP 이메일 알림과 Jira Cloud 이슈·댓글 연동
+- 프로젝트별 파일럿 준비도 점검과 고객용 경영진 보고서
+- 책임별 서비스 레지스트리와 CSV/XLSX·Nessus/OpenVAS 가져오기 모듈 경계
+- schema 42→46 업그레이드, 9개 스캐너 fixture, 6개 파서 강건성 계약, SMTP·Jira 읽기 전용 연결 진단을 위한 운영 검증 도구
+- 원본 파일명과 치환표를 제외하는 스캐너 익명화 수집 번들 및 잔존 구조화 식별자 검사
+- 제어 DB와 모든 프로젝트 DB의 물리 분리, 보존형 단일 DB 마이그레이션, 프로젝트 정체성 기반 복원 차단
+- 세션을 제외하는 제어 DB 오프라인 복구 번들, 복원 전 안전 백업과 프로젝트 등록정보 보존
+- 계정 전역 잠금 없는 sliding-window 로그인 실패 제한과 통일된 외부 인증 오류
+- 운영 보안 프로필, 세션 유휴 만료·브라우저 결합, Bearer 토큰 프로젝트 범위 fail-closed
+- 운영 Docker/Nginx TLS 구성 계약, 실제 로컬 Nginx/Uvicorn TLS 리허설, 컨테이너 등가 영속성 리허설
+- schema 46을 유지하는 migration·trigger·search·backfill 모듈 분리와 전달 헤더 위조 방어
+- 격리형 12회 runtime soak, 원자적 SQLite 백업 발행, 동시 쓰기·락·프로세스 중단 장애 주입 리허설
+- SMTP STARTTLS/SMTPS DNS 고정 연결·사설망 차단·호스트 allowlist와 실제 로컬 STARTTLS 리허설
+- OSV·CISA KEV·FIRST EPSS의 DNS 고정 bounded JSON 전송, 응답 크기 제한과 환경 프록시 무시
+- 직접 네트워크 클라이언트·검증 해제 TLS·승인되지 않은 raw socket·shell·동적 실행을 검사하는 내장 정적 보안 경계 감사
+- 연동 진단과 스캐너 호환성 평가·보고서 모듈 경계 분리
+- 실제 production Compose build·TLS·재기동·named-volume 영속성을 요구하는 공개 CI gate
+- pinned 개발 의존성을 wheelhouse로 내려받아 SHA-256을 기록하고 인덱스 없이 새 가상환경에 재설치하는 공개 CI gate
+- Requests와 전용 전이 의존성을 production runtime에서 제거하고 검토된 오프라인 관리 스크립트만 Docker image에 포함
+- Chromium과 별도로 실제 HTTP 폼·CSRF·역할 분리를 검증하는 서버 렌더링 workflow E2E
+- packaged runtime dependency manifest와 production fail-closed 설치 버전 검증
+- 서명된 release index에서 schemaVersion을 가져오는 오프라인 배포 경계
+- 검증된 배포 identity, 이전 배포 인벤토리·원자적 rollback·보존 정책과 standalone signed-kit 관리 도구
+- 이전 배포 전체 트리 HMAC seal, 위변조 후보 fail-closed 격리, legacy history 명시적 adoption
+- 배포 이력 current/retired HMAC keyring, 원자적 키 회전·재봉인, 0600 keyring 백업/검증 복원과 외부 체인형 감사 로그
+- 로컬 keyring·audit 동시 rollback을 탐지하는 외부 Ed25519 witness receipt, trusted public key와 audit prefix 검증
+- keyring·audit·witness를 한 시점으로 묶는 private recovery bundle, 외부 최소 witness 검증과 중단 복구 journal
+- 중단 복구 journal의 파일 크기·SHA-256 inventory, 별도 HMAC 키로 인증된 transaction manifest, signed offline startup preflight, legacy journal 명시적 수동 복구
+- recovery-journal HMAC 키의 상태 조회, 대상 결합형 0600 백업, pending journal 사전검증 복원, 무중단 키 회전과 감사 실패 rollback
+- 외부 검증 결과의 pass/fail/blocked/unavailable/not-provided 분리, 하위 명령 종료코드·JSON 보고서·실행 로그 SHA-256 결합
+- collector 소유 마커 기반 안전한 증거 디렉터리 교체, 재귀형 증거 manifest, 독립 증거 디렉터리 검증기
+- 고객 스캐너 corpus 심볼릭 링크·파일 수·총바이트 제한, 단일 읽기 기반 파싱·해시, 파일명·원본 오류문구 비노출
+- 요청자 서명으로 소스 snapshot·challenge·공개키·실행 래퍼를 결합하는 결정론적 외부 검증 runner kit, 안전한 ZIP 검증·추출·실행 전 재검증
+- manifest 전체 파일 해시 검증, unlisted 파일 제외 private execution snapshot, 실행 전·후 source attestation 서명
+- 서명된 외부 검증 challenge에 승인된 운영자 Ed25519 key ID·fingerprint를 고정하고, 다른 private key의 응답·runner 실행을 사전 차단
+- 요청자 서명 hash-chain acceptance ledger, 동일 응답 replay 차단, 같은 request의 상충 응답 equivocation 차단
 - 로컬 실행·Docker 구성·SBOM
 
 ## 제외
 
 - 실제 군·고객·기업 데이터
-- 로컬 SQLite DB와 증거파일
+- 로컬 SQLite DB, 프로젝트별 증거파일, 복구 번들, 외부 백업 복사본과 리허설 보고서
 - 비밀번호, API token, private signing key
 - 14MiB runtime dependency snapshot
 - wheel·sdist와 서명형 전체 릴리스 키트
@@ -23,4 +59,31 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.13 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.72 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+
+## Windows 외부 검증 경계
+
+72.0.57은 Windows에서 생성된 경로를 POSIX 구분자로 비교하던 마지막 공개 회귀시험 계약을 수정합니다. 서명형 오프라인 배포 활성화·복구 계층은 POSIX 전용이며 Windows에서는 명시적으로 skip됩니다. skip은 PASS로 계산하지 않습니다.
+
+72.0.58은 Windows 외부 검증 실행에서 드러난 Compose 직접 실행 import, 브라우저 가시성 assertion, bounded-soak warm-up 측정 계약을 수정합니다. 제품 기능이나 schema는 변경하지 않습니다.
+
+72.0.60은 격리 라우터 모듈이 종료된 FastAPI 애플리케이션을 역참조하지 않도록 lifespan 종료 계약을 추가하고, 동일 애플리케이션 재시작 시 전체 의존성을 재결합합니다. 제품 기능과 schema는 변경하지 않습니다.
+
+72.0.61은 Windows CPython 3.13에서 synthetic `ModuleType` 객체가 framework metadata에 남는 경계를 제거하기 위해 격리 라우터 globals의 holder를 `SimpleNamespace`로 변경합니다. 애플리케이션별 globals 격리, 재시작, schema와 제품 기능은 유지됩니다.
+
+
+72.0.63은 FastAPI 0.140.9가 child router를 원본 참조로 유지하는 동작과 무관하게, 격리 `APIRoute`를 애플리케이션 라우터로 직접 이전하고 private source route list를 비웁니다. 276개 route table, 재시작, schema와 제품 기능은 유지됩니다.
+
+
+72.0.67은 라우터 소스 재읽기와 `compile/exec` 재실행을 제거합니다. 이미 import된 router module의 함수 code object와 APIRoute 메타데이터를 앱별 private namespace로 복제하며, 기존 route 276개·schema 46·격리 수명주기와 callable cache 정리 경계는 유지합니다.
+
+72.0.68은 `pilot` 라우터 4개를 요청별 FastAPI `ApplicationContext` 의존성으로 전환합니다. 이 라우터는 앱별 endpoint 함수·globals·APIRoute 복제 없이 정상 등록되며, 나머지 15개 라우터만 기존 호환 복제 경계를 유지합니다.
+
+72.0.69는 요청 범위 DI 라우터를 FastAPI의 공개 `app.include_router()` API로 등록합니다. 72.0.70은 FastAPI 0.140.9의 lazy route-context를 유효 라우트 inventory로 펼쳐 직접 272개와 공유 pilot 4개를 정상 276개로 검증합니다.
+
+72.0.71은 legacy 라우터 함수 기본값에서 FastAPI가 파생한 alias·annotation을 복제하지 않고 생성자 당시 metadata로 복원하며, legacy clone과 공유 DI router include를 포함한 전체 라우터 조립을 하나의 재진입 잠금으로 직렬화합니다. 제품 route·schema·HTTP 동작은 변경하지 않습니다.
+
+
+## 72.0.72 제품 완성 동결
+
+72.0.72부터 현재 로컬 취약점 운영 파일럿 범위의 신규 기능 개발을 동결합니다. 스캐너 데이터가 없는 빈 프로젝트는 더 이상 파일럿 시작 가능으로 표시하지 않으며, 조치 검증 화면은 내부 상태값 중심의 이력 목록 대신 검토 대기 작업을 우선하는 큐로 정리했습니다. 이후 변경은 실제 스캐너 호환성, 사용자 파일럿 또는 보안·신뢰성 결함에서 확인된 문제에 한정합니다.

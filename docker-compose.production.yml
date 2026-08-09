@@ -1,0 +1,76 @@
+services:
+  vulnflow:
+    build: .
+    image: "${VULNFLOW_IMAGE:-vulnflow:72.0.72}"
+    expose:
+      - "8000"
+    volumes:
+      - vulnflow-data:/app/data
+      - vulnflow-backups:/app/external-backups
+    environment:
+      VULNFLOW_CONTROL_DB: "/app/data/control.db"
+      VULNFLOW_DEFAULT_PROJECT_DB: "/app/data/projects/default/vulnflow.db"
+      VULNFLOW_SECURITY_PROFILE: "production"
+      VULNFLOW_RUNTIME_DEPENDENCY_POLICY: "enforce"
+      VULNFLOW_PUBLIC_BASE_URL: "${VULNFLOW_PUBLIC_BASE_URL:?set an https public URL}"
+      VULNFLOW_DEMO_MODE: "0"
+      VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK: "0"
+      VULNFLOW_COOKIE_SECURE: "1"
+      VULNFLOW_AUTH_SESSION_BINDING: "user-agent"
+      VULNFLOW_AUTH_SESSION_IDLE_MINUTES: "${VULNFLOW_AUTH_SESSION_IDLE_MINUTES:-60}"
+      VULNFLOW_AUTH_SESSION_MINUTES: "${VULNFLOW_AUTH_SESSION_MINUTES:-480}"
+      VULNFLOW_API_TOKENS_JSON: "${VULNFLOW_API_TOKENS_JSON:-}"
+      VULNFLOW_WEBHOOKS_JSON: "${VULNFLOW_WEBHOOKS_JSON:-}"
+      VULNFLOW_WEBHOOK_ALLOW_INSECURE_HTTP: "0"
+      VULNFLOW_OUTBOUND_ALLOW_PRIVATE_NETWORKS: "0"
+      VULNFLOW_OUTBOUND_HOST_ALLOWLIST: "${VULNFLOW_OUTBOUND_HOST_ALLOWLIST:-}"
+      VULNFLOW_OUTBOUND_MAX_RESPONSE_BYTES: "${VULNFLOW_OUTBOUND_MAX_RESPONSE_BYTES:-1048576}"
+      VULNFLOW_INTEL_TIMEOUT_SECONDS: "${VULNFLOW_INTEL_TIMEOUT_SECONDS:-30}"
+      VULNFLOW_INTEL_RETRIES: "${VULNFLOW_INTEL_RETRIES:-3}"
+      VULNFLOW_INTEL_MAX_RESPONSE_BYTES: "${VULNFLOW_INTEL_MAX_RESPONSE_BYTES:-8388608}"
+      VULNFLOW_OSV_MAX_RESPONSE_BYTES: "${VULNFLOW_OSV_MAX_RESPONSE_BYTES:-4194304}"
+      VULNFLOW_SMTP_ALLOW_PRIVATE_NETWORKS: "${VULNFLOW_SMTP_ALLOW_PRIVATE_NETWORKS:-0}"
+      VULNFLOW_SMTP_HOST_ALLOWLIST: "${VULNFLOW_SMTP_HOST_ALLOWLIST:-}"
+      VULNFLOW_SMTP_ALLOW_PLAIN: "0"
+      VULNFLOW_CURSOR_SIGNING_KEY: "${VULNFLOW_CURSOR_SIGNING_KEY:?set a persistent random cursor key}"
+      VULNFLOW_AUDIT_SIGNING_KEY: "${VULNFLOW_AUDIT_SIGNING_KEY:?set an audit signing key}"
+      VULNFLOW_BACKUP_SIGNING_KEY: "${VULNFLOW_BACKUP_SIGNING_KEY:?set a different backup signing key}"
+      VULNFLOW_AUDIT_REQUIRE_SIGNATURE: "1"
+      VULNFLOW_BACKUP_REQUIRE_SIGNATURE: "1"
+      VULNFLOW_BACKUP_INTERVAL_HOURS: "${VULNFLOW_BACKUP_INTERVAL_HOURS:-12}"
+      VULNFLOW_EXTERNAL_BACKUP_DIR: "/app/external-backups"
+      VULNFLOW_EVIDENCE_SCANNER_MODE: "${VULNFLOW_EVIDENCE_SCANNER_MODE:-builtin}"
+      VULNFLOW_EVIDENCE_REQUIRE_CLEAN: "1"
+      VULNFLOW_COORDINATION_DB: "/app/data/vulnflow-coordination.db"
+      VULNFLOW_EVIDENCE_DIR: "/app/data/projects/default/evidence"
+      VULNFLOW_LOG_LEVEL: "${VULNFLOW_LOG_LEVEL:-INFO}"
+      # The app is isolated on the internal backend network; nginx overwrites
+      # X-Forwarded-For, so trusting proxy headers cannot be client-spoofed.
+      FORWARDED_ALLOW_IPS: "*"
+    restart: unless-stopped
+    networks:
+      - backend
+
+  proxy:
+    image: "nginx:1.27-alpine"
+    depends_on:
+      - vulnflow
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx/vulnflow.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./deploy/certs:/etc/nginx/certs:ro
+    restart: unless-stopped
+    networks:
+      - frontend
+      - backend
+
+networks:
+  frontend:
+  backend:
+    internal: true
+
+volumes:
+  vulnflow-data:
+  vulnflow-backups:

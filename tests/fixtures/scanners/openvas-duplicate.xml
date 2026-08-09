@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<get_reports_response>
+  <report><report><results>
+    <result id="dup-r1">
+      <name>Duplicate synthetic issue</name>
+      <host>198.51.100.40<hostname>duplicate.example.test</hostname></host>
+      <nvt><name>Duplicate synthetic issue</name><cve>CVE-2026-96004</cve><cvss_base>7.5</cvss_base></nvt>
+      <description>First duplicate row.</description>
+    </result>
+    <result id="dup-r2">
+      <name>Duplicate synthetic issue</name>
+      <host>198.51.100.40<hostname>duplicate.example.test</hostname></host>
+      <nvt><name>Duplicate synthetic issue</name><cve>CVE-2026-96004</cve><cvss_base>7.5</cvss_base></nvt>
+      <description>Second duplicate row.</description>
+    </result>
+  </results></report></report>
+</get_reports_response>

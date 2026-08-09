@@ -60,7 +60,7 @@ def main() -> None:
             witness_public_keys={"witness-a": public["witness-a"], "witness-b": public["witness-b"]},
         )
         checks.extend([
-            {"name": "schema_40", "passed": CURRENT_SCHEMA_VERSION == 40},
+            {"name": "schema_42", "passed": CURRENT_SCHEMA_VERSION == 46},
             {"name": "proof_v6", "passed": result["proof_format"] == "vulnflow-integrity-proof/6"},
             {"name": "checkpoint_sequence", "passed": checkpoint["statement"]["sequence"] == 1},
             {"name": "quorum_verified", "passed": result["witness_quorum"]["status"] == "witness-quorum-verified"},
@@ -97,7 +97,7 @@ def main() -> None:
             checks.append({"name": "duplicate_witness_rejected", "passed": False})
 
     passed = sum(bool(item["passed"]) for item in checks)
-    payload = {"title": "VulnFlow 72.0.13 checkpoint witness quorum verification", "version": CURRENT_APP_VERSION,
+    payload = {"title": "VulnFlow 72.0.72 checkpoint witness quorum verification", "version": CURRENT_APP_VERSION,
                "schema_version": CURRENT_SCHEMA_VERSION, "passed": passed, "total": len(checks), "checks": checks}
     REPORTS.mkdir(parents=True, exist_ok=True)
     (REPORTS / "checkpoint_witness_verification.json").write_text(
