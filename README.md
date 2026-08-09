@@ -1,11 +1,11 @@
-# VulnFlow 72.0.72
+# VulnFlow Free — Public Beta (Core 72.0.72)
 
 [![public-ci](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml/badge.svg)](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml)
 
 
-> FastAPI·SQLite 기반의 로컬 취약점 운영 플랫폼 — 스캐너 결과를 수집한 뒤 자산 식별, 우선순위, 조치, 승인, 증거, 감사와 복구까지 연결합니다.
+> **스캐너는 이미 있는 팀을 위한 local-first 취약점 조치 closeout 도구** — 결과를 가져온 뒤 담당자 지정, 조치, 재검증, 승인, 증거와 보고까지 닫습니다.
 >
-> A local vulnerability-operations platform that connects scanner findings to prioritization, remediation, approval, evidence, audit and recovery.
+> **A local-first vulnerability-remediation closeout workspace** for teams that already have scanners and need a controlled path from scan findings to verified closure.
 
 ![VulnFlow architecture](assets/architecture.png)
 
@@ -15,9 +15,16 @@
 
 **이 프로젝트는 취약점 스캐너가 아닙니다.** 실제 영향 자동판정이나 상용 엔터프라이즈 제품을 주장하지 않습니다. 포함된 모든 샘플 데이터는 합성 데이터입니다.
 
-### 현재 상태
+### 현재 상태 — Free Public Beta
 
-72.0.72는 현재 파일럿 범위의 **코드 완성 후보**입니다. 신규 기능은 동결하며, 이후 변경은 실제 스캐너 호환성·사용자 파일럿·보안 또는 신뢰성 결함에서 확인된 문제에 한정합니다. 남은 완료 조건은 [ROADMAP.md](ROADMAP.md)에 고정했습니다.
+VulnFlow는 현재 **무료 공개 베타(Free Public Beta)** 로 제공합니다. 코어 버전은 `72.0.72`이며, 신규 기능을 선제적으로 늘리기보다 실제 스캐너 호환성, 사용 흐름의 막힘, 보안·신뢰성 결함에서 확인된 문제만 수정합니다.
+
+- 현재 결제, 유료 구독, 상용 SLA 또는 유료 지원 상품은 제공하지 않습니다.
+- 현재 공개된 `72.0.72` 소스는 MIT License이며 해당 버전에 부여된 권리는 그대로 유지됩니다.
+- 기본 제품은 사용자가 직접 운영하는 로컬/self-hosted 방식입니다. 이메일·Jira·OSV 등 외부 연동을 직접 설정하면 해당 기능에 필요한 외부 통신이 발생할 수 있습니다.
+- 향후 사업 운영 기반이 마련되면 **구독형 유료 에디션(working name: VulnFlow Pro)** 을 별도로 도입할 수 있습니다. 기능·가격·라이선스는 아직 확정하지 않았으며, 현재 MIT 릴리스의 권리를 소급해 제한하지 않습니다.
+
+무료 베타의 목적은 다운로드 숫자를 꾸미는 것이 아니라 **실제 scanner export 호환성, 조치→재검증→승인 흐름의 마찰, 반복 사용 이유**를 확인하는 것입니다. 정책은 [PRODUCT_EDITION_POLICY.md](PRODUCT_EDITION_POLICY.md), 진행 기준은 [ROADMAP.md](ROADMAP.md)를 확인하세요.
 
 ### 업그레이드
 
@@ -226,7 +233,8 @@ python scripts/run_quality_gates.py
 - 변경 제안: [CONTRIBUTING.md](CONTRIBUTING.md)
 - 보안 취약점 신고: [SECURITY.md](SECURITY.md)
 - 지원 범위: [SUPPORT.md](SUPPORT.md)
-- 제품 완성 로드맵: [ROADMAP.md](ROADMAP.md)
+- Free/향후 유료 에디션 정책: [PRODUCT_EDITION_POLICY.md](PRODUCT_EDITION_POLICY.md)
+- 제품화 로드맵: [ROADMAP.md](ROADMAP.md)
 - 전체 변경 이력: [CHANGELOG.md](CHANGELOG.md)
 - 현재 릴리스 노트: [RELEASE_NOTES_72.0.72.md](RELEASE_NOTES_72.0.72.md)
 

@@ -1,0 +1,77 @@
+name: Free Public Beta feedback
+description: Share workflow friction after trying VulnFlow Free without posting sensitive vulnerability data.
+title: "[Beta feedback] "
+labels: ["beta-feedback", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Product feedback is most useful when it describes what you tried and where the workflow became harder than your current process. Do not include real vulnerability findings, internal asset identifiers, credentials or personal information.
+  - type: input
+    id: version
+    attributes:
+      label: VulnFlow version
+      placeholder: 72.0.72
+    validations:
+      required: true
+  - type: dropdown
+    id: role
+    attributes:
+      label: Closest role
+      options:
+        - Vulnerability management / security operations
+        - Security assessment / consulting
+        - System / IT operations
+        - Security engineering
+        - Student / evaluation only
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: workflow
+    attributes:
+      label: Steps tried
+      options:
+        - label: Install / first launch
+        - label: Scanner result import / preview
+        - label: Finding prioritization
+        - label: Owner / due date / remediation
+        - label: Verification request / approval
+        - label: Evidence / reporting
+        - label: Backup / restore
+  - type: textarea
+    id: friction
+    attributes:
+      label: Biggest friction
+      description: What made you stop, hesitate, or return to your existing process?
+    validations:
+      required: true
+  - type: textarea
+    id: current_process
+    attributes:
+      label: What would you use instead?
+      description: "Example: Excel, Jira, scanner-native workflow, DefectDojo, another tool."
+  - type: dropdown
+    id: reuse
+    attributes:
+      label: Would you use VulnFlow for another remediation cycle?
+      options:
+        - "5 - definitely"
+        - "4 - probably"
+        - "3 - unsure"
+        - "2 - probably not"
+        - "1 - definitely not"
+    validations:
+      required: true
+  - type: textarea
+    id: blocker
+    attributes:
+      label: One change that would most affect adoption
+      description: Name the concrete blocker, not a general feature wishlist.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Privacy confirmation
+      options:
+        - label: I removed real vulnerability data, internal asset identifiers, credentials and personal information.
+          required: true

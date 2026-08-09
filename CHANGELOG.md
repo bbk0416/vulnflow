@@ -1,3 +1,11 @@
+## Unreleased — Free Public Beta productization (documentation/config only)
+
+- Position the existing 72.0.72 core as `VulnFlow Free — Public Beta` without changing application behavior, schema, dependencies, or version.
+- Define a non-retroactive path from the current MIT release to a possible future subscription edition after commercial readiness.
+- Replace portfolio-only support wording with best-effort Free Beta support boundaries.
+- Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
+- Keep feature development evidence-driven during the free validation phase.
+
 ## 72.0.72 — 2026-08-07
 
 - Freeze new feature development for the pilot candidate and shift the default product surface toward remediation work instead of validation machinery.

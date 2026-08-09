@@ -1,6 +1,6 @@
 # Contributing to VulnFlow
 
-VulnFlow is a personal Security Engineering project that models a local vulnerability-operations workflow. Contributions are welcome when they improve correctness, clarity, testability, or the core workflow without overstating the project’s operational maturity.
+VulnFlow Free is a public-beta, MIT-licensed local vulnerability-remediation closeout project. Contributions are welcome when they improve correctness, clarity, testability, scanner compatibility, or the core workflow without overstating operational maturity or customer validation.
 
 ## Before opening a change
 
@@ -52,3 +52,12 @@ Priority is given to:
 - simpler implementations that reduce operational complexity.
 
 Cryptographic proof, release-supply-chain, or distributed coordination features should include a clear threat model and must not obscure the primary vulnerability-management workflow.
+
+
+## Free core and future commercial editions
+
+This public repository is the MIT-licensed Free core. Contributions accepted here remain part of that public core under the repository license.
+
+Do not submit confidential, customer-owned, employer-owned, or proprietary commercial code. A future paid VulnFlow edition may be developed separately; public pull requests should not assume that an unannounced Pro feature or price exists.
+
+During Free Public Beta, feature requests are prioritized by demonstrated scanner compatibility defects, repeated workflow blockers, security/reliability issues, and concrete target-user requirements. Feature-count expansion alone is not a reason to merge a change.
