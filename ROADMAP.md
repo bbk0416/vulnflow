@@ -1,41 +1,83 @@
-# VulnFlow product completion roadmap
+# VulnFlow productization roadmap
 
-VulnFlow 72.0.72부터 현재 파일럿 범위의 **신규 기능 개발은 동결**합니다. 완성의 기준은 기능 수가 아니라 실제 취약점 운영 흐름이 고객 데이터와 사용자 업무에서 끝까지 작동하는지입니다.
+Core 72.0.72 is functionally frozen. The project is **not abandoned**: development has moved from feature-building to free-product validation and, later, evidence-driven commercialization.
 
-## 현재 코드 상태
+## Phase 1 — Free Public Beta (current)
 
-- 스캐너 결과 수집·정규화
-- 자산 식별과 우선순위
-- 담당자·기한·캠페인
-- 조치 기록과 검증 요청
-- 위험수용 승인
-- 증거·감사
-- 프로젝트 분리·백업·복구
-- 이메일·Jira 및 로컬 운영
+Current product: **VulnFlow Free — Public Beta**.
 
-위 범위는 코드상 구현돼 있으며, 72.0.72 이후에는 기능을 더 늘리지 않습니다.
+Goals:
 
-## 프로젝트를 “완성”으로 닫기 위한 남은 조건
+- make installation and the first scanner import understandable;
+- receive real/anonymized scanner compatibility reports;
+- observe where import → assign → remediate → verify → close breaks down;
+- collect reproducible defects and usability friction;
+- learn which capabilities create repeat use.
 
-1. **실제 스캐너 호환성** — 승인된 익명화 Nessus/Greenbone/CSV/XLSX 표본으로 import compatibility를 확인하고, 실패 형식만 최소 synthetic fixture로 환원합니다.
-2. **실사용 파일럿** — 보안 실무자가 기본 4단계 흐름을 사용해 업로드→담당자 지정→조치→검증을 완료하고, 막히는 UX만 수정합니다.
-3. **복구 실습 1회** — 실제 운영 후보 호스트에서 백업 생성부터 격리 복원까지 한 번 수행해 절차와 소요시간을 기록합니다.
-4. **배포 후보 고정** — 위 세 항목에서 release blocker가 없으면 해당 소스를 pilot release candidate로 고정합니다.
+During this phase there is no paid subscription, paid SLA or paid support product.
 
-## 더 이상 선제적으로 추가하지 않는 것
+### Allowed code changes
 
-- 새로운 trust/ledger/witness 계층
-- 새로운 검증 프레임워크
-- 기능 수를 늘리기 위한 관리 화면
-- 인터넷 규모 SaaS·분산 DB·대규모 멀티테넌시
-- 실제 요구가 확인되지 않은 SSO/ServiceNow/Teams/Slack 통합
+Only change the core when evidence demonstrates at least one of:
 
-## 실제 파일럿에서 측정할 지표
+1. a real scanner compatibility defect;
+2. a repeated remediation-closeout workflow blocker;
+3. a reproducible security/data-integrity/recovery defect;
+4. a supported-platform failure;
+5. a concrete requirement from a plausible target organization.
 
-- 결과 업로드부터 첫 담당자 지정까지 걸린 시간
-- 도움 없이 완료한 핵심 작업 비율
-- 기한 초과 항목 감소율
-- 조치 증거를 찾는 데 걸린 시간
-- 기존 Excel 보고서 작성 대비 절감 시간
+### Do not add speculatively
 
-이 지표에 영향을 주지 않는 기능은 현재 제품 범위에 추가하지 않습니다.
+- generic AI assistant features;
+- more dashboard widgets for feature count;
+- hundreds of scanner connectors;
+- ServiceNow/Teams/Slack integrations without observed demand;
+- distributed PostgreSQL/SaaS architecture without a scale requirement;
+- SAML/OIDC/MFA merely to look enterprise-ready;
+- more proof/transparency machinery without a threat-model requirement.
+
+## Phase 2 — Commercial readiness (after business operation becomes possible)
+
+Do not switch on billing immediately. First define:
+
+- the legal entity and billing/tax process;
+- commercial Terms of Service / EULA as applicable;
+- privacy and support policies;
+- subscription cancellation/renewal rules;
+- what remains Free and what is newly delivered as paid value;
+- how existing MIT releases are preserved.
+
+Working commercial name: **VulnFlow Pro**.
+
+The paid feature boundary must be driven by Free Beta evidence. A likely model is a maintained self-hosted subscription with commercial support, updates and buyer-requested team/enterprise capabilities rather than a forced rewrite into public SaaS.
+
+## Phase 3 — Paid subscription
+
+Only after commercial readiness is complete:
+
+- publish a clear price and billing unit;
+- provide a subscription agreement and cancellation path;
+- ship a supported upgrade path from the Free baseline;
+- separate commercial components/licensing from already-published MIT releases;
+- measure activation, repeat use, support load and conversion.
+
+## Evidence to collect now
+
+Do not add product analytics or hidden telemetry merely to run this roadmap. Prefer explicit user feedback and repository/support signals such as:
+
+- installation/launch issues;
+- scanner/vendor/export format;
+- import success/failure;
+- workflow step where the user became blocked;
+- whether the same team used VulnFlow for another remediation cycle;
+- which missing capability would actually stop adoption.
+
+## Current product state
+
+```text
+CORE_VERSION=72.0.72
+CURRENT_EDITION=VulnFlow Free — Public Beta
+CURRENT_PRICE=FREE
+PAID_SUBSCRIPTION=NOT_OFFERED
+FUTURE_COMMERCIAL_EDITION=PLANNED_AFTER_EVIDENCE_AND_BUSINESS_READINESS
+```

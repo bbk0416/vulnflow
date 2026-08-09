@@ -1,0 +1,64 @@
+name: Scanner compatibility report
+description: Report a scanner export/import compatibility problem without publishing sensitive data.
+title: "[Scanner] "
+labels: ["scanner-compatibility", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not upload raw organizational scanner exports. Remove real vulnerability data, internal hostnames/IPs, credentials, personal information and customer identifiers. If format fidelity is required, use VulnFlow's sanitized/anonymized scanner diagnostic bundle and inspect it before sharing.
+  - type: input
+    id: version
+    attributes:
+      label: VulnFlow version
+      placeholder: 72.0.72
+    validations:
+      required: true
+  - type: dropdown
+    id: scanner
+    attributes:
+      label: Scanner/source
+      options:
+        - Nessus / Tenable export
+        - OpenVAS / Greenbone export
+        - CSV
+        - XLSX
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: format
+    attributes:
+      label: Export format/version
+      description: "Example: .nessus XML, Greenbone CSV, vendor CSV, XLSX. Do not include customer names."
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: What happened?
+      description: Describe detection, preview, mapping, validation or apply behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Safe reproduction material
+      description: Small synthetic example, sanitized field list, or reviewed anonymized diagnostic-bundle details. Do not paste confidential records.
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Data-safety confirmation
+      options:
+        - label: I did not include raw customer/organization vulnerability data or credentials.
+          required: true
+        - label: I reviewed any diagnostic material for residual identifiers before sharing it.
+          required: true
+        - label: This report is about scanner compatibility, not a security vulnerability in VulnFlow itself.
+          required: true
