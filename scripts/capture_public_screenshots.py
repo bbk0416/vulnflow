@@ -53,19 +53,17 @@ def _wait_until_ready(base_url: str, process: subprocess.Popen[str]) -> None:
 
 
 def _page(browser: Browser, base_url: str, credentials: dict[str, str]) -> tuple[Page, object]:
+    # Screenshots are rendered from server HTML fetched with the dedicated
+    # capture bearer token below.  Keeping the browser page originless avoids
+    # managed-browser policies that block loopback navigation while preserving
+    # the exact server-rendered HTML/CSS used by the product.
     context = browser.new_context(
-        base_url=base_url,
         viewport={"width": 1440, "height": 1000},
         device_scale_factor=1,
         locale="ko-KR",
         reduced_motion="reduce",
     )
     page = context.new_page()
-    page.goto("/login")
-    page.locator("input[name='username']").fill(credentials["username"])
-    page.locator("input[name='password']").fill(credentials["password"])
-    page.get_by_role("button", name="로그인").click()
-    expect(page).to_have_url(base_url + "/")
     return page, context
 
 
@@ -112,12 +110,14 @@ def main() -> None:
 
     with tempfile.TemporaryDirectory(prefix="vulnflow-public-capture-") as temp:
         data_dir = Path(temp) / "data"
-        database = data_dir / "vulnflow.db"
+        control_db = data_dir / "control.db"
+        default_project_root = data_dir / "projects" / "default"
+        database = default_project_root / "vulnflow.db"
         from app.core.database_schema import init_db
         from app.services.accounts import create_user
-        init_db(database)
-        create_user(database, username=ADMIN["username"], password=ADMIN["password"], role="admin", actor="capture-bootstrap")
-        create_user(database, username=OPERATOR["username"], password=OPERATOR["password"], role="operator", actor="capture-bootstrap")
+        init_db(control_db)
+        create_user(control_db, username=ADMIN["username"], password=ADMIN["password"], role="admin", actor="capture-bootstrap")
+        create_user(control_db, username=OPERATOR["username"], password=OPERATOR["password"], role="operator", actor="capture-bootstrap")
         port = _free_port()
         base_url = f"http://127.0.0.1:{port}"
         env = os.environ.copy()
@@ -126,10 +126,15 @@ def main() -> None:
                 "PYTHONUNBUFFERED": "1",
                 "VULNFLOW_BASE_DIR": str(ROOT),
                 "VULNFLOW_DATA_DIR": str(data_dir),
-                "VULNFLOW_DB": str(database),
-                "VULNFLOW_EVIDENCE_DIR": str(data_dir / "evidence"),
-                "VULNFLOW_EXPORT_DIR": str(data_dir / "exports"),
-                "VULNFLOW_RECOVERY_DIR": str(data_dir / "recovery"),
+                "VULNFLOW_CONTROL_DB": str(control_db),
+                "VULNFLOW_PROJECTS_DIR": str(data_dir / "projects"),
+                "VULNFLOW_DEFAULT_PROJECT_ROOT": str(default_project_root),
+                "VULNFLOW_DEFAULT_PROJECT_DB": str(database),
+                "VULNFLOW_DB": str(data_dir / "legacy-vulnflow.db"),
+                "VULNFLOW_EVIDENCE_DIR": str(default_project_root / "evidence"),
+                "VULNFLOW_EXPORT_DIR": str(default_project_root / "exports"),
+                "VULNFLOW_IMPORT_PREVIEW_DIR": str(default_project_root / "import-previews"),
+                "VULNFLOW_RECOVERY_DIR": str(default_project_root / "backups" / "recovery"),
                 "VULNFLOW_DEMO_MODE": "1",
                 "VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK": "0",
                 "VULNFLOW_API_TOKENS_JSON": json.dumps({"capture-admin": {"token": "capture-admin-token-123456789", "role": "admin", "projects": "*"}}),
