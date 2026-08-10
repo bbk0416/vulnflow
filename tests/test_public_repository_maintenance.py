@@ -210,6 +210,13 @@ def test_readme_presents_four_step_flow_with_five_screenshots() -> None:
     assert "public screenshot capture: PASS" in capture
     assert "TemporaryDirectory" in capture
 
+    root_release_notes = sorted(path.name for path in ROOT.glob("RELEASE_NOTES_*.md"))
+    assert root_release_notes == ["RELEASE_NOTES_72.0.72.md"]
+    archived_release_notes = sorted((ROOT / "docs/archive/releases").glob("RELEASE_NOTES_*.md"))
+    assert len(archived_release_notes) == 61
+    assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.11.md").is_file()
+    assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.71.md").is_file()
+
 
 def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     workflow = (ROOT / ".github/workflows/public-ci.yml").read_text(encoding="utf-8")
