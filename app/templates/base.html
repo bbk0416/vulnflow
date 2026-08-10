@@ -28,40 +28,43 @@
         <summary>관리자 메뉴</summary>
         <div class="nav-menu nav-menu-wide admin-menu">
           <div class="nav-menu-section">
-            <strong>운영</strong>
+            <strong>일상 운영</strong>
             <a href="/assets">자산 관리</a>
             <a href="/campaigns">조치 캠페인</a>
             {% if request.state.role in ['operator','approver','admin'] %}<a href="/approvals">예외 승인</a>{% endif %}
-            <a href="/exposure-groups">노출 군집</a>
-          </div>
-          <div class="nav-menu-section">
-            <strong>데이터</strong>
             <a href="/imports">가져오기 이력</a>
             <a href="/reconciliation">스캐너 조정</a>
-            <a href="/sboms">SBOM·VEX</a>
             <a href="/exports">내보내기</a>
           </div>
           <div class="nav-menu-section">
-            <strong>설정·감사</strong>
-            <a href="/audit">변경 이력</a>
+            <strong>운영 설정</strong>
             <a href="/policies">우선순위 정책</a>
             <a href="/jobs">작업 큐</a>
             {% if request.state.role in ['operator','approver','admin'] %}<a href="/config-changes">구성 변경</a>{% endif %}
-          </div>
-          {% if request.state.role=='admin' %}
-          <div class="nav-menu-section">
-            <strong>시스템</strong>
-            <a href="/pilot">파일럿 시작 센터</a>
+            {% if request.state.role=='admin' %}
+            <a href="/pilot">운영 준비 점검</a>
             <a href="/projects">고객사·프로젝트</a>
             <a href="/admin/users">사용자 관리</a>
-            <a href="/maintenance">유지관리</a>
             <a href="/integrations">이메일·Jira 연동</a>
-            <a href="/webhooks">웹훅</a>
-            <a href="/execution-receipts">실행 영수증</a>
-            <a href="/system">백업·복구</a>
-            <a href="/cluster">인스턴스</a>
+            {% endif %}
           </div>
-          {% endif %}
+          <div class="nav-menu-section nav-menu-advanced">
+            <details>
+              <summary>고급 기능</summary>
+              <div class="nav-advanced-links">
+                <a href="/exposure-groups">노출 군집</a>
+                <a href="/sboms">SBOM·VEX</a>
+                <a href="/audit">감사·무결성</a>
+                {% if request.state.role=='admin' %}
+                <a href="/maintenance">유지관리</a>
+                <a href="/webhooks">웹훅</a>
+                <a href="/execution-receipts">실행 영수증</a>
+                <a href="/system">백업·복구</a>
+                <a href="/cluster">인스턴스</a>
+                {% endif %}
+              </div>
+            </details>
+          </div>
         </div>
       </details>
     </nav>

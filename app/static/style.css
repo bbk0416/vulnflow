@@ -152,3 +152,15 @@
 /* Pilot launch center */
 .pilot-heading{align-items:flex-end}.pilot-readiness-banner{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:24px;border-radius:18px;margin:20px 0;border:1px solid var(--border,#d7deea)}
 .pilot-readiness-banner.ready{background:#edf9f1;border-color:#9dd7ae}.pilot-readiness-banner.pending{background:#fff8e8;border-color:#e8cb79}.pilot-readiness-banner h2{margin:6px 0}.pilot-readiness-banner p{margin:0;color:#667085}.readiness-score{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:#fff;border:8px solid rgba(36,86,214,.16);font-weight:800;font-size:30px}.readiness-score small{font-size:13px;margin-left:-18px;margin-top:35px}.pilot-check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.pilot-check{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;align-items:center;border:1px solid #d8dee9;border-radius:12px;padding:14px}.pilot-check.passed{background:#f3fbf5;border-color:#b7dfc1}.pilot-check.pending{background:#fffaf0}.pilot-check-status{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800;background:#eef1f7}.pilot-check.passed .pilot-check-status{background:#d7f2df;color:#18753a}.pilot-check.pending .pilot-check-status{background:#ffedbd;color:#8a5b00}.pilot-check p{margin:3px 0;color:#667085;font-size:13px}.pilot-check span{font-size:11px;color:#667085}.pilot-check a{white-space:nowrap}.pilot-profile-form textarea{width:100%;resize:vertical}.pilot-next-actions .pilot-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.pilot-next-actions .pilot-steps li{align-items:flex-start}.pilot-next-actions .pilot-steps small{display:block;color:#667085;margin-top:5px;line-height:1.4}@media(max-width:900px){.pilot-check-grid{grid-template-columns:1fr}.pilot-next-actions .pilot-steps{grid-template-columns:1fr}.pilot-readiness-banner{align-items:flex-start}.readiness-score{flex:0 0 auto}}
+
+/* Free Beta progressive-disclosure cleanup */
+.admin-menu{grid-template-columns:1fr 1fr;min-width:520px}
+.nav-menu-section{display:grid;align-content:start;gap:2px}
+.nav-menu-section>strong{padding:7px 11px 5px;color:#667085;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.nav-menu-advanced{grid-column:1/-1;border-top:1px solid #eaecf0;padding-top:5px;margin-top:3px}
+.nav-menu-advanced details>summary{cursor:pointer;padding:9px 11px;color:#475467;font-size:12px;font-weight:800;list-style:none}
+.nav-menu-advanced details>summary::-webkit-details-marker{display:none}
+.nav-menu-advanced details>summary::after{content:'▾';margin-left:6px;color:#98a2b3;font-size:10px}
+.nav-advanced-links{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:0 2px 4px}
+.compatibility-support>summary{color:#475467}
+@media(max-width:700px){.admin-menu{min-width:0}.nav-advanced-links{grid-template-columns:1fr}}
