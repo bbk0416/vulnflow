@@ -185,7 +185,7 @@ python scripts/run_quality_gates.py
 
 핵심 회귀는 인증, 스캐너 수집, 우선순위, 조치·검증·승인, 자산, 증거, SBOM/OSV, 백업·복구와 동일 호스트 coordination을 포함합니다. 브라우저 E2E는 대시보드→조치 상태 변경, 파일 가져오기→검색, 위험수용 요청→승인 흐름을 실제 Chromium으로 확인합니다.
 
-현재 공식 Windows 제품 기준은 72.0.71에서 FastAPI `0.140.9`, Starlette `1.3.1`, Pydantic `2.13.4` 잠금 설치와 concurrent DI/Pydantic warning gate, 공개 그룹 3 `168/168`이 통과한 결과입니다. 72.0.72는 schema와 런타임 라우팅을 바꾸지 않고 파일럿 UX·문서·완성 기준을 정리한 후속 후보입니다. Docker engine 또는 실제 고객 스캐너 corpus가 없는 환경은 `unavailable`/`not-provided`로 구분하며 제품 PASS로 꾸미지 않습니다.
+현재 공개 CI는 Windows와 Ubuntu의 Python 3.12·3.13에서 잠금 런타임과 공개 회귀를 검증합니다. 72.0.72 코어는 직전 72.0.71에서 검증된 concurrent router/Pydantic 수정 계보를 유지하며, Free Public Beta 제품화 변경은 런타임·schema를 바꾸지 않습니다. Docker engine 또는 실제 고객 스캐너 corpus가 없는 환경은 `unavailable`/`not-provided`로 구분하며 제품 PASS로 꾸미지 않습니다.
 
 ## 기술 구성
 
