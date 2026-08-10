@@ -109,7 +109,7 @@ Nessus·OpenVAS·CSV·XLSX 파일은 `파일 선택 → 자동 판별 → 미리
 
 ## 빠른 실행
 
-Python 3.12~3.13을 사용합니다. 일반 실행에서는 플랫폼 launcher가 전용 `.venv`를 만들고 검증된 `requirements.lock`을 설치·확인하므로 `requirements.txt`를 따로 설치하지 마세요.
+Python 3.12~3.13을 사용합니다. Windows launcher는 `py -3.13`, `py -3.12`, PATH의 `python.exe` 순서로 지원 런타임을 찾습니다. 최초 실행 또는 `requirements.lock` 변경/가상환경 drift가 있을 때만 전용 `.venv`에 잠금 의존성을 설치·복구하고, 정상 상태의 반복 실행에서는 재설치를 건너뜁니다. `requirements.txt`를 따로 설치하지 마세요.
 
 Linux/macOS:
 

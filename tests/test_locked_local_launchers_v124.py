@@ -24,6 +24,12 @@ def test_powershell_launcher_installs_the_exact_runtime_lock_with_venv_python() 
     launcher = _text("run_windows.ps1")
     assert 'Join-Path $PSScriptRoot "requirements.lock"' in launcher
     assert 'Join-Path $venvRoot "Scripts\\python.exe"' in launcher
+    assert '@{ Command = "py"; Arguments = @("-3.13")' in launcher
+    assert '@{ Command = "py"; Arguments = @("-3.12")' in launcher
+    assert '@{ Command = "python"; Arguments = @()' in launcher
+    assert 'Get-FileHash -Algorithm SHA256 $lockPath' in launcher
+    assert '.vulnflow-requirements-lock.sha256' in launcher
+    assert 'LOCKED_RUNTIME_REUSED=PASS' in launcher
     assert '"-m", "pip"' in launcher
     assert '"--requirement", $lockPath' in launcher
     assert 'VULNFLOW_RUNTIME_DEPENDENCY_POLICY = "enforce"' in launcher
