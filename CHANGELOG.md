@@ -1,3 +1,5 @@
+> Historical per-iteration release notes from 72.0.11 through 72.0.71 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.72.md`.
+
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
 - Position the existing 72.0.72 core as `VulnFlow Free — Public Beta` without changing application behavior, schema, dependencies, or version.

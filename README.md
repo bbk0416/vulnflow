@@ -237,6 +237,7 @@ python scripts/run_quality_gates.py
 - 제품화 로드맵: [ROADMAP.md](ROADMAP.md)
 - 전체 변경 이력: [CHANGELOG.md](CHANGELOG.md)
 - 현재 릴리스 노트: [RELEASE_NOTES_72.0.72.md](RELEASE_NOTES_72.0.72.md)
+- 과거 세부 릴리스 노트: [`docs/archive/releases/`](docs/archive/releases/)
 
 ## 확인된 한계
 
