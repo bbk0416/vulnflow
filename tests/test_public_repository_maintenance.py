@@ -142,17 +142,15 @@ def test_dashboard_uses_simple_primary_navigation_with_advanced_menu(client) -> 
     assert 'href="/export/findings.csv"' not in html
     assert 'href="/export/recovery-bundle.zip"' not in html
 
-
-def test_upload_keeps_scanner_import_primary_and_support_tools_collapsed(client) -> None:
-    response = client.get("/upload")
-    assert response.status_code == 200
-    html = response.text
-    assert "취약점 결과를 가져오세요." in html
-    assert "파일 분석하고 미리보기" in html
-    assert '<details class="advanced-section upload-advanced compatibility-support">' in html
-    assert "가져오기 문제 신고용 익명화 도구" in html
-    assert html.index("파일 분석하고 미리보기") < html.index("가져오기 문제 신고용 익명화 도구")
-    assert "파일럿 호환성 수집" not in html
+    upload = client.get("/upload")
+    assert upload.status_code == 200
+    upload_html = upload.text
+    assert "취약점 결과를 가져오세요." in upload_html
+    assert "파일 분석하고 미리보기" in upload_html
+    assert '<details class="advanced-section upload-advanced compatibility-support">' in upload_html
+    assert "가져오기 문제 신고용 익명화 도구" in upload_html
+    assert upload_html.index("파일 분석하고 미리보기") < upload_html.index("가져오기 문제 신고용 익명화 도구")
+    assert "파일럿 호환성 수집" not in upload_html
 
 
 def test_dashboard_prioritizes_four_step_workflow_and_progressive_filters(client) -> None:
