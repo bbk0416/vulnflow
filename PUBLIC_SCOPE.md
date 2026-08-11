@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.75 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.76 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -97,3 +97,8 @@
 ## 72.0.75 scanner import contract patch
 
 72.0.75는 공격검증에서 재현된 preview/apply 계약 및 자산 식별자 정확성 결함을 최소 수정합니다. 명시적 FQDN/IP/MAC은 preview에서 reconciliation과 동일한 규칙으로 검증하고, bracketed IPv6는 중앙 IP 정규화에서 일관되게 처리해 가짜 HOSTNAME alias가 생기지 않게 합니다. 또한 multiline CSV와 앞부분 빈 행이 있는 XLSX의 오류·미리보기에서 실제 물리 행번호를 유지합니다. UTF-16 generic CSV 지원은 추가하지 않으며 문서화된 UTF-8 계열 및 CP949/EUC-KR 범위는 그대로입니다. schema 46, dependency lock, remediation/reconciliation 상태 모델과 제품 범위는 변경하지 않습니다.
+
+## 72.0.76 scanner import integrity patch
+
+72.0.76은 72.0.75 이후 공격검증에서 재현된 세 가지 결함을 최소 수정합니다. CSV/XLSX의 중복 헤더 자동 suffix가 실제 헤더명과 다시 충돌할 때 셀 값이 조용히 덮어써지는 문제를 막고, 명백히 잘못된 FQDN을 중앙 자산 식별자 경계에서 거부합니다. 또한 scanner source 이름의 대소문자만 달라진 재가져오기가 동일 source record identity와 일관되게 reconciliation되도록 수정합니다. schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.
+

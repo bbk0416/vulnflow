@@ -41,7 +41,36 @@ def normalize_asset_identifier(identifier_type: str, value: Any) -> str:
         return ":".join(compact[i:i + 2] for i in range(0, 12, 2))
     if kind == "FQDN":
         normalized = raw.rstrip(".").casefold()
-        if "." not in normalized or any(not label for label in normalized.split(".")):
+        labels = normalized.split(".")
+        invalid = (
+            "." not in normalized
+            or any(not label for label in labels)
+            or any(char.isspace() or ord(char) < 32 or char in "/\\[]:@" for char in normalized)
+        )
+        if not invalid:
+            try:
+                ascii_labels = [label.encode("idna").decode("ascii") for label in labels]
+            except UnicodeError:
+                invalid = True
+            else:
+                invalid = (
+                    any(
+                        len(label) > 63
+                        or label.startswith("-")
+                        or label.endswith("-")
+                        or re.fullmatch(r"[a-z0-9_-]+", label, re.IGNORECASE) is None
+                        for label in ascii_labels
+                    )
+                    or len(".".join(ascii_labels)) > 253
+                )
+        if not invalid:
+            try:
+                ipaddress.ip_address(normalized)
+            except ValueError:
+                pass
+            else:
+                invalid = True
+        if invalid:
             raise ValueError(f"FQDN 형식이 올바르지 않습니다: {raw}")
         return normalized
     return raw.casefold()

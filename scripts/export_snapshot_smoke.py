@@ -99,7 +99,7 @@ def main() -> None:
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     lines = [
-        "VulnFlow 72.0.75 snapshot export verification",
+        "VulnFlow 72.0.76 snapshot export verification",
         f"Synthetic findings: {payload['dataset_rows']}",
         f"Snapshot CSV rows: {snapshot['rows']}",
         f"Snapshot CSV bytes: {snapshot['size_bytes']}",

@@ -1,5 +1,5 @@
 {
-  "application_version": "72.0.75",
+  "application_version": "72.0.76",
   "format": "vulnflow-runtime-dependency-lock/1",
   "packages": [
     {

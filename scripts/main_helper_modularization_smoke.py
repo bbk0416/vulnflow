@@ -26,7 +26,7 @@ def main_smoke() -> int:
     }
     architecture = build_architecture_report(ROOT)
     checks = [
-        ("version_72_0_7", main.CURRENT_APP_VERSION == "72.0.75"),
+        ("version_72_0_7", main.CURRENT_APP_VERSION == "72.0.76"),
         ("schema_42", main.CURRENT_SCHEMA_VERSION == 46),
         ("main_line_budget", len((ROOT / "app/main.py").read_text().splitlines()) < 1250),
         ("request_processing_module", hasattr(request_processing, "normalize_finding_row")),
@@ -39,7 +39,7 @@ def main_smoke() -> int:
     ]
     passed = sum(bool(value) for _, value in checks)
     payload = {
-        "title": "VulnFlow 72.0.75 main helper modularization verification",
+        "title": "VulnFlow 72.0.76 main helper modularization verification",
         "version": main.CURRENT_APP_VERSION,
         "schema_version": main.CURRENT_SCHEMA_VERSION,
         "passed": passed,

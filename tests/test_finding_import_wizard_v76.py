@@ -9,7 +9,8 @@ from openpyxl import Workbook
 import pytest
 
 import app.main as main
-from app.services.asset_identity import extract_asset_identifiers
+from app.core.storage import apply_import_batch, get_source_reconciliation, init_db
+from app.services.asset_identity import extract_asset_identifiers, normalize_asset_identifier
 from app.services.finding_imports import (
     auto_map_headers,
     create_preview_session,
@@ -478,3 +479,93 @@ def test_duplicate_scanner_preview_surfaces_parser_warning(client: TestClient, t
     assert "스캐너 파일 호환성: REVIEW" in preview.text
     assert "파서 경고" in preview.text
     assert "중복" in preview.text
+
+
+def test_duplicate_header_suffix_collisions_never_overwrite_csv_or_xlsx_columns():
+    csv_content = (
+        "product,cve_id,notes,notes,notes_2\n"
+        "Demo,CVE-2026-77801,A,B,C\n"
+    ).encode()
+    parsed_csv = parse_import_file(csv_content, filename="header-collision.csv", format_hint="csv")
+    assert parsed_csv["headers"] == ["product", "cve_id", "notes", "notes_2", "notes_2_2"]
+    assert parsed_csv["rows"][0] == {
+        "product": "Demo", "cve_id": "CVE-2026-77801", "notes": "A", "notes_2": "B", "notes_2_2": "C"
+    }
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.append(["product", "cve_id", "notes", "notes", "notes_2"])
+    sheet.append(["Demo", "CVE-2026-77802", "A", "B", "C"])
+    payload = io.BytesIO()
+    workbook.save(payload)
+    parsed_xlsx = parse_import_file(payload.getvalue(), filename="header-collision.xlsx", format_hint="xlsx")
+    assert parsed_xlsx["headers"] == ["product", "cve_id", "notes", "notes_2", "notes_2_2"]
+    assert parsed_xlsx["rows"][0]["notes_2"] == "B"
+    assert parsed_xlsx["rows"][0]["notes_2_2"] == "C"
+
+
+def test_invalid_explicit_fqdn_is_rejected_by_asset_identity_normalizer():
+    for value in (
+        "bad host.example.com",
+        "bad/host.example.com",
+        "-leading.example.com",
+        "trailing-.example.com",
+        f"{'a' * 64}.example.com",
+        "192.0.2.10",
+    ):
+        with pytest.raises(ValueError, match="FQDN 형식이 올바르지 않습니다"):
+            normalize_asset_identifier("FQDN", value)
+    assert normalize_asset_identifier("FQDN", "DB01.Example.COM.") == "db01.example.com"
+    assert normalize_asset_identifier("FQDN", "dead.beef") == "dead.beef"
+
+
+def test_scanner_source_case_change_reuses_same_source_record(tmp_path: Path):
+    db = tmp_path / "scanner-source-case.sqlite3"
+    init_db(db)
+    row = {
+        "finding_id": "CASE-1",
+        "product": "Case scanner",
+        "product_version": "1.0",
+        "asset_id": "CASE-ASSET-1",
+        "asset_name": "case.example.test",
+        "environment": "prod",
+        "cve_id": "CVE-2026-77803",
+        "component": "case-component",
+        "component_version": "1.0",
+        "cvss": 7.5,
+        "epss": 0.1,
+        "epss_percentile": 0.2,
+        "kev": 0,
+        "internet_exposed": 0,
+        "asset_criticality": 3,
+        "data_sensitivity": 3,
+        "patch_available": 1,
+        "compensating_control": 0,
+        "status": "OPEN",
+        "owner": "",
+        "due_date": "",
+        "notes": "",
+        "score": 50,
+        "threat_score": 20,
+        "asset_context_score": 20,
+        "remediation_urgency_score": 10,
+        "decision": "REVIEW",
+        "decision_label": "검토",
+        "sla_days": 30,
+        "target_date": "2026-09-01",
+        "mitigation_required": 0,
+        "reasons": "test",
+        "policy_version": "test",
+        "first_seen_at": "2026-08-12",
+        "first_scored_at": "2026-08-12",
+        "last_scored_at": "2026-08-12",
+        "record_state": "ACTIVE",
+        "row_version": 1,
+    }
+    first = apply_import_batch(db, [row], scanner_source="Nessus-DMZ", filename="one.csv")
+    second = apply_import_batch(db, [row], scanner_source="nessus-dmz", filename="two.csv")
+    assert first["inserted"] == 1
+    assert second["updated"] == 1
+    detail = get_source_reconciliation(db, "CASE-1")
+    assert len(detail["records"]) == 1
+    assert detail["records"][0]["scanner_source"] == "nessus-dmz"
