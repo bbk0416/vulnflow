@@ -11,7 +11,7 @@ body:
     id: version
     attributes:
       label: VulnFlow version
-      placeholder: 72.0.73
+      placeholder: 72.0.74
     validations:
       required: true
   - type: dropdown

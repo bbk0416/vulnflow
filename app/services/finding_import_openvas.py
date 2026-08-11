@@ -1,7 +1,6 @@
 """OpenVAS and Greenbone CSV/XML adapters for finding imports."""
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from app.core.settings import MAX_CSV_ROWS
@@ -11,6 +10,7 @@ from app.services.finding_import_common import (
     _extract_cves,
     _fqdn_value,
     _header_key,
+    _ip_value,
     _truncate_notes,
 )
 from app.services.finding_import_xml import (
@@ -42,7 +42,7 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
         product = _row_value(raw, "NVT Name", "Vulnerability Name", "Name", "Finding")
         hostname = _row_value(raw, "Hostname", "Host Name", "DNS Name")
         host_value = _row_value(raw, "IP", "IP Address", "Host IP", "Host")
-        ip_address = host_value if re.fullmatch(r"[0-9a-fA-F:.]+", host_value) else ""
+        ip_address = _ip_value(host_value)
         if not cves:
             source_errors.append({
                 "row_number": source_row,
@@ -144,7 +144,7 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
                 "product": product,
                 "cve_id": cve,
                 "asset_name": hostname or host_text,
-                "ip_address": host_text if re.fullmatch(r"[0-9a-fA-F:.]+", host_text) else "",
+                "ip_address": _ip_value(host_text),
                 "fqdn": _fqdn_value(hostname),
                 "component": product,
                 "cvss": cvss,

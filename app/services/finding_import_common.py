@@ -1,6 +1,7 @@
 """Shared canonical fields and normalization helpers for scanner imports."""
 from __future__ import annotations
 
+import ipaddress
 import re
 import unicodedata
 from datetime import date, datetime
@@ -105,9 +106,20 @@ def _extract_cves(*values: Any) -> list[str]:
                 found.append(normalized)
     return found
 
+def _ip_value(value: Any) -> str:
+    text = _clean_cell(value)
+    if not text:
+        return ""
+    candidate = text[1:-1] if text.startswith("[") and text.endswith("]") else text
+    try:
+        return ipaddress.ip_address(candidate).compressed
+    except ValueError:
+        return ""
+
+
 def _fqdn_value(value: str) -> str:
     text = str(value or "").strip()
-    if not text or "." not in text or " " in text or re.fullmatch(r"[0-9a-fA-F:.]+", text):
+    if not text or "." not in text or " " in text or _ip_value(text):
         return ""
     return text
 

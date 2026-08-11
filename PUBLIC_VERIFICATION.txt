@@ -1,4 +1,4 @@
-VulnFlow 72.0.73 public verification summary
+VulnFlow 72.0.74 public verification summary
 Date: 2026-08-10
 
 Release scope
@@ -17,7 +17,7 @@ Local pre-release verification for the candidate tree
 - public manifest: required to verify after final manifest regeneration
 
 Release gate
-- The v72.0.73 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
+- The v72.0.74 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
 - The release tag must point to the resulting main merge commit.
 
 Interpretation limits

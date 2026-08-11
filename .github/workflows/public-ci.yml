@@ -46,6 +46,8 @@ jobs:
       - name: Verify public submission readiness
         run: python scripts/submission_readiness_smoke.py --public
       - name: Run public regression suite
+        env:
+          VULNFLOW_PUBLIC_TEST_GROUP_TIMEOUT_SECONDS: "360"
         run: python scripts/run_public_tests.py
 
   dependency-wheelhouse:

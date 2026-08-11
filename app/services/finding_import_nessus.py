@@ -1,12 +1,11 @@
 """NessusClientData_v2 adapter for finding imports."""
 from __future__ import annotations
 
-import re
 from typing import Any
 from urllib.parse import unquote
 
 from app.core.settings import MAX_CSV_ROWS
-from app.services.finding_import_common import CANONICAL_FIELD_NAMES, _truncate_notes
+from app.services.finding_import_common import CANONICAL_FIELD_NAMES, _ip_value, _truncate_notes
 from app.services.finding_import_xml import (
     _children_by_name,
     _first_text,
@@ -71,9 +70,10 @@ def _nessus_rows(content: bytes) -> dict[str, Any]:
             if name:
                 properties[name] = str(tag.text or "").strip()
         asset_name = properties.get("host-fqdn") or properties.get("netbios-name") or host_name
-        ip_address = properties.get("host-ip") or (
-            host_name if re.fullmatch(r"[0-9a-fA-F:.]+", host_name) else ""
-        )
+        raw_host_ip = properties.get("host-ip", "")
+        ip_address = _ip_value(raw_host_ip) or _ip_value(host_name)
+        if raw_host_ip and not _ip_value(raw_host_ip):
+            parser_warnings.append(f"ReportHost {host_count}: host-ip 값이 올바른 IP 주소가 아닙니다.")
         asset_id = properties.get("host-uuid") or properties.get("bios-uuid") or properties.get("mcafee-epo-guid") or ""
         if not asset_name and not ip_address:
             parser_warnings.append(f"ReportHost {host_count}: 자산 식별자가 없습니다.")
