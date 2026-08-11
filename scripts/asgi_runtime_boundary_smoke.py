@@ -47,7 +47,7 @@ def main_smoke() -> None:
         stopped = context.runtime_snapshot()
 
     checks = {
-        "version_72_0_7": main.CURRENT_APP_VERSION == "72.0.72",
+        "version_72_0_7": main.CURRENT_APP_VERSION == "72.0.73",
         "schema_42": main.CURRENT_SCHEMA_VERSION == 46,
         "architecture_pass": architecture["status"] == "PASS",
         "facade_budget": by_path["app/application_runtime.py"]["lines"] <= 60,
@@ -66,7 +66,7 @@ def main_smoke() -> None:
         "lifecycle_stopped": stopped.get("lifecycle_state") == "STOPPED" and stopped.get("lifecycle_shutdown_timed_out") is False,
     }
     payload = {
-        "title": "VulnFlow 72.0.72 split ASGI runtime boundary verification",
+        "title": "VulnFlow 72.0.73 split ASGI runtime boundary verification",
         "version": main.CURRENT_APP_VERSION,
         "checks": [{"name": name, "passed": passed} for name, passed in checks.items()],
         "result": f"{sum(checks.values())}/{len(checks)}",

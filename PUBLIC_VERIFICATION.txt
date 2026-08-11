@@ -1,87 +1,26 @@
-VulnFlow 72.0.72 public verification summary
-Date: 2026-08-07
+VulnFlow 72.0.73 public verification summary
+Date: 2026-08-10
 
-Current release scope
-- Retains schema 46, physically isolated control/project databases, offline control recovery, project-scoped collaboration, and production security profiles
-- Splits database version, migration, trigger, search, and backfill responsibilities out of the former schema monolith
-- Replaces client-provided forwarded chains at the Nginx edge so application login rate limits receive the actual edge connection address
-- Retains the real local Nginx/Uvicorn HTTPS and split-storage container-equivalent deployment rehearsals
-- Isolates the lifecycle soak from repository data and adds atomic SQLite backup publication plus bounded fault injection
-- Retains the DNS-pinned outbound HTTP boundary for webhook and Jira traffic and extends pinned destination validation to SMTP STARTTLS/SMTPS
-- Adds private SMTP blocking, host allowlisting, plain-SMTP production prohibition, and strict email-address validation
-- Adds a mandatory public-CI production Compose build-and-runtime rehearsal
-- Moves OSV, CISA KEV, and FIRST EPSS onto the DNS-pinned bounded JSON transport
-- Splits integration diagnostics and scanner compatibility services below their architecture budgets
-- Adds a dependency-free static security boundary audit before third-party quality tools
-- Adds clean wheelhouse download, per-run artifact hashing, no-index reinstall, installed-lock verification, application import, and focused HTTP smoke as a mandatory public-CI gate
-- Removes Requests and its dedicated transitive packages from the production runtime dependency set and limits Docker image scripts to reviewed offline administration commands
-- Adds server-rendered workflow E2E for finding updates, import preview/apply/search, and operator-to-approver risk acceptance
-- Fixes the Windows SQLite backup durability barrier, removes OpenSSL CLI dependencies from local TLS rehearsals, and uses cross-platform Compose bind syntax
-- Declares the signed offline deployment activation/recovery runtime POSIX-only instead of treating unsupported Windows filesystem semantics as product failures
-- Adds the missing `idna==3.17` runtime closure pin and v116 cross-platform regression coverage
-- Fixes the final Windows path-separator regression contract and adds explicit Windows/POSIX path-form coverage
-- Fixes direct Compose-script imports, visible browser workflow assertions, and steady-state allocation warm-up evidence found by Windows external validation
-- Releases isolated router application back-references, hosts private router globals in non-module namespaces, and transfers private APIRoutes directly into the owning application so FastAPI retained-router semantics cannot erase or retain the route table
-- Begins staged normal FastAPI DI migration by moving the four pilot routes to request-owned ApplicationContext resolution and concurrent multi-application isolation contracts
-- Verifies Windows route-graph reclamation through per-object weak-reference ownership instead of unstable process-wide route-count equality
-- Adds packaged runtime dependency attestation and requires fail-closed enforcement in the production profile
-- Removes obsolete schema 40 constants from release tooling and reads offline bootstrap schema from the verified signed index
-- Adds signed standalone bootstrap dependencies, validated deployment identities, retained-deployment inventory, atomic rollback, bounded prune, and serialized offline deployment mutations
-- Authenticates retained deployment trees with a private HMAC history key, rejects tampered rollback/prune candidates, and requires explicit adoption for legacy unsealed history
-- Adds an external Ed25519 witness receipt that detects coordinated rollback of the local keyring and audit log when the trusted receipt remains outside the local rollback boundary
-- Adds a private keyring-plus-audit recovery bundle with per-member hashes, trusted-public-key comparison, external minimum-witness enforcement, and interrupted-restore rollback journaling
-- Adds an integrity-inventoried recovery journal and signed offline startup preflight that automatically restores one valid interrupted transaction while blocking ambiguous or legacy state
-- Authenticates the complete recovery transaction manifest with a dedicated private HMAC key and rejects missing, replaced, linked, or unsafe journal keys before live restore
-- Adds status, target-bound private backup, pending-journal-verified restore, and atomic rotation for the recovery-journal HMAC key
-- Adds an external validation evidence gate that distinguishes product failures from unavailable Docker or package index, managed browser policy, and missing customer scanner exports
-- Binds mandatory JSON reports to zero child exit codes, report/log SHA-256 values, safe collector-owned output directories, bounded scanner corpus handling, and an independent evidence verifier
-- Packages the exact source snapshot, signed request, requester public-key copy, and launch wrappers into a deterministic requester-signed runner kit with safe ZIP verification and extraction
-- Pins one authorized operator Ed25519 identity inside the requester-signed challenge and rejects substitute operator keys before response creation or child execution
-- Records the first verified response in a requester-signed hash-chain ledger and rejects replay or a conflicting second response for the same request
-- Requires an independently retained requester-signed minimum checkpoint to reject a valid but older acceptance-ledger prefix before verification or receipt publication
-- Maintains an append-only requester-signed checkpoint series so verification automatically uses the latest retained checkpoint head
-- Moves checkpoint series through deterministic requester-signed transfer bundles and installs only monotonic same-chain extensions
+Release scope
+- Narrow scanner-import data-integrity patch on the 72.0.72 feature-frozen line
+- SQLite schema 46 unchanged
+- Runtime dependency lock unchanged
+- CSV non-empty overflow fields fail closed
+- Malformed/unterminated CSV quoting fails closed
+- XLSX non-empty values beyond the final non-empty header cell fail closed
 
-Verification completed for this source state
-- Core regression tests: 663 PASS on Linux in seven non-overlapping bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 77); Windows keeps POSIX-only offline-deployment tests as explicit skips
-- Signed external-validation runner-kit regression: 14/14 PASS with deterministic ZIP reproduction, pinned-key verification, safe extraction, and pre-execution tamper rejection
-- Authorized-operator challenge regression: 6/6 PASS with signed key identity, response preflight rejection, and runner-kit child-execution blocking
-- Requester acceptance-ledger regression: 6/6 PASS with first acceptance, replay rejection, conflicting-response rejection, signature tamper detection, requester-key pinning, and strict ledger inventory
-- Acceptance-ledger checkpoint regression: 6/6 PASS with signed checkpoint creation, valid-prefix rollback detection, guarded append refusal, forward extension, tamper rejection, and requester-key pinning
-- External-validation source-attestation regression: 7/7 PASS with full manifest-file verification, private execution snapshots, and pre/post source identity binding
-- Bounded runtime stability soak: 12/12 lifespans PASS; 28/28 jobs; 16 accepted HMAC webhook deliveries
-- Runtime fault rehearsal: 15/15 PASS
-- Live outbound HTTPS egress rehearsal: 9/9 PASS with pinned IP connection, original-host TLS verification, proxy bypass resistance, private-address blocking, and allowlist enforcement
-- Live SMTP STARTTLS rehearsal: 10/10 PASS with pinned IP connection, original-host TLS/SNI verification, authentication, message DATA transfer, private-address blocking, allowlisting, and plain-SMTP rejection
-- Production security static contract: 26/26 PASS
-- Intelligence egress regression: 5/5 PASS
-- Built-in static security boundary regression: 4/4 PASS
-- Production Compose runtime: not executed in this workspace because Docker was unavailable; public CI requires it
-- Live host Nginx/Uvicorn TLS transport rehearsal (pilot + dependency warn): 14/14 PASS
-- Container-equivalent split-storage deployment rehearsal: 26/26 PASS across two cycles
-- Host schema-42 to schema-46 upgrade rehearsal: PASS
-- Synthetic scanner fixture matrix: 9/9 PASS
-- Scanner parser robustness matrix: 6/6 PASS
-- Scanner anonymization rehearsal: 6/6 PASS
-- Concurrent application-build warning gate: 12/12 paired secondary-app rounds PASS with `UnsupportedFieldAttributeWarning` promoted to an error and every app retaining 276 effective routes
-- Architecture review: PASS with no internal import cycles
-- Release metadata consistency and public submission readiness: PASS
-- Public SHA-256 manifest: regenerated and verified for this source state
-- Python compilation: PASS
-- Distribution artifact wheel/sdist install rehearsal: 26/26 PASS with split-storage schema 46 verification
+Local pre-release verification for the candidate tree
+- finding import wizard: 16/16 PASS
+- reconciliation/remediation/scanner-anonymization targeted regression: 23/23 PASS
+- public regression group 7: 77/77 PASS
+- synthetic scanner fixture matrix: 9/9 PASS
+- public manifest: required to verify after final manifest regeneration
 
-Verification not completed in this workspace
-- Current Docker image build, Compose networking, Docker volume drivers, and engine health status: Docker command unavailable
-- Clean dependency wheelhouse installation: not completed in this workspace because the configured index did not contain the exact lock and direct public-index access was unavailable; public CI requires the no-index reinstall gate
-- Public DNS, ACME or enterprise-PKI issuance, certificate renewal, and revocation: not exercised
-- Authorized external SMTP relay delivery, Jira issue creation, and public OSV/CISA/FIRST provider calls: not run without approved endpoints, credentials, or network authorization
-- Authorized customer Nessus and Greenbone exports: not supplied; the v36 evidence gate records this as not-provided rather than passed
-- Chromium E2E: 3/3 PASS in the independent Windows 72.0.59 run after rendered-identity locator correction
-- Ruff, Bandit, and pip-audit: not claimed unless separately reported
+Release gate
+- The v72.0.73 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
+- The release tag must point to the resulting main merge commit.
 
 Interpretation limits
-- The runtime soak and fault rehearsal are bounded single-host checks, not a 24-hour endurance, power-loss, or real disk-full test
-- The live TLS rehearsal used the pilot profile with dependency drift in warn mode, a temporary self-signed local CA, and host processes; production dependency enforcement is verified separately, and this is not a current Docker deployment or public-certificate proof
-- The container-equivalent rehearsal is not an image-build or Docker-network rehearsal
-- Synthetic fixtures are regression contracts, not vendor-version certification
-- These results are not a penetration test, compliance certification, or production approval
+- Synthetic/adversarial files are regression evidence, not vendor certification or external-user validation.
+- No customer scanner corpus is claimed.
+- This release does not add scanner connectors or product features.

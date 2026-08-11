@@ -88,7 +88,7 @@ def main() -> None:
         report = ROOT / "reports" / "reconciliation_verification.txt"
         report.parent.mkdir(parents=True, exist_ok=True)
         report.write_text(
-            "VulnFlow 72.0.72 multi-scanner reconciliation smoke\n"
+            "VulnFlow 72.0.73 multi-scanner reconciliation smoke\n"
             "two sources merged: PASS\n"
             "source conflict exposed: PASS\n"
             "authoritative source decision: PASS\n"

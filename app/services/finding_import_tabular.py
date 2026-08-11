@@ -29,22 +29,33 @@ def _csv_rows(content: bytes) -> dict[str, Any]:
         dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
     except csv.Error:
         dialect = csv.excel
-    reader = csv.reader(io.StringIO(text), dialect)
+    reader = csv.reader(io.StringIO(text), dialect, strict=True)
     try:
         raw_headers = next(reader)
     except StopIteration as exc:
         raise ValueError("파일에 헤더가 없습니다.") from exc
+    except csv.Error as exc:
+        raise ValueError(f"CSV 형식 오류: {exc}") from exc
     headers = _unique_headers(raw_headers)
     rows: list[dict[str, str]] = []
     source_rows: list[int] = []
-    for source_row, values in enumerate(reader, start=2):
-        if not any(_clean_cell(value) for value in values):
-            continue
-        if len(rows) >= MAX_CSV_ROWS:
-            raise ValueError(f"가져오기는 최대 {MAX_CSV_ROWS:,}행까지 지원합니다.")
-        padded = list(values[: len(headers)]) + [""] * max(0, len(headers) - len(values))
-        rows.append({header: _clean_cell(padded[index]) for index, header in enumerate(headers)})
-        source_rows.append(source_row)
+    try:
+        for source_row, values in enumerate(reader, start=2):
+            if not any(_clean_cell(value) for value in values):
+                continue
+            overflow = values[len(headers):]
+            if any(_clean_cell(value) for value in overflow):
+                raise ValueError(
+                    f"CSV 행 {reader.line_num}의 열 수가 헤더보다 많습니다. "
+                    "구분자 또는 따옴표를 확인하세요."
+                )
+            if len(rows) >= MAX_CSV_ROWS:
+                raise ValueError(f"가져오기는 최대 {MAX_CSV_ROWS:,}행까지 지원합니다.")
+            padded = list(values[: len(headers)]) + [""] * max(0, len(headers) - len(values))
+            rows.append({header: _clean_cell(padded[index]) for index, header in enumerate(headers)})
+            source_rows.append(source_row)
+    except csv.Error as exc:
+        raise ValueError(f"CSV 형식 오류: {exc}") from exc
     return {
         "headers": headers,
         "rows": rows,
@@ -83,6 +94,10 @@ def _xlsx_rows(content: bytes) -> dict[str, Any]:
                 if any(_clean_cell(value) for value in row):
                     selected = worksheet
                     header_values = list(row)
+                    last_header_index = max(
+                        index for index, value in enumerate(header_values, start=1) if _clean_cell(value)
+                    )
+                    header_values = header_values[:last_header_index]
                     data_iterator = iterator
                     break
             if selected is not None:
@@ -100,6 +115,12 @@ def _xlsx_rows(content: bytes) -> dict[str, Any]:
             source_row += 1
             if not any(_clean_cell(value) for value in values):
                 continue
+            overflow = list(values[len(headers):])
+            if any(_clean_cell(value) for value in overflow):
+                raise ValueError(
+                    f"XLSX 행 {source_row}의 열 수가 헤더보다 많습니다. "
+                    "헤더 범위 또는 시트 구조를 확인하세요."
+                )
             if len(rows) >= MAX_CSV_ROWS:
                 raise ValueError(f"가져오기는 최대 {MAX_CSV_ROWS:,}행까지 지원합니다.")
             padded = list(values[: len(headers)]) + [None] * max(0, len(headers) - len(values))
