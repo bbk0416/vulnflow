@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.72 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.73.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.73 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.74.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,15 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+## 72.0.74 — 2026-08-11
+
+- Replace permissive scanner host/IP regex classification with exact `ipaddress` validation.
+- Prevent hostnames such as `db01`, `cafe`, `face01`, and `dead.beef` from being written into `ip_address` and subsequently failing asset-identity reconciliation.
+- Normalize valid IPv4/IPv6 scanner host values and downgrade malformed explicit Nessus `host-ip` values to parser warnings.
+- Raise the GitHub public-CI per-group guard from 300 to 360 seconds after a verified transient Windows runner timeout; timeouts remain fail-closed.
+- Keep schema 46, dependency package pins, and the feature-frozen product scope unchanged.
+
 
 ## 72.0.73 — 2026-08-10
 

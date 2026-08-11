@@ -9,6 +9,7 @@ from openpyxl import Workbook
 import pytest
 
 import app.main as main
+from app.services.asset_identity import extract_asset_identifiers
 from app.services.finding_imports import (
     auto_map_headers,
     create_preview_session,
@@ -91,6 +92,30 @@ def test_nessus_adapter_extracts_cves_and_reports_non_cve_plugins():
     mapped, source_rows, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
     assert len(mapped) == 2 and errors == [] and source_rows == [1, 1]
 
+    hostname_only = b"""<?xml version='1.0'?>
+<NessusClientData_v2><Report name='demo'><ReportHost name='db01'>
+<HostProperties></HostProperties>
+<ReportItem port='0' svc_name='general' pluginID='2001' pluginName='Hostname only'>
+<cve>CVE-2026-30003</cve></ReportItem>
+</ReportHost></Report></NessusClientData_v2>"""
+    hostname_parsed = parse_import_file(hostname_only, filename="hostname-only.nessus")
+    assert hostname_parsed["rows"][0]["asset_name"] == "db01"
+    assert hostname_parsed["rows"][0]["ip_address"] == ""
+    identifiers = extract_asset_identifiers(hostname_parsed["rows"][0], scanner_source="nessus")
+    assert any(item["identifier_type"] == "HOSTNAME" and item["normalized_value"] == "db01" for item in identifiers)
+
+    malformed_host_ip = b"""<?xml version='1.0'?>
+<NessusClientData_v2><Report name='demo'><ReportHost name='app-host'>
+<HostProperties><tag name='host-ip'>db01</tag></HostProperties>
+<ReportItem port='0' svc_name='general' pluginID='2002' pluginName='Bad host-ip'>
+<cve>CVE-2026-30004</cve></ReportItem>
+</ReportHost></Report></NessusClientData_v2>"""
+    malformed_parsed = parse_import_file(malformed_host_ip, filename="malformed-host-ip.nessus")
+    assert malformed_parsed["rows"][0]["ip_address"] == ""
+    assert malformed_parsed["rows"][0]["asset_name"] == "app-host"
+    assert any("host-ip" in warning for warning in malformed_parsed["parser_warnings"])
+    extract_asset_identifiers(malformed_parsed["rows"][0], scanner_source="nessus")
+
 
 def test_openvas_csv_is_detected_and_mapped():
     content = (
@@ -103,6 +128,20 @@ def test_openvas_csv_is_detected_and_mapped():
     assert parsed["mapping"]["product"] == "product"
     assert parsed["mapping"]["cve_id"] == "cve_id"
     assert parsed["mapping"]["ip_address"] == "ip_address"
+
+    hostname_content = (
+        "Host,NVT Name,CVEs,CVSS\n"
+        "db01,Hostname-only target,CVE-2026-44445,7.1\n"
+        "dead.beef,Hex-looking FQDN,CVE-2026-44446,7.2\n"
+    ).encode()
+    hostname_parsed = parse_import_file(hostname_content, filename="greenbone-hostnames.csv", format_hint="openvas")
+    assert [row["ip_address"] for row in hostname_parsed["rows"]] == ["", ""]
+    assert hostname_parsed["rows"][0]["asset_name"] == "db01"
+    assert hostname_parsed["rows"][1]["asset_name"] == "dead.beef"
+    first_ids = extract_asset_identifiers(hostname_parsed["rows"][0], scanner_source="openvas")
+    second_ids = extract_asset_identifiers(hostname_parsed["rows"][1], scanner_source="openvas")
+    assert any(item["identifier_type"] == "HOSTNAME" and item["normalized_value"] == "db01" for item in first_ids)
+    assert any(item["identifier_type"] == "FQDN" and item["normalized_value"] == "dead.beef" for item in second_ids)
 
 
 
@@ -117,6 +156,16 @@ def test_openvas_xml_adapter_extracts_result():
     assert parsed["rows"][0]["cve_id"] == "CVE-2026-65001"
     assert parsed["rows"][0]["asset_name"] == "tls.example.test"
     assert parsed["rows"][0]["ip_address"] == "10.0.0.30"
+
+    hostname_payload = b"""<?xml version='1.0'?><get_reports_response><report><report><results>
+    <result id='r2'><name>Hostname target</name><host>db01</host>
+    <port>443/tcp</port><nvt oid='1.3.7'><name>Hostname target</name><cve>CVE-2026-65002</cve><cvss_base>7.1</cvss_base></nvt>
+    </result></results></report></report></get_reports_response>"""
+    hostname_parsed = parse_import_file(hostname_payload, filename="hostname-report.xml")
+    assert hostname_parsed["rows"][0]["asset_name"] == "db01"
+    assert hostname_parsed["rows"][0]["ip_address"] == ""
+    ids = extract_asset_identifiers(hostname_parsed["rows"][0], scanner_source="openvas")
+    assert any(item["identifier_type"] == "HOSTNAME" and item["normalized_value"] == "db01" for item in ids)
 
 def test_preview_session_is_actor_bound(tmp_path: Path):
     token = create_preview_session(
