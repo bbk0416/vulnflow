@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.73 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.74.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.74 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.75.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,15 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+## 72.0.75 — 2026-08-11
+
+- Validate explicit FQDN/IP/MAC finding identifiers during import preview so rows that would fail reconciliation are reported before apply instead of failing the whole batch later.
+- Accept bracketed IPv6 literals consistently in the central asset-identity normalizer and prevent bracketed IPv6 scanner targets from being recorded as false HOSTNAME aliases.
+- Preserve physical source-row provenance for multiline CSV records and XLSX files whose header begins after leading blank rows, including overflow error locations.
+- Keep UTF-16 generic CSV outside the documented encoding contract; supported generic CSV encodings remain UTF-8 variants plus CP949/EUC-KR fallback.
+- Keep SQLite schema 46, dependency package pins, and the feature-frozen product scope unchanged.
+
 
 ## 72.0.74 — 2026-08-11
 

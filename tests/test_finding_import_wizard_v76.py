@@ -73,6 +73,42 @@ def test_xlsx_first_nonempty_sheet_and_cve_expansion():
         parse_import_file(overflow_buffer.getvalue(), filename="ragged.xlsx")
 
 
+
+def test_csv_multiline_records_preserve_physical_source_rows():
+    content = (
+        'product,cve_id,notes\n'
+        'One,CVE-2026-77704,"line one\nline two"\n'
+        'Two,CVE-2026-77705,plain\n'
+    ).encode()
+    parsed = parse_import_file(content, filename="multiline.csv", format_hint="csv")
+    assert parsed["source_rows"] == [2, 4]
+
+
+def test_xlsx_leading_blank_rows_preserve_physical_source_rows_and_overflow_location():
+    workbook = Workbook()
+    sheet = workbook.active
+    for _ in range(4):
+        sheet.append([])
+    sheet.append(["product", "cve_id"])
+    sheet.append(["One", "CVE-2026-77706"])
+    sheet.append(["Two", "CVE-2026-77707"])
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    parsed = parse_import_file(buffer.getvalue(), filename="blank-prefix.xlsx", format_hint="xlsx")
+    assert parsed["source_rows"] == [6, 7]
+
+    overflow = Workbook()
+    overflow_sheet = overflow.active
+    for _ in range(4):
+        overflow_sheet.append([])
+    overflow_sheet.append(["product", "cve_id"])
+    overflow_sheet.append(["One", "CVE-2026-77708"])
+    overflow_sheet.append(["Two", "CVE-2026-77709", "EXTRA"])
+    overflow_buffer = io.BytesIO()
+    overflow.save(overflow_buffer)
+    with pytest.raises(ValueError, match="XLSX 행 7의 열 수가 헤더보다 많습니다"):
+        parse_import_file(overflow_buffer.getvalue(), filename="blank-prefix-overflow.xlsx", format_hint="xlsx")
+
 def test_nessus_adapter_extracts_cves_and_reports_non_cve_plugins():
     payload = b"""<?xml version='1.0'?>
 <NessusClientData_v2><Report name='demo'><ReportHost name='10.0.0.8'>
@@ -261,6 +297,84 @@ def test_invalid_rows_can_be_downloaded_and_explicitly_skipped(client: TestClien
     assert "upload_partial" in applied.headers["location"]
     assert len(client.get("/api/v1/findings?query=CVE-2026-62001").json()["items"]) == 1
 
+
+
+def test_invalid_ip_is_reported_during_preview_before_apply(client: TestClient, tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(main, "IMPORT_PREVIEW_DIR", tmp_path / "previews")
+    token = _csrf(client)
+    content = (
+        "product,cve_id,asset_name,ip_address\n"
+        "Good,CVE-2026-77700,db00,192.0.2.10\n"
+        "Bad,CVE-2026-77701,db01,db01\n"
+    ).encode()
+    preview = client.post(
+        "/upload/findings/preview",
+        data={"csrf_token": token, "format_hint": "csv", "scanner_source": "manual", "import_mode": "incremental"},
+        files={"file": ("bad-ip.csv", content, "text/csv")},
+    )
+    assert preview.status_code == 200
+    assert "확인 필요한 항목" in preview.text
+    assert "IP 주소 형식이 올바르지 않습니다: db01" in preview.text
+    match = re.search(r'name="token" value="([A-Za-z0-9_-]+)"', preview.text)
+    assert match
+    blocked = client.post(
+        "/upload/findings/apply",
+        data={
+            "csrf_token": token,
+            "token": match.group(1),
+            "scanner_source": "manual",
+            "import_mode": "incremental",
+        },
+    )
+    assert blocked.status_code == 400
+
+
+def test_generic_csv_bracketed_ipv6_previews_and_applies(client: TestClient, tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(main, "IMPORT_PREVIEW_DIR", tmp_path / "previews")
+    token = _csrf(client)
+    content = (
+        "product,cve_id,asset_name,ip_address\n"
+        "Demo,CVE-2026-77702,[2001:db8::1],[2001:db8::1]\n"
+    ).encode()
+    preview = client.post(
+        "/upload/findings/preview",
+        data={"csrf_token": token, "format_hint": "csv", "scanner_source": "manual", "import_mode": "incremental"},
+        files={"file": ("ipv6.csv", content, "text/csv")},
+    )
+    assert preview.status_code == 200
+    assert "반영 가능" in preview.text
+    match = re.search(r'name="token" value="([A-Za-z0-9_-]+)"', preview.text)
+    assert match
+    applied = client.post(
+        "/upload/findings/apply",
+        data={
+            "csrf_token": token,
+            "token": match.group(1),
+            "scanner_source": "manual",
+            "import_mode": "incremental",
+        },
+        follow_redirects=False,
+    )
+    assert applied.status_code == 303
+    found = client.get("/api/v1/findings?query=CVE-2026-77702").json()["items"]
+    assert len(found) == 1
+
+
+def test_openvas_bracketed_ipv6_does_not_create_false_hostname_identity():
+    content = (
+        "IP,NVT Name,CVEs,CVSS\n"
+        "[2001:db8::1],IPv6 target,CVE-2026-77703,7.5\n"
+    ).encode()
+    parsed = parse_import_file(content, filename="openvas-ipv6.csv", format_hint="openvas")
+    identifiers = extract_asset_identifiers(parsed["rows"][0], scanner_source="openvas")
+    assert any(
+        item["identifier_type"] == "IP_ADDRESS" and item["normalized_value"] == "2001:db8::1"
+        for item in identifiers
+    )
+    assert not any(
+        item["identifier_type"] == "HOSTNAME" and item["normalized_value"] == "[2001:db8::1]"
+        for item in identifiers
+    )
 
 def test_snapshot_import_never_skips_invalid_rows(client: TestClient, tmp_path: Path, monkeypatch):
     monkeypatch.setattr(main, "IMPORT_PREVIEW_DIR", tmp_path / "previews")

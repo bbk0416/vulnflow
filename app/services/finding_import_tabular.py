@@ -40,13 +40,18 @@ def _csv_rows(content: bytes) -> dict[str, Any]:
     rows: list[dict[str, str]] = []
     source_rows: list[int] = []
     try:
-        for source_row, values in enumerate(reader, start=2):
+        while True:
+            source_row = reader.line_num + 1
+            try:
+                values = next(reader)
+            except StopIteration:
+                break
             if not any(_clean_cell(value) for value in values):
                 continue
             overflow = values[len(headers):]
             if any(_clean_cell(value) for value in overflow):
                 raise ValueError(
-                    f"CSV 행 {reader.line_num}의 열 수가 헤더보다 많습니다. "
+                    f"CSV 행 {source_row}의 열 수가 헤더보다 많습니다. "
                     "구분자 또는 따옴표를 확인하세요."
                 )
             if len(rows) >= MAX_CSV_ROWS:
@@ -88,12 +93,14 @@ def _xlsx_rows(content: bytes) -> dict[str, Any]:
         selected = None
         header_values: list[Any] = []
         data_iterator = None
+        header_row_number = 0
         for worksheet in workbook.worksheets:
             iterator = worksheet.iter_rows(values_only=True)
-            for row in iterator:
+            for physical_row, row in enumerate(iterator, start=1):
                 if any(_clean_cell(value) for value in row):
                     selected = worksheet
                     header_values = list(row)
+                    header_row_number = physical_row
                     last_header_index = max(
                         index for index, value in enumerate(header_values, start=1) if _clean_cell(value)
                     )
@@ -109,8 +116,7 @@ def _xlsx_rows(content: bytes) -> dict[str, Any]:
         headers = _unique_headers(header_values)
         rows: list[dict[str, str]] = []
         source_rows: list[int] = []
-        # The first non-empty row is treated as row 1 for preview purposes.
-        source_row = 1
+        source_row = header_row_number
         for values in data_iterator:
             source_row += 1
             if not any(_clean_cell(value) for value in values):

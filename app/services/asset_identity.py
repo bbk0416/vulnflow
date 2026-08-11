@@ -29,8 +29,9 @@ def normalize_asset_identifier(identifier_type: str, value: Any) -> str:
     if len(raw) > 500:
         raise ValueError("자산 식별자 값은 500자 이하여야 합니다.")
     if kind == "IP_ADDRESS":
+        candidate = raw[1:-1].strip() if raw.startswith("[") and raw.endswith("]") else raw
         try:
-            return ipaddress.ip_address(raw).compressed.casefold()
+            return ipaddress.ip_address(candidate).compressed.casefold()
         except ValueError as exc:
             raise ValueError(f"IP 주소 형식이 올바르지 않습니다: {raw}") from exc
     if kind == "MAC_ADDRESS":
@@ -93,7 +94,7 @@ def extract_asset_identifiers(row: dict[str, Any], *, scanner_source: str) -> li
     name = str(row.get("asset_name") or "").strip()
     if name:
         try:
-            ipaddress.ip_address(name)
+            normalize_asset_identifier("IP_ADDRESS", name)
             append_identifier(items, "IP_ADDRESS", name, scanner_source=scanner_source,
                               environment=environment, source=f"scanner:{scanner_source}")
         except ValueError:

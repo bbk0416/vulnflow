@@ -1,26 +1,34 @@
-VulnFlow 72.0.74 public verification summary
-Date: 2026-08-10
+VulnFlow 72.0.75 public verification summary
+Date: 2026-08-11
 
 Release scope
-- Narrow scanner-import data-integrity patch on the 72.0.72 feature-frozen line
+- Narrow scanner-import preview/reconciliation and source-provenance patch on the 72.0.72 feature-frozen line
 - SQLite schema 46 unchanged
 - Runtime dependency lock unchanged
-- CSV non-empty overflow fields fail closed
-- Malformed/unterminated CSV quoting fails closed
-- XLSX non-empty values beyond the final non-empty header cell fail closed
+- Invalid explicit FQDN/IP/MAC identifiers fail during preview instead of later during apply reconciliation
+- Bracketed IPv6 uses one canonical IP identity and does not create a false HOSTNAME alias
+- Multiline CSV and leading-blank XLSX source row numbers reflect physical source locations
+- UTF-16 generic CSV remains outside the documented encoding contract
 
 Local pre-release verification for the candidate tree
-- finding import wizard: 16/16 PASS
-- reconciliation/remediation/scanner-anonymization targeted regression: 23/23 PASS
-- public regression group 7: 77/77 PASS
-- synthetic scanner fixture matrix: 9/9 PASS
-- public manifest: required to verify after final manifest regeneration
+- focused scanner/import/asset-identity regression: 63/63 PASS
+- public regression suite: 668/668 PASS across the seven bounded groups when executed in shorter local chunks
+- scanner fixture matrix: 9/9 PASS
+- scanner parser robustness: 6/6 PASS
+- release version consistency: 12/12 PASS
+- dependency lock static consistency: 9/9 PASS
+- architecture review: PASS (276 FastAPI route decorators, 0 internal import cycles)
+- public submission readiness: 29/29 PASS
+- public manifest: 661/661 PASS after final regeneration
+- static security boundary audit: PASS
+- local full quality runner is not claimed because this managed environment does not have the pinned `ruff` quality dependency installed
 
 Release gate
-- The v72.0.74 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
+- The v72.0.75 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
 - The release tag must point to the resulting main merge commit.
 
 Interpretation limits
 - Synthetic/adversarial files are regression evidence, not vendor certification or external-user validation.
 - No customer scanner corpus is claimed.
+- Docker-required production validation, Chromium E2E, clean dependency-wheelhouse reinstall, Windows runner behavior, and the pinned quality environment remain GitHub/external release gates where this local environment cannot reproduce them exactly.
 - This release does not add scanner connectors or product features.
