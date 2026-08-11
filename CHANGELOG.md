@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.71 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.72.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.72 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.73.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,14 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+## 72.0.73 — 2026-08-10
+
+- Reject CSV records with non-empty fields beyond the declared header width instead of silently truncating them.
+- Parse CSV in strict mode so malformed or unterminated quoted fields fail closed rather than absorbing later rows.
+- Bound XLSX header width at the final non-empty header cell and reject non-empty data beyond that boundary.
+- Keep schema 46, dependency locks and the feature-frozen product scope unchanged.
+
 
 ## 72.0.72 — 2026-08-07
 

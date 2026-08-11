@@ -60,7 +60,7 @@ def main_smoke() -> dict[str, object]:
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     linux = (ROOT / "run_linux.sh").read_text(encoding="utf-8")
     windows = (ROOT / "run_windows.ps1").read_text(encoding="utf-8")
-    check("compose_version_tag", "vulnflow:72.0.72" in compose)
+    check("compose_version_tag", "vulnflow:72.0.73" in compose)
     check("compose_fallback_disabled", "VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK:-0" in compose)
     check("container_fallback_disabled", "VULNFLOW_ALLOW_LOCAL_ADMIN_FALLBACK=0" in dockerfile)
     check(
@@ -71,7 +71,7 @@ def main_smoke() -> dict[str, object]:
 
     passed = sum(bool(item["passed"]) for item in checks)
     payload = {
-        "title": "VulnFlow 72.0.72 safe authentication defaults verification",
+        "title": "VulnFlow 72.0.73 safe authentication defaults verification",
         "version": main.CURRENT_APP_VERSION,
         "passed": passed,
         "total": len(checks),

@@ -33,6 +33,17 @@ def test_cp949_csv_and_korean_header_auto_mapping():
     assert parsed["mapping"]["cve_id"] == "CVE"
     assert parsed["mapping"]["asset_name"] == "호스트명"
 
+    with pytest.raises(ValueError, match="열 수가 헤더보다 많습니다"):
+        parse_import_file(
+            b"product,cve_id,asset_name,cvss\nOpenSSL,CVE-2026-12345,host-a,9.8,EXTRA\n",
+            filename="ragged.csv",
+        )
+    with pytest.raises(ValueError, match="CSV 형식 오류"):
+        parse_import_file(
+            b'product,cve_id,asset_name,notes\nOpenSSL,CVE-2026-12345,host-a,"unterminated\n',
+            filename="broken-quotes.csv",
+        )
+
 
 def test_xlsx_first_nonempty_sheet_and_cve_expansion():
     workbook = Workbook()
@@ -50,6 +61,15 @@ def test_xlsx_first_nonempty_sheet_and_cve_expansion():
     assert errors == []
     assert [row["cve_id"] for row in mapped] == ["CVE-2026-11111", "CVE-2026-22222"]
     assert source_rows == [2, 2]
+
+    overflow = Workbook()
+    overflow_sheet = overflow.active
+    overflow_sheet.append(["product", "cve_id"])
+    overflow_sheet.append(["OpenSSL", "CVE-2026-12345", "EXTRA"])
+    overflow_buffer = io.BytesIO()
+    overflow.save(overflow_buffer)
+    with pytest.raises(ValueError, match="XLSX 행 2의 열 수가 헤더보다 많습니다"):
+        parse_import_file(overflow_buffer.getvalue(), filename="ragged.xlsx")
 
 
 def test_nessus_adapter_extracts_cves_and_reports_non_cve_plugins():

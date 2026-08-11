@@ -83,7 +83,7 @@ def main() -> None:
             json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8"
         )
         (reports / "config_change_control_verification.txt").write_text(
-            "VulnFlow 72.0.72 configuration change control verification\n"
+            "VulnFlow 72.0.73 configuration change control verification\n"
             f"self approval blocked: {result['self_approval_blocked']}\n"
             f"approved window: {result['approved_window_status']}\n"
             f"additional drift: {result['unexpected_drift_status']}\n"
