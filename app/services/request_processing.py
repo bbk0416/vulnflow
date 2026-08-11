@@ -15,6 +15,7 @@ from typing import Any, Callable
 
 from app.core.scoring import ALLOWED_STATUSES, ACTIVE_STATUSES, as_bool, exception_state, is_overdue
 from app.core.settings import MAX_CSV_ROWS, MAX_NOTES, MAX_REASON, MAX_TEXT
+from app.services.asset_identity import normalize_asset_identifier
 
 
 def bounded_text(value: Any, field: str, max_length: int = MAX_TEXT) -> str:
@@ -69,6 +70,11 @@ def normalize_finding_row(
         "cmdb_id", "cloud_instance_id", "fqdn", "ip_address", "mac_address",
     ]:
         row[field] = bounded_text(row.get(field), field)
+    for field, identifier_type in [
+        ("fqdn", "FQDN"), ("ip_address", "IP_ADDRESS"), ("mac_address", "MAC_ADDRESS"),
+    ]:
+        if row[field]:
+            normalize_asset_identifier(identifier_type, row[field])
     row["notes"] = bounded_text(row.get("notes"), "notes", MAX_NOTES)
     row["risk_acceptance_reason"] = bounded_text(
         row.get("risk_acceptance_reason"), "risk_acceptance_reason", MAX_REASON

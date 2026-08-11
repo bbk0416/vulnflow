@@ -86,7 +86,7 @@ def main() -> None:
             json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8"
         )
         (reports / "config_drift_verification.txt").write_text(
-            "VulnFlow 72.0.74 configuration baseline and drift verification\n"
+            "VulnFlow 72.0.75 configuration baseline and drift verification\n"
             "redacted baseline: passed\n"
             f"initial status: {result['initial_status']}\n"
             f"high-risk drift: {result['drift_status']} / {result['drift_severity']} / {result['change_count']} changes\n"

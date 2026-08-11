@@ -8,7 +8,7 @@
 - 합성 샘플 데이터와 정책
 - 핵심 운영 문서
 - 대표 화면과 아키텍처 이미지
-- 핵심 업무 흐름을 검증하는 663개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
+- 핵심 업무 흐름을 검증하는 668개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
 - 프로젝트별 SMTP 이메일 알림과 Jira Cloud 이슈·댓글 연동
 - 프로젝트별 파일럿 준비도 점검과 고객용 경영진 보고서
 - 책임별 서비스 레지스트리와 CSV/XLSX·Nessus/OpenVAS 가져오기 모듈 경계
@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.74 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.75 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -89,6 +89,11 @@
 72.0.72부터 현재 로컬 취약점 운영 파일럿 범위의 신규 기능 개발을 동결합니다. 스캐너 데이터가 없는 빈 프로젝트는 더 이상 파일럿 시작 가능으로 표시하지 않으며, 조치 검증 화면은 내부 상태값 중심의 이력 목록 대신 검토 대기 작업을 우선하는 큐로 정리했습니다. 이후 변경은 실제 스캐너 호환성, 사용자 파일럿 또는 보안·신뢰성 결함에서 확인된 문제에 한정합니다.
 
 
-## 72.0.74 scanner import integrity patch
+## 72.0.74 scanner host-identity patch
 
-72.0.74은 72.0.72의 기능 동결 정책을 유지하면서, 공격적 scanner-import 검증에서 재현된 데이터 무결성 결함만 수정합니다. CSV의 헤더 초과 비어 있지 않은 열을 조용히 버리지 않고 차단하고, 닫히지 않은 CSV 따옴표를 형식 오류로 처리하며, XLSX에서 실제 헤더 범위를 벗어난 비어 있지 않은 값을 무시하지 않습니다. schema 46, dependency lock, remediation/reconciliation 상태 모델과 제품 범위는 변경하지 않습니다.
+72.0.74은 72.0.72의 기능 동결 정책을 유지하면서, scanner host 값을 IP로 추정하던 느슨한 정규식 때문에 `db01`, `cafe`, `face01`, `dead.beef` 같은 정상 hostname이 IP로 오인되던 결함을 수정했습니다. Python `ipaddress` 기반 정확한 분류를 사용하고, 잘못된 Nessus `host-ip`는 canonical IP를 오염시키지 않도록 warning으로 처리합니다. 72.0.73의 CSV/XLSX fail-closed 무결성 보호, schema 46, dependency lock, 제품 범위는 그대로 유지합니다.
+
+
+## 72.0.75 scanner import contract patch
+
+72.0.75는 공격검증에서 재현된 preview/apply 계약 및 자산 식별자 정확성 결함을 최소 수정합니다. 명시적 FQDN/IP/MAC은 preview에서 reconciliation과 동일한 규칙으로 검증하고, bracketed IPv6는 중앙 IP 정규화에서 일관되게 처리해 가짜 HOSTNAME alias가 생기지 않게 합니다. 또한 multiline CSV와 앞부분 빈 행이 있는 XLSX의 오류·미리보기에서 실제 물리 행번호를 유지합니다. UTF-16 generic CSV 지원은 추가하지 않으며 문서화된 UTF-8 계열 및 CP949/EUC-KR 범위는 그대로입니다. schema 46, dependency lock, remediation/reconciliation 상태 모델과 제품 범위는 변경하지 않습니다.
