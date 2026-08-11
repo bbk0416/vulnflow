@@ -90,11 +90,21 @@ def _clean_cell(value: Any) -> str:
 
 def _unique_headers(values: list[Any]) -> list[str]:
     headers: list[str] = []
-    counts: dict[str, int] = {}
+    used: set[str] = set()
+    next_suffix: dict[str, int] = {}
     for index, value in enumerate(values, start=1):
         base = _clean_cell(value) or f"column_{index}"
-        counts[base] = counts.get(base, 0) + 1
-        headers.append(base if counts[base] == 1 else f"{base}_{counts[base]}")
+        candidate = base
+        if candidate in used:
+            suffix = max(2, next_suffix.get(base, 2))
+            while f"{base}_{suffix}" in used:
+                suffix += 1
+            candidate = f"{base}_{suffix}"
+            next_suffix[base] = suffix + 1
+        else:
+            next_suffix.setdefault(base, 2)
+        used.add(candidate)
+        headers.append(candidate)
     return headers
 
 def _extract_cves(*values: Any) -> list[str]:

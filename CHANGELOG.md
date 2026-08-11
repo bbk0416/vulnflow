@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.74 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.75.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.75 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.76.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,14 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+## 72.0.76 — 2026-08-12
+
+- Prevent supported CSV/XLSX duplicate-header suffix collisions from silently overwriting a column value when a generated name such as `notes_2` is already present.
+- Reject malformed explicit FQDN asset identifiers at the central identity boundary instead of accepting invalid hostnames into reconciliation.
+- Make scanner-source reconciliation stable across case-only source-name changes by reusing the case-folded source-record identity and applying the same equivalence during missing-source snapshot handling.
+- Keep SQLite schema 46, dependency package pins, scanner connectors, and the feature-frozen product scope unchanged.
+
 
 ## 72.0.75 — 2026-08-11
 

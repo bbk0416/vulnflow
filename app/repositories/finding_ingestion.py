@@ -178,9 +178,10 @@ def apply_import_batch(
 
         for raw_row, source_native_id in zip(prepared, source_native_ids):
             row = dict(raw_row)
+            source_record_id = source_record_id_for(source, source_native_id)
             old_record = conn.execute(
-                "SELECT * FROM source_finding_records WHERE scanner_source=? AND source_finding_id=?",
-                (source, source_native_id),
+                "SELECT * FROM source_finding_records WHERE source_record_id=?",
+                (source_record_id,),
             ).fetchone()
             if old_record is not None:
                 canonical_id = str(old_record["finding_id"])
@@ -254,7 +255,6 @@ def apply_import_batch(
             canonical_for_source[source_native_id] = canonical_id
             present_canonical_ids.add(canonical_id)
             affected_canonical_ids.add(canonical_id)
-            source_record_id = source_record_id_for(source, source_native_id)
             source_record_for_native[source_native_id] = source_record_id
             if old_record is None or str(old_record["observed_state"]) != "PRESENT":
                 newly_present_canonical_ids.add(canonical_id)
@@ -264,10 +264,12 @@ def apply_import_batch(
                        source_record_id,finding_id,scanner_source,source_finding_id,canonical_key,observed_state,
                        consecutive_absent_scans,first_seen_at,last_seen_at,last_batch_id,snapshot_json,created_at,updated_at
                    ) VALUES(?,?,?,?,?,'PRESENT',0,?,?,?,?,?,?)
-                   ON CONFLICT(scanner_source,source_finding_id) DO UPDATE SET
-                       finding_id=excluded.finding_id,canonical_key=excluded.canonical_key,observed_state='PRESENT',
-                       consecutive_absent_scans=0,last_seen_at=excluded.last_seen_at,last_batch_id=excluded.last_batch_id,
-                       snapshot_json=excluded.snapshot_json,updated_at=excluded.updated_at""",
+                   ON CONFLICT(source_record_id) DO UPDATE SET
+                       finding_id=excluded.finding_id,scanner_source=excluded.scanner_source,
+                       source_finding_id=excluded.source_finding_id,canonical_key=excluded.canonical_key,
+                       observed_state='PRESENT',consecutive_absent_scans=0,last_seen_at=excluded.last_seen_at,
+                       last_batch_id=excluded.last_batch_id,snapshot_json=excluded.snapshot_json,
+                       updated_at=excluded.updated_at""",
                 (source_record_id, canonical_id, source, source_native_id, key,
                  now, now, batch_id, snapshot_json, now, now),
             )
@@ -279,7 +281,9 @@ def apply_import_batch(
         if reconcile_missing:
             uploaded_record_ids = set(source_record_for_native.values())
             source_rows = conn.execute(
-                "SELECT * FROM source_finding_records WHERE scanner_source=? AND observed_state IN ('PRESENT','ABSENT')",
+                """SELECT * FROM source_finding_records
+                     WHERE LOWER(scanner_source)=LOWER(?)
+                       AND observed_state IN ('PRESENT','ABSENT')""",
                 (source,),
             ).fetchall()
             for raw_record in source_rows:
