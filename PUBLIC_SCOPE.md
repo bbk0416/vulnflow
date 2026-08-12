@@ -8,7 +8,7 @@
 - 합성 샘플 데이터와 정책
 - 핵심 운영 문서
 - 대표 화면과 아키텍처 이미지
-- 핵심 업무 흐름을 검증하는 692개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
+- 핵심 업무 흐름을 검증하는 704개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
 - 프로젝트별 SMTP 이메일 알림과 Jira Cloud 이슈·댓글 연동
 - 프로젝트별 파일럿 준비도 점검과 고객용 경영진 보고서
 - 책임별 서비스 레지스트리와 CSV/XLSX·Nessus/OpenVAS 가져오기 모듈 경계
@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.81 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.82 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -118,9 +118,9 @@
 
 
 
-## 72.0.81 scanner inventory/reconciliation lifecycle integrity patch
+## 72.0.82 documentation consistency gate
 
-72.0.81은 72.0.80 이후 공격검증에서 재현된 scanner-inventory identity 및 reconciliation lifecycle 결함을 최소 수정합니다. 현재 PRESENT source들이 하나의 비어 있지 않은 product/component version으로 수렴하면 canonical finding을 그 값으로 갱신하고, 선택 source가 PRESENT여도 선택 필드를 더 이상 제공하지 않으면 저장된 reconciliation decision을 일시적으로 적용하지 않습니다. 또한 inventory external ID를 Unicode NFC + casefold로 정규화해 기존 scanner-derived asset을 안전하게 재사용하고, 같은 논리 external ID의 NFC/NFD 변형이나 한 배치 내 중복 권위 식별자가 자산 분리·재가져오기 실패·부분 쓰기를 만들지 않게 합니다. schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.
+72.0.82는 72.0.81에서 재현된 운영 문서 drift를 수정합니다. 공개 회귀시험 수, schema, 제어 DB와 기본 프로젝트 DB 경로, 로그인 sliding-window 기본값을 실행 코드에서 파생해 README·PUBLIC_SCOPE·PUBLIC_VERIFICATION·운영/RBAC 문서·환경 예제와 대조하며, 불일치하면 공개 CI가 fail-closed 합니다. 애플리케이션 기능, schema 46, dependency package pins, scanner connector 및 feature-frozen 범위는 변경하지 않습니다.
 
 ## 72.0.80 asset/reconciliation state integrity patch
 

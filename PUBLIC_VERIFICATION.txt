@@ -1,29 +1,30 @@
-VulnFlow 72.0.81 public verification summary
-Date: 2026-08-12
+VulnFlow 72.0.82 public verification summary
+Date: 2026-08-13
 
 Release scope
-- Narrow scanner-inventory identity and reconciliation-lifecycle integrity patch on the 72.0.72 feature-frozen line
+- Narrow documentation/runtime-contract consistency patch on the 72.0.72 feature-frozen line
 - SQLite schema 46 unchanged
 - Runtime dependency package pins unchanged
-- Canonical product/component versions refresh when current PRESENT sources converge on one non-empty value
-- Stored reconciliation decisions are effective only while the chosen PRESENT source currently supplies the selected field
-- Inventory external IDs use Unicode NFC + casefold for duplicate detection and scanner-derived asset linking
-- Inventory enrichment reuses matching scanner-derived assets so later scanner reimports preserve authoritative identity
+- Public regression counts are derived from the executable seven-group bounded suite and release-facing documents must match them
+- First-administrator and operations documentation use data/control.db and data/projects/default/vulnflow.db for the separated database layout
+- Browser-login documentation matches the 300-second sliding window, username+client 5-attempt limit, client-wide 25-attempt limit, and disabled account-wide lockout
+- A documentation consistency gate fails closed in public CI when these operator-facing contracts drift from executable source
 
 Local pre-release verification for the candidate tree
-- focused scanner/import/asset/reconciliation regression: 123/123 PASS
-- public regression suite: 699/699 PASS across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 113)
+- focused documentation/auth/database/repository-maintenance regression: 49/49 PASS
+- documentation consistency gate: PASS
+- public regression suite: 704/704 PASS across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 118)
 - scanner fixture matrix: 9/9 PASS
 - scanner parser robustness: 6/6 PASS
 - release version consistency: 12/12 PASS
 - dependency lock static consistency: 9/9 PASS
 - architecture review: PASS (276 FastAPI route decorators, 0 internal import cycles)
-- public submission readiness: 29/29 PASS
-- public manifest: 672/672 PASS after final regeneration
+- public submission readiness: 31/31 PASS
+- public manifest: 675/675 PASS after final regeneration
 - static security boundary audit: PASS
 
 Release gate
-- The v72.0.81 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
+- The v72.0.82 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head, including the documentation consistency gate inside the four core-test jobs.
 - The release tag must point to the resulting main merge commit.
 
 Interpretation limits

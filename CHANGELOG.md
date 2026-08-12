@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.80 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.81.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.81 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.82.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,14 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+
+## 72.0.82 — 2026-08-13
+
+- Correct stale public regression counts, first-admin/control DB paths, and login rate-limit documentation.
+- Add a fail-closed documentation/runtime-contract consistency gate to public CI and submission readiness.
+- Add 5 documentation-contract regressions; public bounded suite is 704 tests (78 + 76 + 168 + 80 + 117 + 67 + 118).
+- Keep SQLite schema 46, dependency package pins, scanner connectors, and feature scope unchanged.
 
 ## 72.0.81 — 2026-08-12
 
