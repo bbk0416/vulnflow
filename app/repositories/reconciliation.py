@@ -66,7 +66,9 @@ def canonical_key_for(row: dict[str, Any]) -> str:
     """
     asset_ref = str(row.get("asset_ref_id") or "").strip() or asset_ref_id_for(row)
     cve_id = str(row.get("cve_id") or "").strip().upper()
-    component = str(row.get("component") or row.get("product") or "").strip().casefold()
+    component = unicodedata.normalize(
+        "NFC", str(row.get("component") or row.get("product") or "").strip()
+    ).casefold()
     identity = "|".join([asset_ref.casefold(), cve_id.casefold(), component])
     return "CK-" + hashlib.sha256(identity.encode("utf-8")).hexdigest().upper()
 
@@ -75,8 +77,12 @@ def scanner_source_key(value: Any) -> str:
     return unicodedata.normalize("NFC", str(value or "").strip()).casefold()
 
 
+def source_finding_id_key(value: Any) -> str:
+    return unicodedata.normalize("NFC", str(value or "").strip()).casefold()
+
+
 def source_record_id_for(scanner_source: str, source_finding_id: str) -> str:
-    native_key = unicodedata.normalize("NFC", str(source_finding_id).strip()).casefold()
+    native_key = source_finding_id_key(source_finding_id)
     identity = f"{scanner_source_key(scanner_source)}|{native_key}"
     return "SRC-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:24].upper()
 

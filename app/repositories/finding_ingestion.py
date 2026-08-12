@@ -26,6 +26,7 @@ from app.repositories.reconciliation import (
     _sync_asset_row,
     canonical_key_for,
     scanner_source_key,
+    source_finding_id_key,
     source_record_id_for,
 )
 
@@ -138,7 +139,8 @@ def apply_import_batch(
     source_native_ids = [str(row.get("finding_id") or "").strip() for row in prepared]
     if any(not item for item in source_native_ids):
         raise ValueError("finding_id가 없는 항목이 있습니다.")
-    if len(set(source_native_ids)) != len(source_native_ids):
+    source_native_keys = [source_finding_id_key(item) for item in source_native_ids]
+    if len(set(source_native_keys)) != len(source_native_keys):
         raise ValueError("가져오기 데이터에 중복 finding_id가 있습니다.")
 
     placeholders = ",".join(["?"] * len(FIELDS))

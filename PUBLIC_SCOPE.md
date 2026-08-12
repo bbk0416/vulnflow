@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.78 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.79 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -111,3 +111,8 @@
 ## 72.0.78 IDNA canonicalization and scanner-source normalization patch
 
 72.0.78은 72.0.77 이후 공격검증에서 재현된 두 가지 identity integrity 결함을 최소 수정합니다. FQDN 정규화가 Unicode `casefold()`와 Python built-in IDNA 호환 매핑을 먼저 적용해 IDNA2008에서 서로 다른 `faß.de`/`fass.de`, sigma/final-sigma 도메인을 하나의 자산으로 잘못 병합하던 문제를, 이미 고정된 `idna` 패키지의 non-transitional IDNA2008/UTS #46 A-label canonicalization으로 교체합니다. 또한 scanner source가 NFC/NFD처럼 canonically equivalent한 Unicode 표기로 들어와도 동일 source key로 취급되도록 NFC 정규화 후 casefold를 적용합니다. 기존 72.0.77 Unicode FQDN identifier는 U-label compatibility lookup으로 계속 연결되며 schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.
+
+## 72.0.79 Unicode source/canonical identity parity patch
+
+72.0.79는 72.0.78 이후 공격검증에서 재현된 세 가지 import identity-integrity 결함을 최소 수정합니다. scanner-independent canonical key의 component/product text를 Unicode NFC 후 casefold로 정규화해 NFC/NFD 차이만 있는 동일 구성요소가 별도 canonical finding으로 분리되지 않게 합니다. 자동 생성 finding ID의 identity fields도 동일한 Unicode canonicalization을 사용해 같은 scanner/source row가 composed/decomposed 표기만으로 다른 source record가 되지 않게 합니다. preview와 apply의 source-native finding ID 중복 판정도 source-record 계약인 NFC + casefold 기준으로 맞춰, preview에서 허용한 배치가 apply에서 뒤늦게 거부되는 불일치를 제거합니다. schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.
+

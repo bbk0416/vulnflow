@@ -1,29 +1,29 @@
-VulnFlow 72.0.78 public verification summary
+VulnFlow 72.0.79 public verification summary
 Date: 2026-08-12
 
 Release scope
-- Narrow IDNA canonicalization and scanner-source Unicode normalization integrity patch on the 72.0.72 feature-frozen line
+- Narrow Unicode source/canonical identity parity patch on the 72.0.72 feature-frozen line
 - SQLite schema 46 unchanged
 - Runtime dependency package pins unchanged
-- IDNA2008-distinct Unicode FQDNs remain separate asset identities instead of being collapsed by Unicode case folding
-- Canonically equivalent NFC/NFD scanner-source labels share the same source-record, snapshot-absence, and source-count boundary
-- Stable Unicode U-label / ASCII A-label compatibility remains available for valid existing IDN identifiers
-- 72.0.77 scanner-source casefold and authoritative scanner asset-ID protections remain in force
+- Canonically equivalent NFC/NFD component/product text shares one scanner-independent canonical finding identity
+- AUTO finding IDs are stable across canonically equivalent Unicode scanner-source and row identity fields
+- Preview and apply use the same NFC + casefold source-native finding-ID duplicate boundary
+- 72.0.78 IDNA2008 FQDN separation and scanner-source normalization protections remain in force
 
 Local pre-release verification for the candidate tree
-- focused scanner/import/asset-identity regression: 104/104 PASS
-- public regression suite: 680/680 PASS across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 94)
+- focused scanner/import/asset-identity regression: 110/110 PASS
+- public regression suite: 686/686 PASS across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 100)
 - scanner fixture matrix: 9/9 PASS
 - scanner parser robustness: 6/6 PASS
 - release version consistency: 12/12 PASS
 - dependency lock static consistency: 9/9 PASS
 - architecture review: PASS (276 FastAPI route decorators, 0 internal import cycles)
 - public submission readiness: 29/29 PASS
-- public manifest: 666/666 PASS after final regeneration
+- public manifest: 668/668 PASS after final regeneration
 - static security boundary audit: PASS
 
 Release gate
-- The v72.0.78 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
+- The v72.0.79 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
 - The release tag must point to the resulting main merge commit.
 
 Interpretation limits
