@@ -25,6 +25,7 @@ from app.repositories.reconciliation import (
     _source_snapshot,
     _sync_asset_row,
     canonical_key_for,
+    scanner_source_key,
     source_record_id_for,
 )
 
@@ -280,12 +281,23 @@ def apply_import_batch(
 
         if reconcile_missing:
             uploaded_record_ids = set(source_record_for_native.values())
-            source_rows = conn.execute(
-                """SELECT * FROM source_finding_records
-                     WHERE LOWER(scanner_source)=LOWER(?)
-                       AND observed_state IN ('PRESENT','ABSENT')""",
-                (source,),
-            ).fetchall()
+            source_key = scanner_source_key(source)
+            source_variants = [
+                str(raw[0]) for raw in conn.execute(
+                    "SELECT DISTINCT scanner_source FROM source_finding_records"
+                ).fetchall()
+                if scanner_source_key(raw[0]) == source_key
+            ]
+            if source_variants:
+                placeholders = ",".join("?" for _ in source_variants)
+                source_rows = conn.execute(
+                    f"""SELECT * FROM source_finding_records
+                          WHERE scanner_source IN ({placeholders})
+                            AND observed_state IN ('PRESENT','ABSENT')""",
+                    source_variants,
+                ).fetchall()
+            else:
+                source_rows = []
             for raw_record in source_rows:
                 record = dict(raw_record)
                 if record["source_record_id"] in uploaded_record_ids:
