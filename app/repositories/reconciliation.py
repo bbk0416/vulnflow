@@ -161,14 +161,14 @@ def _resolve_asset_identity_conn(conn: sqlite3.Connection, row: dict[str, Any], 
     authoritative_assets: set[str] = set()
     external_asset_id = str(row.get("asset_id") or "").strip()
     if external_asset_id:
-        inventory_match = conn.execute(
-            """SELECT asset_ref_id FROM assets
-                 WHERE source='inventory' AND LOWER(COALESCE(external_asset_id,''))=LOWER(?)
-                   AND status='ACTIVE' ORDER BY updated_at DESC LIMIT 1""",
-            (external_asset_id,),
-        ).fetchone()
-        if inventory_match is not None:
-            authoritative_assets.add(str(inventory_match["asset_ref_id"]))
+        inventory_key = normalize_asset_identifier("INVENTORY_ID", external_asset_id)
+        inventory_matches = conn.execute(
+            """SELECT i.asset_ref_id FROM asset_identifiers i JOIN assets a ON a.asset_ref_id=i.asset_ref_id
+                 WHERE i.identifier_type='INVENTORY_ID' AND i.scope='global' AND i.normalized_value=?
+                   AND i.status='ACTIVE' AND a.source='inventory' AND a.status='ACTIVE' ORDER BY a.updated_at DESC""",
+            (inventory_key,),
+        ).fetchall()
+        authoritative_assets.update(str(match["asset_ref_id"]) for match in inventory_matches)
     for item in identifiers:
         if item["identifier_type"] not in AUTHORITATIVE_IDENTIFIER_TYPES:
             continue
@@ -269,30 +269,28 @@ def _canonical_conflicts(source_rows: list[dict[str, Any]]) -> dict[str, list[An
     return conflicts
 
 
+def _current_reconciliation_value(snapshot_json: Any, field_name: str) -> Any | None:
+    try:
+        snapshot = json.loads(str(snapshot_json or "{}"))
+    except json.JSONDecodeError:
+        return None
+    value = snapshot.get(field_name)
+    return None if value in (None, "") else value
+
+
 def _active_reconciliation_values(conn: sqlite3.Connection, finding_id: str) -> dict[str, Any]:
     rows = conn.execute(
-        """SELECT d.field_name,d.chosen_value_json,d.chosen_source_record_id,r.snapshot_json
-             FROM finding_reconciliation_decisions d
-             LEFT JOIN source_finding_records r ON r.source_record_id=d.chosen_source_record_id
+        """SELECT d.field_name,r.snapshot_json FROM finding_reconciliation_decisions d
+             JOIN source_finding_records r ON r.source_record_id=d.chosen_source_record_id
              WHERE d.finding_id=? AND d.status='ACTIVE' AND r.observed_state='PRESENT'""",
         (finding_id,),
     ).fetchall()
     result: dict[str, Any] = {}
     for row in rows:
         field = str(row["field_name"])
-        value: Any = None
-        if row["snapshot_json"]:
-            try:
-                snapshot = json.loads(row["snapshot_json"] or "{}")
-                value = snapshot.get(field)
-            except json.JSONDecodeError:
-                value = None
-        if value is None:
-            try:
-                value = json.loads(row["chosen_value_json"])
-            except json.JSONDecodeError:
-                value = row["chosen_value_json"]
-        result[field] = value
+        value = _current_reconciliation_value(row["snapshot_json"], field)
+        if value is not None:
+            result[field] = value
     return result
 
 
@@ -328,8 +326,10 @@ def _aggregate_canonical_row(conn: sqlite3.Connection, finding_id: str, *, fallb
         if not str(merged.get(field) or "").strip():
             merged[field] = first.get(field) or ""
     for field in ("product_version", "component_version"):
-        values = [snapshot.get(field) for snapshot in snapshots if snapshot.get(field) not in (None, "")]
-        if values and not str(merged.get(field) or "").strip():
+        values = list(dict.fromkeys(
+            snapshot.get(field) for snapshot in snapshots if snapshot.get(field) not in (None, "")
+        ))
+        if len(values) == 1 or (values and not str(merged.get(field) or "").strip()):
             merged[field] = values[0]
     cvss_values = [float(snapshot.get("cvss") or 0) for snapshot in snapshots]
     merged["cvss"] = max(cvss_values) if cvss_values else float(existing.get("cvss") or 0)

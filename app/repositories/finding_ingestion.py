@@ -18,6 +18,7 @@ from app.repositories.reconciliation import (
     _aggregate_canonical_row,
     _apply_authoritative_asset_context,
     _canonical_conflicts,
+    _current_reconciliation_value,
     _load_source_records_conn,
     _register_asset_identifiers_conn,
     _resolve_asset_identity_conn,
@@ -458,7 +459,7 @@ def get_source_reconciliation(db_path: str | Path, finding_id: str) -> dict[str,
         present_records = [item for item in records if item.get("observed_state") == "PRESENT"]
         conflicts = _canonical_conflicts(present_records)
         decisions = [dict(row) for row in conn.execute(
-            """SELECT d.*,r.scanner_source,r.source_finding_id,r.observed_state
+            """SELECT d.*,r.scanner_source,r.source_finding_id,r.observed_state,r.snapshot_json AS current_snapshot_json
                  FROM finding_reconciliation_decisions d
                  LEFT JOIN source_finding_records r ON r.source_record_id=d.chosen_source_record_id
                 WHERE d.finding_id=? ORDER BY d.created_at DESC""",
@@ -468,6 +469,7 @@ def get_source_reconciliation(db_path: str | Path, finding_id: str) -> dict[str,
             str(item["field_name"]): item
             for item in decisions
             if item.get("status") == "ACTIVE" and item.get("observed_state") == "PRESENT"
+            and _current_reconciliation_value(item.get("current_snapshot_json"), str(item["field_name"])) is not None
         }
         conflict_items = []
         for field, values in conflicts.items():

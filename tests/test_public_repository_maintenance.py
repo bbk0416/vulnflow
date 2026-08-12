@@ -211,14 +211,15 @@ def test_readme_presents_four_step_flow_with_five_screenshots() -> None:
     assert "TemporaryDirectory" in capture
 
     root_release_notes = sorted(path.name for path in ROOT.glob("RELEASE_NOTES_*.md"))
-    assert root_release_notes == ["RELEASE_NOTES_72.0.80.md"]
+    assert root_release_notes == ["RELEASE_NOTES_72.0.81.md"]
     archived_release_notes = sorted((ROOT / "docs/archive/releases").glob("RELEASE_NOTES_*.md"))
-    assert len(archived_release_notes) == 69
+    assert len(archived_release_notes) == 70
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.11.md").is_file()
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.71.md").is_file()
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.75.md").is_file()
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.78.md").is_file()
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.79.md").is_file()
+    assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.80.md").is_file()
 
 
 def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
@@ -236,7 +237,7 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     public_runner = (ROOT / "scripts/run_public_tests.py").read_text(encoding="utf-8")
     assert "_cleanup_residual_process_group" in public_runner
     assert "os.killpg" in public_runner
-    assert "expected_counts = (78, 76, 168, 80, 117, 67, 106)" in public_runner
+    assert "expected_counts = (78, 76, 168, 80, 117, 67, 113)" in public_runner
     assert "--group" in public_runner
     assert 'env.pop("FORCE_COLOR", None)' in public_runner
     assert ".github/workflows/public-ci.yml" in dependency_lock

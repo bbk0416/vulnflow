@@ -1,28 +1,29 @@
-VulnFlow 72.0.80 public verification summary
+VulnFlow 72.0.81 public verification summary
 Date: 2026-08-12
 
 Release scope
-- Narrow asset-identity and reconciliation-state integrity patch on the 72.0.72 feature-frozen line
+- Narrow scanner-inventory identity and reconciliation-lifecycle integrity patch on the 72.0.72 feature-frozen line
 - SQLite schema 46 unchanged
 - Runtime dependency package pins unchanged
-- Generic asset identifiers, HOSTNAME environment scope, and fallback asset identity use Unicode NFC + casefold
-- ABSENT chosen source records no longer override PRESENT source aggregation or resolve remaining conflicts
-- Existing reconciliation decisions become effective again when their chosen source returns PRESENT
+- Canonical product/component versions refresh when current PRESENT sources converge on one non-empty value
+- Stored reconciliation decisions are effective only while the chosen PRESENT source currently supplies the selected field
+- Inventory external IDs use Unicode NFC + casefold for duplicate detection and scanner-derived asset linking
+- Inventory enrichment reuses matching scanner-derived assets so later scanner reimports preserve authoritative identity
 
 Local pre-release verification for the candidate tree
-- focused scanner/import/asset-identity regression: 116/116 PASS
-- public regression suite: 692/692 PASS across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 106)
+- focused scanner/import/asset/reconciliation regression: 123/123 PASS
+- public regression suite: 699/699 PASS across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 113)
 - scanner fixture matrix: 9/9 PASS
 - scanner parser robustness: 6/6 PASS
 - release version consistency: 12/12 PASS
 - dependency lock static consistency: 9/9 PASS
 - architecture review: PASS (276 FastAPI route decorators, 0 internal import cycles)
 - public submission readiness: 29/29 PASS
-- public manifest: 670/670 PASS after final regeneration
+- public manifest: 672/672 PASS after final regeneration
 - static security boundary audit: PASS
 
 Release gate
-- The v72.0.80 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
+- The v72.0.81 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
 - The release tag must point to the resulting main merge commit.
 
 Interpretation limits

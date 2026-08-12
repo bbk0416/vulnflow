@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.79 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.80.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.80 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.81.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,14 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+## 72.0.81 — 2026-08-12
+
+- Refresh canonical product/component versions when currently PRESENT sources converge on one non-empty value, fixing sticky single-source reimports without arbitrarily collapsing unresolved multi-source conflicts.
+- Treat a stored reconciliation decision as effective only while the chosen PRESENT source currently supplies that field; preserve the decision while inactive and reactivate it automatically if the field returns.
+- Reuse scanner-derived assets during inventory enrichment through normalized external identity so inventory linking does not create a competing authoritative asset or break later scanner reimports.
+- Normalize inventory external IDs and batch duplicate detection to Unicode NFC + casefold, rejecting canonically equivalent duplicate authoritative identifiers before partial writes.
+- Keep SQLite schema 46, dependency package pins, scanner connectors, and the feature-frozen product scope unchanged.
 
 ## 72.0.80 — 2026-08-12
 
