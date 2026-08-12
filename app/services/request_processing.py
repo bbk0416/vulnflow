@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import unicodedata
 from datetime import date
 from typing import Any, Callable
 
@@ -87,7 +88,7 @@ def normalize_finding_row(
             row.get("asset_name", ""), row.get("environment", ""), row.get("cve_id", ""),
             row.get("component", ""), row.get("component_version", ""),
         ]
-        identity = "|".join(str(value).strip().casefold() for value in identity_fields)
+        identity = "|".join(unicodedata.normalize("NFC", str(value or "").strip()).casefold() for value in identity_fields)
         digest = hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16].upper()
         row["finding_id"] = f"AUTO-{digest}"
     for field in ["due_date", "exception_expiry", "first_seen_at", "first_scored_at"]:
@@ -178,9 +179,10 @@ def prepare_findings_rows(
                 for field in preserve_on_update:
                     row[field] = existing.get(field)
                 row = rescore_callback(row)
-            if row["finding_id"] in ids:
+            finding_id_key = unicodedata.normalize("NFC", str(row["finding_id"]).strip()).casefold()
+            if finding_id_key in ids:
                 raise ValueError(f"업로드 파일 내 finding_id 중복: {row['finding_id']}")
-            ids.add(row["finding_id"])
+            ids.add(finding_id_key)
             rows.append(row)
         except ValueError as exc:
             if not collect_errors:

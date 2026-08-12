@@ -82,7 +82,7 @@ def main() -> None:
         )
         checks.extend([
             {"name": "schema_42", "passed": CURRENT_SCHEMA_VERSION == 46 and validate_database_file(db)["schema_version"] == 46},
-            {"name": "app_72_0_4", "passed": CURRENT_APP_VERSION == "72.0.78"},
+            {"name": "app_72_0_4", "passed": CURRENT_APP_VERSION == "72.0.79"},
             {"name": "entry_chain", "passed": len(entries) == 1 and entries[0]["statement"]["sequence"] == 1},
             {"name": "signed_head", "passed": len(heads) == 1 and heads[0]["statement"]["tree_size"] == 1},
             {"name": "head_pin", "passed": log_result["trusted_head_observed"] is True},
@@ -105,7 +105,7 @@ def main() -> None:
 
     passed = sum(bool(item["passed"]) for item in checks)
     payload = {
-        "title": "VulnFlow 72.0.78 append-only transparency log verification",
+        "title": "VulnFlow 72.0.79 append-only transparency log verification",
         "version": CURRENT_APP_VERSION,
         "schema_version": CURRENT_SCHEMA_VERSION,
         "passed": passed,

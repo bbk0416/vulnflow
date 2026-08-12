@@ -47,7 +47,7 @@ def main() -> None:
         identifiers = asset_identity_writes.list_asset_identifiers(db, asset["asset_ref_id"])
 
     checks = {
-        "version_72_0_7": storage.CURRENT_APP_VERSION == "72.0.78",
+        "version_72_0_7": storage.CURRENT_APP_VERSION == "72.0.79",
         "schema_42": storage.CURRENT_SCHEMA_VERSION == 46,
         "identity_export": asset_writes.add_asset_identifier is asset_identity_writes.add_asset_identifier,
         "inventory_export": asset_writes.apply_asset_inventory is asset_inventory.apply_asset_inventory,
@@ -69,7 +69,7 @@ def main() -> None:
         ) and architecture["status"] == "PASS",
     }
     payload = {
-        "title": "VulnFlow 72.0.78 asset write repository boundary verification",
+        "title": "VulnFlow 72.0.79 asset write repository boundary verification",
         "version": storage.CURRENT_APP_VERSION,
         "checks": [{"name": name, "passed": passed} for name, passed in checks.items()],
         "result": f"{sum(checks.values())}/{len(checks)}",

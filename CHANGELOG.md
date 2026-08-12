@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.77 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.78.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.78 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.79.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,13 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+## 72.0.79 — 2026-08-12
+
+- Normalize canonical component/product identity text to Unicode NFC before case folding so canonically equivalent scanner spellings do not split one vulnerability into duplicate canonical findings.
+- Normalize all fields used to derive AUTO finding IDs to NFC before case folding, stabilizing generated source IDs across composed/decomposed Unicode spellings while preserving existing ASCII-generated IDs.
+- Align preview and apply duplicate finding-ID checks with the source-record identity contract (NFC + casefold), so case/Unicode-equivalent source-native IDs fail during preview instead of passing preview and failing apply.
+- Keep SQLite schema 46, dependency package pins, scanner connectors, and the feature-frozen product scope unchanged.
 
 ## 72.0.78 — 2026-08-12
 
