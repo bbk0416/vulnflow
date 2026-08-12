@@ -319,7 +319,7 @@ def _evaluate(
     expected_jobs = iterations * 2 + ((iterations + 2) // 3)
     expected_webhooks = iterations
     checks = [
-        {"name": "release_version", "passed": app_main.CURRENT_APP_VERSION == "72.0.79", "actual": app_main.CURRENT_APP_VERSION},
+        {"name": "release_version", "passed": app_main.CURRENT_APP_VERSION == "72.0.80", "actual": app_main.CURRENT_APP_VERSION},
         {"name": "schema_version", "passed": app_main.CURRENT_SCHEMA_VERSION == 46, "actual": app_main.CURRENT_SCHEMA_VERSION},
         {"name": "iterations_completed", "passed": len(samples) == iterations, "actual": len(samples)},
         {"name": "worker_jobs_succeeded", "passed": succeeded == expected_jobs, "actual": succeeded, "expected": expected_jobs},

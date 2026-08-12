@@ -44,14 +44,14 @@ RECONCILABLE_FIELDS = {"product_version", "component_version", "cvss", "patch_av
 
 def asset_ref_id_for(row: dict[str, Any]) -> str:
     """Return a stable internal asset identifier without changing scanner IDs."""
-    external = str(row.get("asset_id") or "").strip().casefold()
+    external = unicodedata.normalize("NFC", str(row.get("asset_id") or "").strip()).casefold()
     if external:
         identity = "external|" + external
     else:
         parts = [
-            str(row.get("asset_name") or "").strip().casefold(),
-            str(row.get("product") or "").strip().casefold(),
-            str(row.get("environment") or "").strip().casefold(),
+            unicodedata.normalize("NFC", str(row.get("asset_name") or "").strip()).casefold(),
+            unicodedata.normalize("NFC", str(row.get("product") or "").strip()).casefold(),
+            unicodedata.normalize("NFC", str(row.get("environment") or "").strip()).casefold(),
         ]
         identity = "derived|" + "|".join(parts)
     return "AST-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16].upper()
@@ -274,7 +274,7 @@ def _active_reconciliation_values(conn: sqlite3.Connection, finding_id: str) -> 
         """SELECT d.field_name,d.chosen_value_json,d.chosen_source_record_id,r.snapshot_json
              FROM finding_reconciliation_decisions d
              LEFT JOIN source_finding_records r ON r.source_record_id=d.chosen_source_record_id
-             WHERE d.finding_id=? AND d.status='ACTIVE'""",
+             WHERE d.finding_id=? AND d.status='ACTIVE' AND r.observed_state='PRESENT'""",
         (finding_id,),
     ).fetchall()
     result: dict[str, Any] = {}

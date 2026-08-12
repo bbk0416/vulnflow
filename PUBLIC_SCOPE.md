@@ -8,7 +8,7 @@
 - 합성 샘플 데이터와 정책
 - 핵심 운영 문서
 - 대표 화면과 아키텍처 이미지
-- 핵심 업무 흐름을 검증하는 668개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
+- 핵심 업무 흐름을 검증하는 692개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
 - 프로젝트별 SMTP 이메일 알림과 Jira Cloud 이슈·댓글 연동
 - 프로젝트별 파일럿 준비도 점검과 고객용 경영진 보고서
 - 책임별 서비스 레지스트리와 CSV/XLSX·Nessus/OpenVAS 가져오기 모듈 경계
@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.79 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.80 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -116,3 +116,8 @@
 
 72.0.79는 72.0.78 이후 공격검증에서 재현된 세 가지 import identity-integrity 결함을 최소 수정합니다. scanner-independent canonical key의 component/product text를 Unicode NFC 후 casefold로 정규화해 NFC/NFD 차이만 있는 동일 구성요소가 별도 canonical finding으로 분리되지 않게 합니다. 자동 생성 finding ID의 identity fields도 동일한 Unicode canonicalization을 사용해 같은 scanner/source row가 composed/decomposed 표기만으로 다른 source record가 되지 않게 합니다. preview와 apply의 source-native finding ID 중복 판정도 source-record 계약인 NFC + casefold 기준으로 맞춰, preview에서 허용한 배치가 apply에서 뒤늦게 거부되는 불일치를 제거합니다. schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.
 
+
+
+## 72.0.80 asset/reconciliation state integrity patch
+
+72.0.80은 72.0.79 이후 공격검증에서 재현된 두 가지 무결성 결함을 최소 수정합니다. 일반 자산 식별자와 HOSTNAME 환경 scope, fallback asset identity를 Unicode NFC 후 casefold로 정규화해 canonically equivalent NFC/NFD 표기가 재가져오기 거부나 자산 분리를 만들지 않게 합니다. 또한 충돌 조정에서 선택한 source record가 snapshot에서 ABSENT인 동안에는 그 결정을 canonical aggregate와 unresolved 판단에 적용하지 않고, 해당 source가 다시 PRESENT로 돌아오면 기존 결정을 다시 유효하게 적용합니다. schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.
