@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.76 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.77 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -102,3 +102,7 @@
 
 72.0.76은 72.0.75 이후 공격검증에서 재현된 세 가지 결함을 최소 수정합니다. CSV/XLSX의 중복 헤더 자동 suffix가 실제 헤더명과 다시 충돌할 때 셀 값이 조용히 덮어써지는 문제를 막고, 명백히 잘못된 FQDN을 중앙 자산 식별자 경계에서 거부합니다. 또한 scanner source 이름의 대소문자만 달라진 재가져오기가 동일 source record identity와 일관되게 reconciliation되도록 수정합니다. schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.
 
+
+## 72.0.77 scanner source and IDNA identity patch
+
+72.0.77은 72.0.76 이후 공격검증에서 재현된 scanner-source 및 국제화 FQDN 동치성 결함을 최소 수정합니다. snapshot absence reconciliation이 SQLite의 ASCII 중심 `LOWER()`에 의존하지 않고 Python Unicode `casefold()` 경계를 사용하도록 하고, 대소문자만 다른 동일 source가 canonical `source_count`에서 중복 집계되지 않게 합니다. 또한 안정적으로 round-trip되는 IDNA Unicode/punycode FQDN 표기를 동일 자산 식별 신호로 취급하되, 권위 scanner asset ID가 서로 다른 경우 자동 병합하지 않습니다. schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.

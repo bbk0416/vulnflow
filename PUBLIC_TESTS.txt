@@ -27,6 +27,7 @@ tests/test_commercial_safety_hardening_v73.py
 tests/test_read_only_recovery_mode_v74.py
 tests/test_database_users_v75.py
 tests/test_finding_import_wizard_v76.py
+tests/test_scanner_import_integrity_v77.py
 tests/test_scanner_anonymization_v83.py
 tests/test_control_database_separation_v84.py
 tests/test_control_recovery_v85.py

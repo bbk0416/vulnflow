@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.75 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.76.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.76 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.77.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,14 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+## 72.0.77 — 2026-08-12
+
+- Use Unicode `casefold()` rather than SQLite ASCII-only `LOWER()` for snapshot scanner-source equivalence, preventing non-ASCII case-only source labels from escaping missing-source reconciliation.
+- Count case-fold-equivalent scanner-source labels as one logical source in canonical aggregation even when multiple native source records remain present.
+- Match stable IDNA Unicode and punycode FQDN spellings during asset identity resolution without rewriting stored identifiers or overriding authoritative scanner asset IDs.
+- Keep SQLite schema 46, dependency package pins, scanner connectors, and the feature-frozen product scope unchanged.
+
 
 ## 72.0.76 — 2026-08-12
 

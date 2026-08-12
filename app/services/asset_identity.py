@@ -76,6 +76,29 @@ def normalize_asset_identifier(identifier_type: str, value: Any) -> str:
     return raw.casefold()
 
 
+def fqdn_equivalent_values(value: Any) -> tuple[str, ...]:
+    """Return safe legacy-equivalent FQDN spellings without changing stored display form.
+
+    Python's built-in IDNA codec is used only when the ASCII round-trip is stable.
+    That lets Unicode U-labels such as ``bücher.example`` match their A-label form
+    without conflating mappings that are not reversible under the active codec.
+    """
+    normalized = normalize_asset_identifier("FQDN", value)
+    values = [normalized]
+    try:
+        ascii_name = normalized.encode("idna").decode("ascii").casefold()
+        unicode_name = ascii_name.encode("ascii").decode("idna").casefold()
+        roundtrip = unicode_name.encode("idna").decode("ascii").casefold()
+    except (UnicodeError, UnicodeDecodeError):
+        return tuple(values)
+    if roundtrip != ascii_name:
+        return tuple(values)
+    for candidate in (ascii_name, unicode_name):
+        if candidate and candidate not in values:
+            values.append(candidate)
+    return tuple(values)
+
+
 def identifier_scope(identifier_type: str, *, scanner_source: str = "", environment: str = "") -> str:
     kind = str(identifier_type).upper()
     if kind == "SCANNER_ASSET_ID":

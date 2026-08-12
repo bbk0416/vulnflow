@@ -12,7 +12,7 @@ from app.core.scoring import parse_policy_text, prioritize_finding
 from app.repositories.policies import get_active_policy_version
 from app.services.asset_identity import (
     ASSET_IDENTIFIER_TYPES, AUTHORITATIVE_IDENTIFIER_TYPES, IDENTIFIER_CONFIDENCE,
-    append_identifier as _append_identifier, extract_asset_identifiers,
+    append_identifier as _append_identifier, extract_asset_identifiers, fqdn_equivalent_values,
     identifier_scope as _identifier_scope, normalize_asset_identifier,
 )
 
@@ -70,9 +70,27 @@ def canonical_key_for(row: dict[str, Any]) -> str:
     return "CK-" + hashlib.sha256(identity.encode("utf-8")).hexdigest().upper()
 
 
+def scanner_source_key(value: Any) -> str:
+    return str(value or "").strip().casefold()
+
+
 def source_record_id_for(scanner_source: str, source_finding_id: str) -> str:
-    identity = f"{str(scanner_source).strip().casefold()}|{str(source_finding_id).strip().casefold()}"
+    identity = f"{scanner_source_key(scanner_source)}|{str(source_finding_id).strip().casefold()}"
     return "SRC-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:24].upper()
+
+
+def _active_identifier_matches_conn(conn: sqlite3.Connection, item: dict[str, Any]) -> list[sqlite3.Row]:
+    values = (str(item["normalized_value"]),)
+    if item["identifier_type"] == "FQDN":
+        values = fqdn_equivalent_values(item["normalized_value"])
+    placeholders = ",".join("?" for _ in values)
+    return conn.execute(
+        f"""SELECT * FROM asset_identifiers
+              WHERE identifier_type=? AND scope=? AND normalized_value IN ({placeholders})
+                AND status='ACTIVE'
+              ORDER BY identifier_id""",
+        (item["identifier_type"], item["scope"], *values),
+    ).fetchall()
 
 
 def _asset_ref_from_identifiers(identifiers: list[dict[str, Any]], row: dict[str, Any]) -> str:
@@ -146,12 +164,7 @@ def _resolve_asset_identity_conn(conn: sqlite3.Connection, row: dict[str, Any], 
     for item in identifiers:
         if item["identifier_type"] not in AUTHORITATIVE_IDENTIFIER_TYPES:
             continue
-        match = conn.execute(
-            """SELECT asset_ref_id FROM asset_identifiers
-                 WHERE identifier_type=? AND scope=? AND normalized_value=? AND status='ACTIVE'""",
-            (item["identifier_type"], item["scope"], item["normalized_value"]),
-        ).fetchone()
-        if match is not None:
+        for match in _active_identifier_matches_conn(conn, item):
             authoritative_assets.add(str(match["asset_ref_id"]))
     if len(authoritative_assets) > 1:
         assets = sorted(authoritative_assets)
@@ -168,22 +181,25 @@ def _resolve_asset_identity_conn(conn: sqlite3.Connection, row: dict[str, Any], 
         return next(iter(authoritative_assets)), identifiers
     supporting_scores: dict[str, int] = {}
     supporting_keys: dict[str, set[tuple[str, str, str]]] = {}
+    fqdn_match_assets: set[str] = set()
+    has_authoritative_input = any(
+        item["identifier_type"] in AUTHORITATIVE_IDENTIFIER_TYPES for item in identifiers
+    )
     for item in identifiers:
         if item["identifier_type"] in AUTHORITATIVE_IDENTIFIER_TYPES:
             continue
-        match = conn.execute(
-            """SELECT asset_ref_id FROM asset_identifiers
-                 WHERE identifier_type=? AND scope=? AND normalized_value=? AND status='ACTIVE'""",
-            (item["identifier_type"], item["scope"], item["normalized_value"]),
-        ).fetchone()
-        if match is None:
-            continue
-        asset_id = str(match["asset_ref_id"])
-        key = (item["identifier_type"], item["scope"], item["normalized_value"])
-        supporting_keys.setdefault(asset_id, set())
-        if key not in supporting_keys[asset_id]:
-            supporting_keys[asset_id].add(key)
-            supporting_scores[asset_id] = supporting_scores.get(asset_id, 0) + int(item.get("confidence") or 0)
+        matches = _active_identifier_matches_conn(conn, item)
+        if item["identifier_type"] == "FQDN":
+            fqdn_match_assets.update(str(match["asset_ref_id"]) for match in matches)
+        for match in matches:
+            asset_id = str(match["asset_ref_id"])
+            key = (item["identifier_type"], item["scope"], item["normalized_value"])
+            supporting_keys.setdefault(asset_id, set())
+            if key not in supporting_keys[asset_id]:
+                supporting_keys[asset_id].add(key)
+                supporting_scores[asset_id] = supporting_scores.get(asset_id, 0) + int(item.get("confidence") or 0)
+    if not has_authoritative_input and len(fqdn_match_assets) == 1:
+        return next(iter(fqdn_match_assets)), identifiers
     if supporting_scores:
         ranked = sorted(supporting_scores.items(), key=lambda pair: (-pair[1], pair[0]))
         best_asset, best_score = ranked[0]
@@ -197,24 +213,21 @@ def _register_asset_identifiers_conn(conn: sqlite3.Connection, *, asset_ref_id: 
                                      identifiers: list[dict[str, Any]], actor: str, now: str) -> list[str]:
     candidate_ids: list[str] = []
     for item in identifiers:
-        existing = conn.execute(
-            """SELECT * FROM asset_identifiers
-                 WHERE identifier_type=? AND scope=? AND normalized_value=? AND status='ACTIVE'""",
-            (item["identifier_type"], item["scope"], item["normalized_value"]),
-        ).fetchone()
-        if existing is not None:
-            if str(existing["asset_ref_id"]) == asset_ref_id:
-                conn.execute(
-                    "UPDATE asset_identifiers SET last_seen_at=?,confidence=MAX(confidence,?) WHERE identifier_id=?",
-                    (now, int(item.get("confidence") or 50), existing["identifier_id"]),
-                )
-            else:
-                candidate = _create_asset_identity_candidate_conn(
-                    conn, asset_ref_id_a=str(existing["asset_ref_id"]), asset_ref_id_b=asset_ref_id,
-                    identifier=item, actor=actor, now=now,
-                )
-                if candidate is not None:
-                    candidate_ids.append(str(candidate["candidate_id"]))
+        existing_matches = _active_identifier_matches_conn(conn, item)
+        if existing_matches:
+            for existing in existing_matches:
+                if str(existing["asset_ref_id"]) == asset_ref_id:
+                    conn.execute(
+                        "UPDATE asset_identifiers SET last_seen_at=?,confidence=MAX(confidence,?) WHERE identifier_id=?",
+                        (now, int(item.get("confidence") or 50), existing["identifier_id"]),
+                    )
+                else:
+                    candidate = _create_asset_identity_candidate_conn(
+                        conn, asset_ref_id_a=str(existing["asset_ref_id"]), asset_ref_id_b=asset_ref_id,
+                        identifier=item, actor=actor, now=now,
+                    )
+                    if candidate is not None:
+                        candidate_ids.append(str(candidate["candidate_id"]))
             continue
         identifier_id = "AID-" + uuid.uuid4().hex[:20].upper()
         conn.execute(
@@ -322,12 +335,20 @@ def _aggregate_canonical_row(conn: sqlite3.Connection, finding_id: str, *, fallb
     merged["patch_available"] = max(patch_values) if patch_values else int(existing.get("patch_available") or 0)
     # Compensating controls are workflow-owned; scanner imports cannot weaken or create them.
     merged["compensating_control"] = int(existing.get("compensating_control") or 0)
-    merged["scanner_source"] = ",".join(sorted({str(record["scanner_source"]) for record in records}))[:120]
+    source_names: dict[str, tuple[str, str]] = {}
+    for record in records:
+        name = str(record["scanner_source"] or "").strip()
+        key = scanner_source_key(name)
+        seen_at = str(record.get("last_seen_at") or "")
+        current = source_names.get(key)
+        if current is None or seen_at >= current[0]:
+            source_names[key] = (seen_at, name)
+    merged["scanner_source"] = ",".join(source_names[key][1] for key in sorted(source_names))[:120]
     merged["source_last_seen_at"] = max(str(record.get("last_seen_at") or "") for record in records)
     merged["record_state"] = "ACTIVE"
     merged["stale_since"] = ""
     merged["archived_at"] = ""
-    merged["source_count"] = len({str(record["scanner_source"]) for record in records})
+    merged["source_count"] = len(source_names)
     conflicts = _canonical_conflicts(records)
     resolved_values = _active_reconciliation_values(conn, finding_id)
     for field, value in resolved_values.items():
