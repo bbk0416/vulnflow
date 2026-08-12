@@ -31,6 +31,7 @@ tests/test_scanner_import_integrity_v77.py
 tests/test_scanner_identity_idna_v78.py
 tests/test_scanner_identity_unicode_v79.py
 tests/test_scanner_asset_reconciliation_v80.py
+tests/test_scanner_inventory_reconciliation_v81.py
 tests/test_scanner_anonymization_v83.py
 tests/test_control_database_separation_v84.py
 tests/test_control_recovery_v85.py

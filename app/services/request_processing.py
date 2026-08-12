@@ -135,11 +135,11 @@ def prepare_findings_rows(
     existing_map = {row["finding_id"]: row for row in list_findings_fn(db_path)}
     asset_rows = list_assets_fn(db_path, status="", limit=5000)
     assets_by_external = {
-        str(a.get("external_asset_id") or "").casefold(): a
+        normalize_asset_identifier("EXTERNAL_ASSET_ID", a.get("external_asset_id")): a
         for a in asset_rows if str(a.get("external_asset_id") or "").strip()
     }
     assets_by_name = {
-        str(a.get("asset_name") or "").casefold(): a
+        unicodedata.normalize("NFC", str(a.get("asset_name") or "").strip()).casefold(): a
         for a in asset_rows if str(a.get("asset_name") or "").strip()
     }
     preserve_on_update = {
@@ -160,9 +160,10 @@ def prepare_findings_rows(
             raise ValueError(message)
         source_row = source_rows[idx] if source_rows and idx < len(source_rows) else idx + 2
         raw_row = dict(raw)
-        inventory_asset = assets_by_external.get(str(raw_row.get("asset_id") or "").strip().casefold())
+        external_key = str(raw_row.get("asset_id") or "").strip()
+        inventory_asset = assets_by_external.get(normalize_asset_identifier("EXTERNAL_ASSET_ID", external_key)) if external_key else None
         if inventory_asset is None:
-            inventory_asset = assets_by_name.get(str(raw_row.get("asset_name") or "").strip().casefold())
+            inventory_asset = assets_by_name.get(unicodedata.normalize("NFC", str(raw_row.get("asset_name") or "").strip()).casefold())
         if inventory_asset and str(inventory_asset.get("source") or "") == "inventory":
             raw_row["asset_ref_id"] = inventory_asset.get("asset_ref_id")
             raw_row["asset_name"] = inventory_asset.get("asset_name") or raw_row.get("asset_name")
@@ -196,7 +197,6 @@ def prepare_findings_rows(
         raise ValueError("파일에 데이터 행이 없습니다.")
     return {"rows": rows, "errors": errors}
 
-
 def parse_findings_csv(
     content: bytes,
     *,
@@ -225,7 +225,6 @@ def parse_findings_csv(
         return result["rows"]
     except (UnicodeDecodeError, csv.Error) as exc:
         raise ValueError(str(exc)) from exc
-
 def parse_assets_csv(content: bytes) -> list[dict[str, Any]]:
     try:
         reader = csv.DictReader(io.StringIO(content.decode("utf-8-sig")))
@@ -259,9 +258,10 @@ def parse_assets_csv(content: bytes) -> list[dict[str, Any]]:
                 "mac_address": bounded_text(row.get("mac_address"), "mac_address", 100),
                 "status": str(row.get("status") or "ACTIVE").strip().upper(),
             }
-            identity = external_id.casefold() if external_id else "|".join([
-                asset_name.casefold(), normalized["service_name"].casefold(), normalized["environment"].casefold()
-            ])
+            identity = normalize_asset_identifier("EXTERNAL_ASSET_ID", external_id) if external_id else "|".join(
+                unicodedata.normalize("NFC", value).casefold()
+                for value in (asset_name, normalized["service_name"], normalized["environment"])
+            )
             if identity in seen:
                 raise ValueError(f"자산 CSV 중복: {external_id or asset_name}")
             seen.add(identity)

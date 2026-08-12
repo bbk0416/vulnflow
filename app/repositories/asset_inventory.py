@@ -15,6 +15,7 @@ from app.repositories.reconciliation import (
 from app.services.asset_identity import (
     append_identifier as _append_identifier,
     extract_asset_identifiers,
+    normalize_asset_identifier,
 )
 
 ASSET_STATUSES = {"ACTIVE", "RETIRED"}
@@ -56,8 +57,17 @@ def _resolve_inventory_asset_ref_conn(conn: sqlite3.Connection, row: dict[str, A
         ).fetchone()
         if found:
             matched.add(str(found["asset_ref_id"]))
+    external = str(row.get("asset_id") or row.get("external_asset_id") or "").strip()
+    if external:
+        external_key = normalize_asset_identifier("EXTERNAL_ASSET_ID", external)
+        matched.update(str(found["asset_ref_id"]) for found in conn.execute(
+            """SELECT DISTINCT asset_ref_id FROM asset_identifiers
+                 WHERE identifier_type='EXTERNAL_ASSET_ID' AND scope='global'
+                   AND normalized_value=? AND status='ACTIVE'""",
+            (external_key,),
+        ).fetchall())
     if len(matched) > 1:
-        raise ValueError("자산 인벤토리의 권위 식별자가 서로 다른 기존 자산을 가리킵니다.")
+        raise ValueError("자산 인벤토리 식별자가 서로 다른 기존 자산을 가리킵니다.")
     if matched:
         return next(iter(matched))
     return _asset_ref_from_identifiers(identifiers, row)
@@ -69,12 +79,21 @@ def apply_asset_inventory(db_path: str | Path, rows: Iterable[dict[str, Any]], *
         raise ValueError("가져올 자산이 없습니다.")
     inserted = updated = linked = 0
     identity_candidate_ids: set[str] = set()
+    seen_authoritative: set[tuple[str, str, str]] = set()
     now = utc_now()
     with connect(db_path) as conn:
         conn.execute("BEGIN IMMEDIATE")
         existing = {r[0] for r in conn.execute("SELECT asset_ref_id FROM assets").fetchall()}
         for row in prepared:
             inventory_identifiers = extract_inventory_identifiers(row)
+            authority_keys = {
+                (item["identifier_type"], item["scope"], item["normalized_value"])
+                for item in inventory_identifiers
+                if item["identifier_type"] in {"INVENTORY_ID", "CMDB_ID", "CLOUD_INSTANCE_ID"}
+            }
+            if seen_authoritative.intersection(authority_keys):
+                raise ValueError("자산 인벤토리 배치에 중복 권위 식별자가 있습니다.")
+            seen_authoritative.update(authority_keys)
             ref = _resolve_inventory_asset_ref_conn(conn, row, inventory_identifiers)
             status = str(row.get("status") or "ACTIVE").upper()
             if status not in ASSET_STATUSES:
@@ -115,11 +134,11 @@ def apply_asset_inventory(db_path: str | Path, rows: Iterable[dict[str, Any]], *
                     """UPDATE findings SET asset_ref_id=?,asset_name=COALESCE(NULLIF(?,''),asset_name),
                               environment=COALESCE(NULLIF(?,''),environment),asset_criticality=?,
                               data_sensitivity=?,internet_exposed=?,row_version=row_version+1,updated_at=CURRENT_TIMESTAMP
-                         WHERE asset_id=?""",
+                         WHERE asset_ref_id=?""",
                     (ref, str(row.get("asset_name") or ""), str(row.get("environment") or ""),
                      max(1, min(5, int(row.get("criticality") or row.get("asset_criticality") or 1))),
                      max(1, min(5, int(row.get("data_sensitivity") or 1))),
-                     1 if bool(row.get("internet_exposed")) else 0, external),
+                     1 if bool(row.get("internet_exposed")) else 0, ref),
                 )
                 linked += int(cursor.rowcount or 0)
         add_audit_event(
