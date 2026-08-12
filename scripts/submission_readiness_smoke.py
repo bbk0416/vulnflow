@@ -40,6 +40,8 @@ def _public_checks(version: str) -> list[tuple[str, bool]]:
         ("public_ci_architecture", "architecture_review.py" in workflow_text),
         ("version_consistency_script", (ROOT / "scripts/version_consistency_smoke.py").is_file()),
         ("public_ci_version_consistency", "version_consistency_smoke.py" in workflow_text),
+        ("documentation_consistency_script", (ROOT / "scripts/documentation_consistency_smoke.py").is_file()),
+        ("public_ci_documentation_consistency", "documentation_consistency_smoke.py" in workflow_text),
         ("runtime_dependency_manifest", (ROOT / "app/resources/runtime_dependency_lock.json").is_file()),
         ("runtime_dependency_manifest_generator", (ROOT / "scripts/runtime_dependency_manifest.py").is_file()),
         ("public_ci_runtime_dependency_manifest", "runtime_dependency_manifest.py --check" in workflow_text),

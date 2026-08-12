@@ -33,6 +33,8 @@ jobs:
       - run: pip install -r requirements-dev.lock
       - name: Verify release version consistency
         run: python scripts/version_consistency_smoke.py
+      - name: Verify documentation/runtime contract consistency
+        run: python scripts/documentation_consistency_smoke.py
       - name: Verify dependency lock consistency
         run: python scripts/dependency_lock_smoke.py
       - name: Verify packaged runtime dependency manifest
