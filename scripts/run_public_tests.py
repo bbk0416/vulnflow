@@ -89,6 +89,7 @@ TEST_GROUPS = [['tests/test_production_validation_v81.py',
   'tests/test_scanner_import_integrity_v77.py',
   'tests/test_scanner_identity_idna_v78.py',
   'tests/test_scanner_identity_unicode_v79.py',
+  'tests/test_scanner_asset_reconciliation_v80.py',
   'tests/test_scanner_anonymization_v83.py',
   'tests/test_collaboration_integrations_v80.py',
   'tests/test_remediation_verification_v14.py',
@@ -192,7 +193,7 @@ def main() -> int:
     env["PY_COLORS"] = "0"
     env["NO_COLOR"] = "1"
     group_timeout = max(30, int(env.get("VULNFLOW_PUBLIC_TEST_GROUP_TIMEOUT_SECONDS", "300")))
-    expected_counts = (78, 76, 168, 80, 117, 67, 100)
+    expected_counts = (78, 76, 168, 80, 117, 67, 106)
     selected = list(dict.fromkeys(args.group or range(1, len(TEST_GROUPS) + 1)))
     invalid = [index for index in selected if index < 1 or index > len(TEST_GROUPS)]
     if invalid:

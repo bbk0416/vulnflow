@@ -464,7 +464,11 @@ def get_source_reconciliation(db_path: str | Path, finding_id: str) -> dict[str,
                 WHERE d.finding_id=? ORDER BY d.created_at DESC""",
             (finding_id,),
         ).fetchall()]
-        active = {str(item["field_name"]): item for item in decisions if item.get("status") == "ACTIVE"}
+        active = {
+            str(item["field_name"]): item
+            for item in decisions
+            if item.get("status") == "ACTIVE" and item.get("observed_state") == "PRESENT"
+        }
         conflict_items = []
         for field, values in conflicts.items():
             options = []

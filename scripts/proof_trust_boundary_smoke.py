@@ -30,7 +30,7 @@ def _private_key() -> str:
 
 def main() -> int:
     checks: dict[str, bool] = {}
-    checks["version_72_0_7"] = CURRENT_APP_VERSION == "72.0.79"
+    checks["version_72_0_7"] = CURRENT_APP_VERSION == "72.0.80"
     checks["facade_create_identity"] = proof_trust.create_integrity_proof_key_transition is proof_transitions.create_integrity_proof_key_transition
     checks["facade_validate_identity"] = proof_trust.validate_transition_document is proof_transitions.validate_transition_document
     checks["facade_resolver_identity"] = proof_trust.resolve_trusted_proof_signer is proof_trust_resolver.resolve_trusted_proof_signer
@@ -78,7 +78,7 @@ def main() -> int:
         checks["facade_list"] = len(proof_trust.list_integrity_proof_key_transitions(db)) == 1
 
     report = {
-        "title": "VulnFlow 72.0.79 proof trust boundary verification",
+        "title": "VulnFlow 72.0.80 proof trust boundary verification",
         "version": CURRENT_APP_VERSION,
         "checks": checks,
         "passed": sum(checks.values()),

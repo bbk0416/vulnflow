@@ -63,7 +63,7 @@ def normalize_asset_identifier(identifier_type: str, value: Any) -> str:
         else:
             raise ValueError(f"FQDN 형식이 올바르지 않습니다: {raw}")
         return ascii_name
-    return raw.casefold()
+    return unicodedata.normalize("NFC", raw).casefold()
 
 
 def fqdn_equivalent_values(value: Any) -> tuple[str, ...]:
@@ -91,7 +91,7 @@ def identifier_scope(identifier_type: str, *, scanner_source: str = "", environm
     if kind == "SCANNER_ASSET_ID":
         return "scanner:" + (unicodedata.normalize("NFC", str(scanner_source or "manual").strip()).casefold() or "manual")
     if kind == "HOSTNAME":
-        env = str(environment or "").strip().casefold()
+        env = unicodedata.normalize("NFC", str(environment or "").strip()).casefold()
         return "environment:" + (env or "unspecified")
     return "global"
 
