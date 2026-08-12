@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+import unicodedata
 import uuid
 from datetime import date
 from typing import Any
@@ -71,11 +72,12 @@ def canonical_key_for(row: dict[str, Any]) -> str:
 
 
 def scanner_source_key(value: Any) -> str:
-    return str(value or "").strip().casefold()
+    return unicodedata.normalize("NFC", str(value or "").strip()).casefold()
 
 
 def source_record_id_for(scanner_source: str, source_finding_id: str) -> str:
-    identity = f"{scanner_source_key(scanner_source)}|{str(source_finding_id).strip().casefold()}"
+    native_key = unicodedata.normalize("NFC", str(source_finding_id).strip()).casefold()
+    identity = f"{scanner_source_key(scanner_source)}|{native_key}"
     return "SRC-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:24].upper()
 
 
