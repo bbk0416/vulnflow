@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.77 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.78 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -106,3 +106,8 @@
 ## 72.0.77 scanner source and IDNA identity patch
 
 72.0.77은 72.0.76 이후 공격검증에서 재현된 scanner-source 및 국제화 FQDN 동치성 결함을 최소 수정합니다. snapshot absence reconciliation이 SQLite의 ASCII 중심 `LOWER()`에 의존하지 않고 Python Unicode `casefold()` 경계를 사용하도록 하고, 대소문자만 다른 동일 source가 canonical `source_count`에서 중복 집계되지 않게 합니다. 또한 안정적으로 round-trip되는 IDNA Unicode/punycode FQDN 표기를 동일 자산 식별 신호로 취급하되, 권위 scanner asset ID가 서로 다른 경우 자동 병합하지 않습니다. schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.
+
+
+## 72.0.78 IDNA canonicalization and scanner-source normalization patch
+
+72.0.78은 72.0.77 이후 공격검증에서 재현된 두 가지 identity integrity 결함을 최소 수정합니다. FQDN 정규화가 Unicode `casefold()`와 Python built-in IDNA 호환 매핑을 먼저 적용해 IDNA2008에서 서로 다른 `faß.de`/`fass.de`, sigma/final-sigma 도메인을 하나의 자산으로 잘못 병합하던 문제를, 이미 고정된 `idna` 패키지의 non-transitional IDNA2008/UTS #46 A-label canonicalization으로 교체합니다. 또한 scanner source가 NFC/NFD처럼 canonically equivalent한 Unicode 표기로 들어와도 동일 source key로 취급되도록 NFC 정규화 후 casefold를 적용합니다. 기존 72.0.77 Unicode FQDN identifier는 U-label compatibility lookup으로 계속 연결되며 schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.

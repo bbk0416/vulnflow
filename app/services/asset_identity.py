@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import ipaddress
 import re
+import unicodedata
+
+import idna
 from typing import Any
 
 ASSET_IDENTIFIER_TYPES = {
@@ -40,69 +43,53 @@ def normalize_asset_identifier(identifier_type: str, value: Any) -> str:
         compact = re.sub(r"[^0-9a-fA-F]", "", raw).lower()
         return ":".join(compact[i:i + 2] for i in range(0, 12, 2))
     if kind == "FQDN":
-        normalized = raw.rstrip(".").casefold()
-        labels = normalized.split(".")
-        invalid = (
-            "." not in normalized
-            or any(not label for label in labels)
-            or any(char.isspace() or ord(char) < 32 or char in "/\\[]:@" for char in normalized)
-        )
-        if not invalid:
-            try:
-                ascii_labels = [label.encode("idna").decode("ascii") for label in labels]
-            except UnicodeError:
-                invalid = True
-            else:
-                invalid = (
-                    any(
-                        len(label) > 63
-                        or label.startswith("-")
-                        or label.endswith("-")
-                        or re.fullmatch(r"[a-z0-9_-]+", label, re.IGNORECASE) is None
-                        for label in ascii_labels
-                    )
-                    or len(".".join(ascii_labels)) > 253
-                )
-        if not invalid:
-            try:
-                ipaddress.ip_address(normalized)
-            except ValueError:
-                pass
-            else:
-                invalid = True
-        if invalid:
+        if raw.endswith(".."):
             raise ValueError(f"FQDN 형식이 올바르지 않습니다: {raw}")
-        return normalized
+        domain = raw[:-1] if raw.endswith(".") else raw
+        if "." not in domain or any(char.isspace() or ord(char) < 32 or char in "/\\[]:@" for char in domain):
+            raise ValueError(f"FQDN 형식이 올바르지 않습니다: {raw}")
+        try:
+            ascii_name = idna.encode(
+                domain, uts46=True, std3_rules=True, transitional=False
+            ).decode("ascii").lower()
+        except idna.IDNAError as exc:
+            raise ValueError(f"FQDN 형식이 올바르지 않습니다: {raw}") from exc
+        if len(ascii_name) > 253:
+            raise ValueError(f"FQDN 형식이 올바르지 않습니다: {raw}")
+        try:
+            ipaddress.ip_address(ascii_name)
+        except ValueError:
+            pass
+        else:
+            raise ValueError(f"FQDN 형식이 올바르지 않습니다: {raw}")
+        return ascii_name
     return raw.casefold()
 
 
 def fqdn_equivalent_values(value: Any) -> tuple[str, ...]:
-    """Return safe legacy-equivalent FQDN spellings without changing stored display form.
+    """Return the canonical IDNA2008 A-label plus its stable Unicode U-label.
 
-    Python's built-in IDNA codec is used only when the ASCII round-trip is stable.
-    That lets Unicode U-labels such as ``bücher.example`` match their A-label form
-    without conflating mappings that are not reversible under the active codec.
+    The A-label is authoritative for identity. The U-label is retained only as a
+    compatibility lookup value for rows written by releases before 72.0.78.
     """
-    normalized = normalize_asset_identifier("FQDN", value)
-    values = [normalized]
+    ascii_name = normalize_asset_identifier("FQDN", value)
+    values = [ascii_name]
     try:
-        ascii_name = normalized.encode("idna").decode("ascii").casefold()
-        unicode_name = ascii_name.encode("ascii").decode("idna").casefold()
-        roundtrip = unicode_name.encode("idna").decode("ascii").casefold()
-    except (UnicodeError, UnicodeDecodeError):
+        unicode_name = idna.decode(ascii_name, uts46=True, std3_rules=True)
+        roundtrip = idna.encode(
+            unicode_name, uts46=True, std3_rules=True, transitional=False
+        ).decode("ascii").lower()
+    except idna.IDNAError:
         return tuple(values)
-    if roundtrip != ascii_name:
-        return tuple(values)
-    for candidate in (ascii_name, unicode_name):
-        if candidate and candidate not in values:
-            values.append(candidate)
+    if roundtrip == ascii_name and unicode_name not in values:
+        values.append(unicode_name)
     return tuple(values)
 
 
 def identifier_scope(identifier_type: str, *, scanner_source: str = "", environment: str = "") -> str:
     kind = str(identifier_type).upper()
     if kind == "SCANNER_ASSET_ID":
-        return "scanner:" + (str(scanner_source or "manual").strip().casefold() or "manual")
+        return "scanner:" + (unicodedata.normalize("NFC", str(scanner_source or "manual").strip()).casefold() or "manual")
     if kind == "HOSTNAME":
         env = str(environment or "").strip().casefold()
         return "environment:" + (env or "unspecified")
