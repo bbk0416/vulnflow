@@ -90,6 +90,7 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
     operations = root / "docs/05_OPERATIONS_GUIDE.md"
     env_example = root / ".env.example"
     workflow = root / ".github/workflows/public-ci.yml"
+    release_notes = root / f"RELEASE_NOTES_{version}.md"
 
     checks = [
         ("readme_version", _contains(readme, f"Core {version}")),
@@ -104,14 +105,10 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
             ),
         ),
         ("public_verification_version", _contains(verification, f"VulnFlow {version} public verification summary")),
-        (
-            "public_verification_release_scope",
-            _contains(verification, "Narrow documentation/runtime-contract consistency patch"),
-        ),
-        (
-            "public_verification_stale_scanner_scope_absent",
-            _absent(verification, "scanner-inventory identity and reconciliation-lifecycle integrity patch"),
-        ),
+        ("current_release_notes_exists", release_notes.is_file()),
+        ("readme_current_release_notes", _contains(readme, f"RELEASE_NOTES_{version}.md")),
+        ("public_scope_current_version", _contains(scope, f"## {version} ")),
+        ("public_verification_release_notes", _contains(verification, f"release notes: RELEASE_NOTES_{version}.md")),
         (
             "public_verification_submission_count",
             _contains(verification, f"public submission readiness: {submission_count}/{submission_count} PASS"),

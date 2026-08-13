@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.81 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.82.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.82 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.83.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -8,6 +8,13 @@
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
 
+
+## 72.0.83 — 2026-08-13
+
+- Fix Greenbone/OpenVAS remediation semantics so an explicit `Solution Type` reports a patch only for `VendorFix`; `Workaround`, `Mitigation`, `NoneAvailable`, and `WillNotFix` no longer masquerade as patch availability.
+- Preserve the legacy solution-text fallback for exports that omit `Solution Type`.
+- Add XML/CSV regressions for the corrected mapping; public bounded suite is 706 tests (78 + 76 + 168 + 80 + 117 + 67 + 120).
+- Keep SQLite schema 46, dependency package pins, supported scanner connector set, and the feature-frozen product scope unchanged.
 
 ## 72.0.82 — 2026-08-13
 

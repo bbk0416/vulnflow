@@ -1,34 +1,23 @@
-VulnFlow 72.0.82 public verification summary
-Date: 2026-08-13
+VulnFlow 72.0.83 public verification summary
 
-Release scope
-- Narrow documentation/runtime-contract consistency patch on the 72.0.72 feature-frozen line
-- SQLite schema 46 unchanged
-- Runtime dependency package pins unchanged
-- Public regression counts are derived from the executable seven-group bounded suite and release-facing documents must match them
-- First-administrator and operations documentation use data/control.db and data/projects/default/vulnflow.db for the separated database layout
-- Browser-login documentation matches the 300-second sliding window, username+client 5-attempt limit, client-wide 25-attempt limit, and disabled account-wide lockout
-- A documentation consistency gate fails closed in public CI when these operator-facing contracts drift from executable source
+Release scope:
+- Greenbone/OpenVAS remediation-semantics correctness patch on the 72.0.72 feature-frozen line
+- release notes: RELEASE_NOTES_72.0.83.md
+- SQLite schema remains 46
+- Runtime/development dependency package pins remain unchanged
 
-Local pre-release verification for the candidate tree
-- focused documentation/auth/database/repository-maintenance regression: 49/49 PASS
-- documentation consistency gate: PASS
-- public regression suite: 704/704 PASS across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 118)
+Locally reproducible public checks required before release:
+- public manifest: 676/676 PASS
+- documentation consistency: PASS
+- version consistency: 12/12 PASS
+- public submission readiness: 31/31 PASS
+- architecture review: PASS
+- static security boundary audit: PASS
 - scanner fixture matrix: 9/9 PASS
 - scanner parser robustness: 6/6 PASS
-- release version consistency: 12/12 PASS
-- dependency lock static consistency: 9/9 PASS
-- architecture review: PASS (276 FastAPI route decorators, 0 internal import cycles)
-- public submission readiness: 31/31 PASS
-- public manifest: 675/675 PASS after final regeneration
-- static security boundary audit: PASS
+- public regression suite: 706/706 PASS across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 120)
 
-Release gate
-- The v72.0.82 tag and GitHub Release must only be created after the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head, including the documentation consistency gate inside the four core-test jobs.
-- The release tag must point to the resulting main merge commit.
-
-Interpretation limits
-- Synthetic/adversarial files are regression evidence, not vendor certification or external-user validation.
-- No customer scanner corpus is claimed.
-- Docker-required production validation, Chromium E2E, clean dependency-wheelhouse reinstall, Windows runner behavior, and the pinned quality environment remain GitHub/external release gates where this local environment cannot reproduce them exactly.
-- This release does not add scanner connectors or product features.
+Release boundary:
+- The v72.0.83 tag and GitHub Release must only be created after Windows candidate validation and the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
+- The official v72.0.82 tag and release assets are immutable and must not be modified.
+- Real customer scanner corpus validation is not claimed unless separately provided and reproduced.
