@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import uuid
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -94,6 +95,299 @@ def upsert_findings(db_path: str | Path, rows: Iterable[dict[str, Any]], *, acto
     return inserted, updated
 
 
+_SOURCE_MANAGED_FIELDS = (
+    "product", "product_version", "asset_id", "asset_ref_id", "asset_name", "environment", "cve_id", "component",
+    "component_version", "cvss", "epss", "epss_percentile", "kev", "internet_exposed", "asset_criticality",
+    "data_sensitivity", "patch_available", "compensating_control", "intel_source", "intel_updated_at", "score",
+    "threat_score", "asset_context_score", "remediation_urgency_score", "decision", "decision_label", "sla_days",
+    "target_date", "mitigation_required", "reasons", "policy_version", "policy_id", "last_scored_at", "scanner_source",
+    "source_last_seen_at", "record_state", "stale_since", "archived_at", "import_batch_id", "canonical_key",
+    "source_count", "source_conflict_count",
+)
+
+
+@dataclass
+class _ImportBatchState:
+    inserted: int = 0
+    updated: int = 0
+    reopened: int = 0
+    verification_ready: int = 0
+    merged: int = 0
+    conflict_fields_total: int = 0
+    identity_candidate_ids: set[str] = field(default_factory=set)
+    stale_ids: list[str] = field(default_factory=list)
+    observations: list[tuple[Any, ...]] = field(default_factory=list)
+    source_record_for_native: dict[str, str] = field(default_factory=dict)
+    present_canonical_ids: set[str] = field(default_factory=set)
+    affected_canonical_ids: set[str] = field(default_factory=set)
+    newly_present_canonical_ids: set[str] = field(default_factory=set)
+    seen_batch_keys: set[str] = field(default_factory=set)
+    fallback_rows: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+
+def _idempotent_import_result(db_path: str | Path, source_job_id: str | None) -> dict[str, Any] | None:
+    if not source_job_id:
+        return None
+    with connect(db_path) as conn:
+        existing_batch = conn.execute(
+            "SELECT * FROM import_batches WHERE source_job_id=?", (source_job_id,)
+        ).fetchone()
+    if existing_batch is None:
+        return None
+    item = dict(existing_batch)
+    return {
+        "batch_id": item["batch_id"], "scanner_source": item["scanner_source"],
+        "mode": item["import_mode"], "row_count": int(item["row_count"] or 0),
+        "inserted": int(item["inserted_count"] or 0), "updated": int(item["updated_count"] or 0),
+        "stale": int(item["stale_count"] or 0), "reopened": 0, "verification_ready": 0,
+        "merged": 0, "conflicts": 0, "identity_candidates": 0, "idempotent_replay": True,
+    }
+
+
+def _ingest_source_rows_conn(
+    conn: Any, prepared: list[dict[str, Any]], source_native_ids: list[str], *, source: str,
+    batch_id: str, now: str, actor: str, db_path: str | Path, insert_sql: str, state: _ImportBatchState,
+) -> None:
+    for raw_row, source_native_id in zip(prepared, source_native_ids):
+        row = dict(raw_row)
+        source_record_id = source_record_id_for(source, source_native_id)
+        old_record = conn.execute(
+            "SELECT * FROM source_finding_records WHERE source_record_id=?",
+            (source_record_id,),
+        ).fetchone()
+        if old_record is not None:
+            canonical_id = str(old_record["finding_id"])
+            canonical_row = conn.execute("SELECT * FROM findings WHERE finding_id=?", (canonical_id,)).fetchone()
+            if canonical_row is None:
+                raise ValueError(f"원천 관측의 canonical finding이 없습니다: {source_native_id}")
+            canonical_existing = dict(canonical_row)
+            # Partial scanner exports often omit identity context. Fill only blanks
+            # from the established canonical record before checking identity drift.
+            incoming_has_asset_identity = bool(str(row.get("asset_id") or "").strip() or str(row.get("asset_name") or "").strip())
+            for field_name in ("product", "product_version", "asset_id", "asset_name", "environment", "cve_id", "component"):
+                if not str(row.get(field_name) or "").strip():
+                    row[field_name] = canonical_existing.get(field_name)
+            if not incoming_has_asset_identity and not str(row.get("asset_ref_id") or "").strip():
+                row["asset_ref_id"] = canonical_existing.get("asset_ref_id")
+            resolved_asset_ref, asset_identifiers = _resolve_asset_identity_conn(
+                conn, row, scanner_source=source, actor=actor, now=now
+            )
+            row["asset_ref_id"] = resolved_asset_ref
+            row = _apply_authoritative_asset_context(conn, row)
+            proposed_key = canonical_key_for(row)
+            key = str(old_record["canonical_key"] or canonical_existing.get("canonical_key") or proposed_key)
+            if proposed_key != key:
+                raise ValueError(f"스캐너 원본 ID가 다른 canonical finding으로 변경되었습니다: {source_native_id}")
+        else:
+            resolved_asset_ref, asset_identifiers = _resolve_asset_identity_conn(
+                conn, row, scanner_source=source, actor=actor, now=now
+            )
+            row["asset_ref_id"] = resolved_asset_ref
+            row = _apply_authoritative_asset_context(conn, row)
+            key = canonical_key_for(row)
+            existing_canonical = conn.execute(
+                "SELECT finding_id FROM findings WHERE canonical_key=? ORDER BY first_seen_at,finding_id LIMIT 1",
+                (key,),
+            ).fetchone()
+            if existing_canonical is not None:
+                canonical_id = str(existing_canonical["finding_id"])
+            else:
+                collision = conn.execute("SELECT canonical_key FROM findings WHERE finding_id=?", (source_native_id,)).fetchone()
+                canonical_id = source_native_id
+                if collision is not None and str(collision["canonical_key"] or "") != key:
+                    canonical_id = "CAN-" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:20].upper()
+                row["finding_id"] = canonical_id
+                row["canonical_key"] = key
+                row["source_count"] = 1
+                row["source_conflict_count"] = 0
+                row["scanner_source"] = source
+                row["source_last_seen_at"] = now
+                row["record_state"] = "ACTIVE"
+                row["stale_since"] = ""
+                row["archived_at"] = ""
+                row["import_batch_id"] = batch_id
+                row.setdefault("row_version", 1)
+                conn.execute(insert_sql, [row.get(field_name) for field_name in FIELDS])
+                _sync_asset_row(conn, row, now=now)
+                state.inserted += 1
+                state.fallback_rows[canonical_id] = dict(row)
+
+        if conn.execute("SELECT 1 FROM assets WHERE asset_ref_id=?", (row.get("asset_ref_id"),)).fetchone() is None:
+            row_for_asset = dict(row)
+            row_for_asset["finding_id"] = canonical_id
+            _sync_asset_row(conn, row_for_asset, now=now)
+        state.identity_candidate_ids.update(_register_asset_identifiers_conn(
+            conn, asset_ref_id=str(row.get("asset_ref_id") or ""), identifiers=asset_identifiers,
+            actor=actor, now=now,
+        ))
+
+        if key in state.seen_batch_keys:
+            raise ValueError("같은 스캐너 배치에 동일 canonical finding 후보가 중복되었습니다.")
+        state.seen_batch_keys.add(key)
+        state.present_canonical_ids.add(canonical_id)
+        state.affected_canonical_ids.add(canonical_id)
+        state.source_record_for_native[source_native_id] = source_record_id
+        if old_record is None or str(old_record["observed_state"]) != "PRESENT":
+            state.newly_present_canonical_ids.add(canonical_id)
+        snapshot_json = json.dumps(_source_snapshot(row), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+        conn.execute(
+            """INSERT INTO source_finding_records(
+                   source_record_id,finding_id,scanner_source,source_finding_id,canonical_key,observed_state,
+                   consecutive_absent_scans,first_seen_at,last_seen_at,last_batch_id,snapshot_json,created_at,updated_at
+               ) VALUES(?,?,?,?,?,'PRESENT',0,?,?,?,?,?,?)
+               ON CONFLICT(source_record_id) DO UPDATE SET
+                   finding_id=excluded.finding_id,scanner_source=excluded.scanner_source,
+                   source_finding_id=excluded.source_finding_id,canonical_key=excluded.canonical_key,
+                   observed_state='PRESENT',consecutive_absent_scans=0,last_seen_at=excluded.last_seen_at,
+                   last_batch_id=excluded.last_batch_id,snapshot_json=excluded.snapshot_json,
+                   updated_at=excluded.updated_at""",
+            (source_record_id, canonical_id, source, source_native_id, key,
+             now, now, batch_id, snapshot_json, now, now),
+        )
+        state.observations.append((
+            f"OBS-{uuid.uuid4().hex[:16].upper()}", canonical_id, batch_id, source,
+            "PRESENT", now, "{}", source_record_id,
+        ))
+
+
+def _mark_missing_source_records_conn(
+    conn: Any, *, source: str, batch_id: str, now: str, state: _ImportBatchState,
+) -> None:
+    uploaded_record_ids = set(state.source_record_for_native.values())
+    source_key = scanner_source_key(source)
+    source_variants = [
+        str(raw[0]) for raw in conn.execute(
+            "SELECT DISTINCT scanner_source FROM source_finding_records"
+        ).fetchall()
+        if scanner_source_key(raw[0]) == source_key
+    ]
+    if source_variants:
+        placeholders = ",".join("?" for _ in source_variants)
+        source_rows = conn.execute(
+            f"""SELECT * FROM source_finding_records
+                  WHERE scanner_source IN ({placeholders})
+                    AND observed_state IN ('PRESENT','ABSENT')""",
+            source_variants,
+        ).fetchall()
+    else:
+        source_rows = []
+    for raw_record in source_rows:
+        record = dict(raw_record)
+        if record["source_record_id"] in uploaded_record_ids:
+            continue
+        next_absence = int(record.get("consecutive_absent_scans") or 0) + 1
+        conn.execute(
+            """UPDATE source_finding_records SET observed_state='ABSENT',consecutive_absent_scans=?,
+                       last_batch_id=?,updated_at=? WHERE source_record_id=?""",
+            (next_absence, batch_id, now, record["source_record_id"]),
+        )
+        canonical_id = str(record["finding_id"])
+        state.affected_canonical_ids.add(canonical_id)
+        state.observations.append((
+            f"OBS-{uuid.uuid4().hex[:16].upper()}", canonical_id, batch_id, source,
+            "ABSENT", now,
+            json.dumps({"source_consecutive_absent_scans": next_absence}, separators=(",", ":")),
+            record["source_record_id"],
+        ))
+
+
+def _refresh_affected_canonical_findings_conn(
+    conn: Any, *, db_path: str | Path, source: str, batch_id: str, now: str, actor: str, threshold: int,
+    reconcile_missing: bool, state: _ImportBatchState,
+) -> None:
+    for canonical_id in sorted(state.affected_canonical_ids):
+        before_row = conn.execute("SELECT * FROM findings WHERE finding_id=?", (canonical_id,)).fetchone()
+        before = dict(before_row) if before_row is not None else {}
+        present_records = _load_source_records_conn(conn, canonical_id, present_only=True)
+        if present_records:
+            merged_row, conflicts = _aggregate_canonical_row(
+                conn, canonical_id, fallback=state.fallback_rows.get(canonical_id)
+            )
+            merged_row["finding_id"] = canonical_id
+            merged_row["canonical_key"] = str(merged_row.get("canonical_key") or canonical_key_for(merged_row))
+            merged_row["import_batch_id"] = batch_id
+            merged_row = _apply_authoritative_asset_context(conn, merged_row)
+            merged_row = _score_canonical_from_active_policy(conn, merged_row)
+            assignments = ",".join(f"{field_name}=?" for field_name in _SOURCE_MANAGED_FIELDS)
+            conn.execute(
+                f"UPDATE findings SET {assignments},row_version=COALESCE(row_version,0)+1,updated_at=CURRENT_TIMESTAMP WHERE finding_id=?",
+                [merged_row.get(field_name) for field_name in _SOURCE_MANAGED_FIELDS] + [canonical_id],
+            )
+            _sync_asset_row(conn, merged_row, now=now)
+            if canonical_id not in state.fallback_rows and canonical_id in state.present_canonical_ids:
+                state.updated += 1
+            if len(present_records) > 1:
+                state.merged += 1
+            state.conflict_fields_total += len(conflicts)
+
+            previous_status = str(before.get("status") or "OPEN")
+            previous_resolution = str(before.get("resolution_state") or "UNVERIFIED")
+            should_reopen = canonical_id in state.newly_present_canonical_ids and (
+                (previous_status == "CLOSED" and previous_resolution == "VERIFIED")
+                or (previous_status == "MITIGATED" and previous_resolution in {"PENDING", "READY_FOR_VERIFICATION"})
+            )
+            if should_reopen:
+                next_count = int(before.get("reopen_count") or 0) + 1
+                conn.execute(
+                    """UPDATE findings SET status='OPEN',resolution_state='REOPENED',resolution_requested_at='',
+                               verified_at='',verified_by='',verification_method='',verification_note='',resolved_at='',
+                               consecutive_absent_scans=0,last_reopened_at=?,reopen_count=?,
+                               row_version=COALESCE(row_version,0)+1,updated_at=CURRENT_TIMESTAMP WHERE finding_id=?""",
+                    (now, next_count, canonical_id),
+                )
+                _cancel_pending_verifications_conn(
+                    conn, canonical_id, actor=actor,
+                    reason="다중 스캐너 관측에서 취약점이 다시 탐지됨", db_path=db_path,
+                )
+                add_audit_event(
+                    db_path, finding_id=canonical_id, event_type="finding_reopened",
+                    summary="스캐너 재탐지로 canonical finding 자동 재개방",
+                    details={"batch_id": batch_id, "scanner_source": source, "reopen_count": next_count},
+                    actor=actor, conn=conn,
+                )
+                state.reopened += 1
+            elif int(before.get("consecutive_absent_scans") or 0) or previous_resolution == "READY_FOR_VERIFICATION":
+                conn.execute(
+                    """UPDATE findings SET consecutive_absent_scans=0,
+                               resolution_state=CASE WHEN resolution_state='READY_FOR_VERIFICATION'
+                                                     THEN 'UNVERIFIED' ELSE resolution_state END
+                         WHERE finding_id=?""",
+                    (canonical_id,),
+                )
+        elif reconcile_missing:
+            all_records = _load_source_records_conn(conn, canonical_id, present_only=False)
+            if not all_records:
+                continue
+            absence_counts = [int(record.get("consecutive_absent_scans") or 0) for record in all_records]
+            canonical_absence = min(absence_counts) if absence_counts else 0
+            next_resolution = str(before.get("resolution_state") or "UNVERIFIED")
+            became_ready = False
+            if str(before.get("status") or "OPEN") == "MITIGATED" and canonical_absence >= threshold and next_resolution not in {"PENDING", "VERIFIED"}:
+                became_ready = next_resolution != "READY_FOR_VERIFICATION"
+                next_resolution = "READY_FOR_VERIFICATION"
+            conn.execute(
+                """UPDATE findings SET record_state='STALE',stale_since=COALESCE(NULLIF(stale_since,''),?),
+                           source_count=0,source_conflict_count=0,consecutive_absent_scans=?,resolution_state=?,
+                           row_version=COALESCE(row_version,0)+1,updated_at=CURRENT_TIMESTAMP WHERE finding_id=?""",
+                (now, canonical_absence, next_resolution, canonical_id),
+            )
+            state.stale_ids.append(canonical_id)
+            add_audit_event(
+                db_path, finding_id=canonical_id, event_type="all_sources_missing",
+                summary="모든 스캐너 관측에서 누락되어 canonical finding을 STALE로 표시",
+                details={"batch_id": batch_id, "scanner_source": source,
+                         "consecutive_absent_scans": canonical_absence, "verification_ready": became_ready},
+                actor=actor, conn=conn,
+            )
+            if became_ready:
+                add_audit_event(
+                    db_path, finding_id=canonical_id, event_type="remediation_verification_ready",
+                    summary=f"모든 원천 연속 미탐지 {canonical_absence}회로 조치 검증 가능",
+                    details={"batch_id": batch_id, "threshold": threshold}, actor=actor, conn=conn,
+                )
+                state.verification_ready += 1
+
+
 def apply_import_batch(
     db_path: str | Path,
     rows: Iterable[dict[str, Any]],
@@ -120,20 +414,9 @@ def apply_import_batch(
         raise ValueError("스캐너·원천 이름이 필요합니다.")
     threshold = max(1, int(verification_absence_threshold))
     normalized_job_id = str(source_job_id or "").strip() or None
-    if normalized_job_id:
-        with connect(db_path) as conn:
-            existing_batch = conn.execute(
-                "SELECT * FROM import_batches WHERE source_job_id=?", (normalized_job_id,)
-            ).fetchone()
-        if existing_batch is not None:
-            item = dict(existing_batch)
-            return {
-                "batch_id": item["batch_id"], "scanner_source": item["scanner_source"],
-                "mode": item["import_mode"], "row_count": int(item["row_count"] or 0),
-                "inserted": int(item["inserted_count"] or 0), "updated": int(item["updated_count"] or 0),
-                "stale": int(item["stale_count"] or 0), "reopened": 0, "verification_ready": 0,
-                "merged": 0, "conflicts": 0, "identity_candidates": 0, "idempotent_replay": True,
-            }
+    replay = _idempotent_import_result(db_path, normalized_job_id)
+    if replay is not None:
+        return replay
 
     batch_id = f"IMP-{uuid.uuid4().hex[:16].upper()}"
     now = utc_now()
@@ -146,22 +429,7 @@ def apply_import_batch(
 
     placeholders = ",".join(["?"] * len(FIELDS))
     insert_sql = f"INSERT INTO findings ({','.join(FIELDS)}) VALUES ({placeholders})"
-    source_managed_fields = [
-        "product", "product_version", "asset_id", "asset_ref_id", "asset_name", "environment",
-        "cve_id", "component", "component_version", "cvss", "epss", "epss_percentile", "kev",
-        "internet_exposed", "asset_criticality", "data_sensitivity", "patch_available",
-        "compensating_control", "intel_source", "intel_updated_at", "score", "threat_score",
-        "asset_context_score", "remediation_urgency_score", "decision", "decision_label", "sla_days",
-        "target_date", "mitigation_required", "reasons", "policy_version", "policy_id",
-        "last_scored_at", "scanner_source", "source_last_seen_at", "record_state", "stale_since",
-        "archived_at", "import_batch_id", "canonical_key", "source_count", "source_conflict_count",
-    ]
-
-    inserted = updated = reopened = verification_ready = merged = 0
-    identity_candidate_ids: set[str] = set()
-    stale_ids: list[str] = []
-    observations: list[tuple[Any, ...]] = []
-    conflict_fields_total = 0
+    state = _ImportBatchState()
     with connect(db_path) as conn:
         conn.execute("BEGIN IMMEDIATE")
         conn.execute(
@@ -172,277 +440,50 @@ def apply_import_batch(
             (batch_id, source, filename, "snapshot" if reconcile_missing else "incremental",
              len(prepared), actor, now, normalized_job_id),
         )
-        canonical_for_source: dict[str, str] = {}
-        source_record_for_native: dict[str, str] = {}
-        present_canonical_ids: set[str] = set()
-        affected_canonical_ids: set[str] = set()
-        newly_present_canonical_ids: set[str] = set()
-        seen_batch_keys: set[str] = set()
-        fallback_rows: dict[str, dict[str, Any]] = {}
-
-        for raw_row, source_native_id in zip(prepared, source_native_ids):
-            row = dict(raw_row)
-            source_record_id = source_record_id_for(source, source_native_id)
-            old_record = conn.execute(
-                "SELECT * FROM source_finding_records WHERE source_record_id=?",
-                (source_record_id,),
-            ).fetchone()
-            if old_record is not None:
-                canonical_id = str(old_record["finding_id"])
-                canonical_row = conn.execute("SELECT * FROM findings WHERE finding_id=?", (canonical_id,)).fetchone()
-                if canonical_row is None:
-                    raise ValueError(f"원천 관측의 canonical finding이 없습니다: {source_native_id}")
-                canonical_existing = dict(canonical_row)
-                # Partial scanner exports often omit identity context. Fill only blanks
-                # from the established canonical record before checking identity drift.
-                incoming_has_asset_identity = bool(str(row.get("asset_id") or "").strip() or str(row.get("asset_name") or "").strip())
-                for field in ("product", "product_version", "asset_id", "asset_name", "environment", "cve_id", "component"):
-                    if not str(row.get(field) or "").strip():
-                        row[field] = canonical_existing.get(field)
-                if not incoming_has_asset_identity and not str(row.get("asset_ref_id") or "").strip():
-                    row["asset_ref_id"] = canonical_existing.get("asset_ref_id")
-                resolved_asset_ref, asset_identifiers = _resolve_asset_identity_conn(
-                    conn, row, scanner_source=source, actor=actor, now=now
-                )
-                row["asset_ref_id"] = resolved_asset_ref
-                row = _apply_authoritative_asset_context(conn, row)
-                proposed_key = canonical_key_for(row)
-                key = str(old_record["canonical_key"] or canonical_existing.get("canonical_key") or proposed_key)
-                if proposed_key != key:
-                    raise ValueError(f"스캐너 원본 ID가 다른 canonical finding으로 변경되었습니다: {source_native_id}")
-            else:
-                resolved_asset_ref, asset_identifiers = _resolve_asset_identity_conn(
-                    conn, row, scanner_source=source, actor=actor, now=now
-                )
-                row["asset_ref_id"] = resolved_asset_ref
-                row = _apply_authoritative_asset_context(conn, row)
-                key = canonical_key_for(row)
-                existing_canonical = conn.execute(
-                    "SELECT finding_id FROM findings WHERE canonical_key=? ORDER BY first_seen_at,finding_id LIMIT 1",
-                    (key,),
-                ).fetchone()
-                if existing_canonical is not None:
-                    canonical_id = str(existing_canonical["finding_id"])
-                else:
-                    collision = conn.execute("SELECT canonical_key FROM findings WHERE finding_id=?", (source_native_id,)).fetchone()
-                    canonical_id = source_native_id
-                    if collision is not None and str(collision["canonical_key"] or "") != key:
-                        canonical_id = "CAN-" + hashlib.sha256(key.encode("utf-8")).hexdigest()[:20].upper()
-                    row["finding_id"] = canonical_id
-                    row["canonical_key"] = key
-                    row["source_count"] = 1
-                    row["source_conflict_count"] = 0
-                    row["scanner_source"] = source
-                    row["source_last_seen_at"] = now
-                    row["record_state"] = "ACTIVE"
-                    row["stale_since"] = ""
-                    row["archived_at"] = ""
-                    row["import_batch_id"] = batch_id
-                    row.setdefault("row_version", 1)
-                    conn.execute(insert_sql, [row.get(field) for field in FIELDS])
-                    _sync_asset_row(conn, row, now=now)
-                    inserted += 1
-                    fallback_rows[canonical_id] = dict(row)
-
-            if conn.execute("SELECT 1 FROM assets WHERE asset_ref_id=?", (row.get("asset_ref_id"),)).fetchone() is None:
-                row_for_asset = dict(row)
-                row_for_asset["finding_id"] = canonical_id
-                _sync_asset_row(conn, row_for_asset, now=now)
-            identity_candidate_ids.update(_register_asset_identifiers_conn(
-                conn, asset_ref_id=str(row.get("asset_ref_id") or ""), identifiers=asset_identifiers,
-                actor=actor, now=now,
-            ))
-
-            if key in seen_batch_keys:
-                raise ValueError("같은 스캐너 배치에 동일 canonical finding 후보가 중복되었습니다.")
-            seen_batch_keys.add(key)
-            canonical_for_source[source_native_id] = canonical_id
-            present_canonical_ids.add(canonical_id)
-            affected_canonical_ids.add(canonical_id)
-            source_record_for_native[source_native_id] = source_record_id
-            if old_record is None or str(old_record["observed_state"]) != "PRESENT":
-                newly_present_canonical_ids.add(canonical_id)
-            snapshot_json = json.dumps(_source_snapshot(row), ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-            conn.execute(
-                """INSERT INTO source_finding_records(
-                       source_record_id,finding_id,scanner_source,source_finding_id,canonical_key,observed_state,
-                       consecutive_absent_scans,first_seen_at,last_seen_at,last_batch_id,snapshot_json,created_at,updated_at
-                   ) VALUES(?,?,?,?,?,'PRESENT',0,?,?,?,?,?,?)
-                   ON CONFLICT(source_record_id) DO UPDATE SET
-                       finding_id=excluded.finding_id,scanner_source=excluded.scanner_source,
-                       source_finding_id=excluded.source_finding_id,canonical_key=excluded.canonical_key,
-                       observed_state='PRESENT',consecutive_absent_scans=0,last_seen_at=excluded.last_seen_at,
-                       last_batch_id=excluded.last_batch_id,snapshot_json=excluded.snapshot_json,
-                       updated_at=excluded.updated_at""",
-                (source_record_id, canonical_id, source, source_native_id, key,
-                 now, now, batch_id, snapshot_json, now, now),
-            )
-            observations.append((
-                f"OBS-{uuid.uuid4().hex[:16].upper()}", canonical_id, batch_id, source,
-                "PRESENT", now, "{}", source_record_id,
-            ))
-
+        _ingest_source_rows_conn(
+            conn, prepared, source_native_ids, source=source, batch_id=batch_id, now=now,
+            actor=actor, db_path=db_path, insert_sql=insert_sql, state=state,
+        )
         if reconcile_missing:
-            uploaded_record_ids = set(source_record_for_native.values())
-            source_key = scanner_source_key(source)
-            source_variants = [
-                str(raw[0]) for raw in conn.execute(
-                    "SELECT DISTINCT scanner_source FROM source_finding_records"
-                ).fetchall()
-                if scanner_source_key(raw[0]) == source_key
-            ]
-            if source_variants:
-                placeholders = ",".join("?" for _ in source_variants)
-                source_rows = conn.execute(
-                    f"""SELECT * FROM source_finding_records
-                          WHERE scanner_source IN ({placeholders})
-                            AND observed_state IN ('PRESENT','ABSENT')""",
-                    source_variants,
-                ).fetchall()
-            else:
-                source_rows = []
-            for raw_record in source_rows:
-                record = dict(raw_record)
-                if record["source_record_id"] in uploaded_record_ids:
-                    continue
-                next_absence = int(record.get("consecutive_absent_scans") or 0) + 1
-                conn.execute(
-                    """UPDATE source_finding_records SET observed_state='ABSENT',consecutive_absent_scans=?,
-                               last_batch_id=?,updated_at=? WHERE source_record_id=?""",
-                    (next_absence, batch_id, now, record["source_record_id"]),
-                )
-                canonical_id = str(record["finding_id"])
-                affected_canonical_ids.add(canonical_id)
-                observations.append((
-                    f"OBS-{uuid.uuid4().hex[:16].upper()}", canonical_id, batch_id, source,
-                    "ABSENT", now,
-                    json.dumps({"source_consecutive_absent_scans": next_absence}, separators=(",", ":")),
-                    record["source_record_id"],
-                ))
+            _mark_missing_source_records_conn(
+                conn, source=source, batch_id=batch_id, now=now, state=state,
+            )
+        _refresh_affected_canonical_findings_conn(
+            conn, db_path=db_path, source=source, batch_id=batch_id, now=now, actor=actor,
+            threshold=threshold, reconcile_missing=reconcile_missing, state=state,
+        )
 
-        for canonical_id in sorted(affected_canonical_ids):
-            before_row = conn.execute("SELECT * FROM findings WHERE finding_id=?", (canonical_id,)).fetchone()
-            before = dict(before_row) if before_row is not None else {}
-            present_records = _load_source_records_conn(conn, canonical_id, present_only=True)
-            if present_records:
-                merged_row, conflicts = _aggregate_canonical_row(
-                    conn, canonical_id, fallback=fallback_rows.get(canonical_id)
-                )
-                merged_row["finding_id"] = canonical_id
-                merged_row["canonical_key"] = str(merged_row.get("canonical_key") or canonical_key_for(merged_row))
-                merged_row["import_batch_id"] = batch_id
-                merged_row = _apply_authoritative_asset_context(conn, merged_row)
-                merged_row = _score_canonical_from_active_policy(conn, merged_row)
-                assignments = ",".join(f"{field}=?" for field in source_managed_fields)
-                conn.execute(
-                    f"UPDATE findings SET {assignments},row_version=COALESCE(row_version,0)+1,updated_at=CURRENT_TIMESTAMP WHERE finding_id=?",
-                    [merged_row.get(field) for field in source_managed_fields] + [canonical_id],
-                )
-                _sync_asset_row(conn, merged_row, now=now)
-                if canonical_id not in fallback_rows and canonical_id in present_canonical_ids:
-                    updated += 1
-                if len(present_records) > 1:
-                    merged += 1
-                conflict_fields_total += len(conflicts)
-
-                previous_status = str(before.get("status") or "OPEN")
-                previous_resolution = str(before.get("resolution_state") or "UNVERIFIED")
-                should_reopen = canonical_id in newly_present_canonical_ids and (
-                    (previous_status == "CLOSED" and previous_resolution == "VERIFIED")
-                    or (previous_status == "MITIGATED" and previous_resolution in {"PENDING", "READY_FOR_VERIFICATION"})
-                )
-                if should_reopen:
-                    next_count = int(before.get("reopen_count") or 0) + 1
-                    conn.execute(
-                        """UPDATE findings SET status='OPEN',resolution_state='REOPENED',resolution_requested_at='',
-                                   verified_at='',verified_by='',verification_method='',verification_note='',resolved_at='',
-                                   consecutive_absent_scans=0,last_reopened_at=?,reopen_count=?,
-                                   row_version=COALESCE(row_version,0)+1,updated_at=CURRENT_TIMESTAMP WHERE finding_id=?""",
-                        (now, next_count, canonical_id),
-                    )
-                    _cancel_pending_verifications_conn(
-                        conn, canonical_id, actor=actor,
-                        reason="다중 스캐너 관측에서 취약점이 다시 탐지됨", db_path=db_path,
-                    )
-                    add_audit_event(
-                        db_path, finding_id=canonical_id, event_type="finding_reopened",
-                        summary="스캐너 재탐지로 canonical finding 자동 재개방",
-                        details={"batch_id": batch_id, "scanner_source": source, "reopen_count": next_count},
-                        actor=actor, conn=conn,
-                    )
-                    reopened += 1
-                elif int(before.get("consecutive_absent_scans") or 0) or previous_resolution == "READY_FOR_VERIFICATION":
-                    conn.execute(
-                        """UPDATE findings SET consecutive_absent_scans=0,
-                                   resolution_state=CASE WHEN resolution_state='READY_FOR_VERIFICATION'
-                                                         THEN 'UNVERIFIED' ELSE resolution_state END
-                             WHERE finding_id=?""",
-                        (canonical_id,),
-                    )
-            elif reconcile_missing:
-                all_records = _load_source_records_conn(conn, canonical_id, present_only=False)
-                if not all_records:
-                    continue
-                absence_counts = [int(record.get("consecutive_absent_scans") or 0) for record in all_records]
-                canonical_absence = min(absence_counts) if absence_counts else 0
-                next_resolution = str(before.get("resolution_state") or "UNVERIFIED")
-                became_ready = False
-                if str(before.get("status") or "OPEN") == "MITIGATED" and canonical_absence >= threshold and next_resolution not in {"PENDING", "VERIFIED"}:
-                    became_ready = next_resolution != "READY_FOR_VERIFICATION"
-                    next_resolution = "READY_FOR_VERIFICATION"
-                conn.execute(
-                    """UPDATE findings SET record_state='STALE',stale_since=COALESCE(NULLIF(stale_since,''),?),
-                               source_count=0,source_conflict_count=0,consecutive_absent_scans=?,resolution_state=?,
-                               row_version=COALESCE(row_version,0)+1,updated_at=CURRENT_TIMESTAMP WHERE finding_id=?""",
-                    (now, canonical_absence, next_resolution, canonical_id),
-                )
-                stale_ids.append(canonical_id)
-                add_audit_event(
-                    db_path, finding_id=canonical_id, event_type="all_sources_missing",
-                    summary="모든 스캐너 관측에서 누락되어 canonical finding을 STALE로 표시",
-                    details={"batch_id": batch_id, "scanner_source": source,
-                             "consecutive_absent_scans": canonical_absence, "verification_ready": became_ready},
-                    actor=actor, conn=conn,
-                )
-                if became_ready:
-                    add_audit_event(
-                        db_path, finding_id=canonical_id, event_type="remediation_verification_ready",
-                        summary=f"모든 원천 연속 미탐지 {canonical_absence}회로 조치 검증 가능",
-                        details={"batch_id": batch_id, "threshold": threshold}, actor=actor, conn=conn,
-                    )
-                    verification_ready += 1
-
+        stale_count = len(set(state.stale_ids))
         conn.execute(
             """UPDATE import_batches SET inserted_count=?,updated_count=?,stale_count=? WHERE batch_id=?""",
-            (inserted, updated, len(set(stale_ids)), batch_id),
+            (state.inserted, state.updated, stale_count, batch_id),
         )
         conn.executemany(
             """INSERT INTO finding_observations(
                    observation_id,finding_id,batch_id,scanner_source,observation,observed_at,details_json,source_record_id
                ) VALUES(?,?,?,?,?,?,?,?)""",
-            observations,
+            state.observations,
         )
         add_audit_event(
             db_path, finding_id=None, event_type="import_batch",
             summary=f"{source} 취약점 {len(prepared)}건 가져오기",
             details={"batch_id": batch_id, "filename": filename,
                      "mode": "snapshot" if reconcile_missing else "incremental",
-                     "inserted": inserted, "updated": updated, "stale": len(set(stale_ids)),
-                     "reopened": reopened, "verification_ready": verification_ready,
-                     "canonical_merged": merged, "conflict_fields": conflict_fields_total,
-                     "identity_candidates": len(identity_candidate_ids)},
+                     "inserted": state.inserted, "updated": state.updated, "stale": stale_count,
+                     "reopened": state.reopened, "verification_ready": state.verification_ready,
+                     "canonical_merged": state.merged, "conflict_fields": state.conflict_fields_total,
+                     "identity_candidates": len(state.identity_candidate_ids)},
             actor=actor, conn=conn,
         )
         conn.commit()
     return {
         "batch_id": batch_id, "scanner_source": source,
         "mode": "snapshot" if reconcile_missing else "incremental", "row_count": len(prepared),
-        "inserted": inserted, "updated": updated, "stale": len(set(stale_ids)),
-        "reopened": reopened, "verification_ready": verification_ready,
-        "merged": merged, "conflicts": conflict_fields_total,
-        "identity_candidates": len(identity_candidate_ids),
+        "inserted": state.inserted, "updated": state.updated, "stale": stale_count,
+        "reopened": state.reopened, "verification_ready": state.verification_ready,
+        "merged": state.merged, "conflicts": state.conflict_fields_total,
+        "identity_candidates": len(state.identity_candidate_ids),
     }
-
 
 def list_source_finding_records(db_path: str | Path, finding_id: str, *, include_absent: bool = True) -> list[dict[str, Any]]:
     with connect(db_path) as conn:
