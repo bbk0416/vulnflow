@@ -1,5 +1,5 @@
 """Stable facade for Nessus and OpenVAS scanner adapters."""
-from app.services.finding_import_nessus import _cpe_product_version, _nessus_rows
+from app.services.finding_import_nessus import _cpe_product_version, _nessus_patch_available, _nessus_rows
 from app.services.finding_import_openvas import (
     _greenbone_patch_available,
     _openvas_csv_rows,
@@ -27,6 +27,7 @@ __all__ = [
     "_first_text",
     "_greenbone_patch_available",
     "_local_name",
+    "_nessus_patch_available",
     "_nessus_rows",
     "_openvas_csv_rows",
     "_openvas_xml_rows",

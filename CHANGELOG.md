@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.82 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.83.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.83 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.84.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -8,6 +8,13 @@
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
 
+
+## 72.0.84 — 2026-08-13
+
+- Honor Tenable `.nessus` `has_patch` as the authoritative structured patch-availability signal when present, preventing generic solution guidance from overriding `has_patch=false`.
+- Preserve explicit `has_patch=true`, fail closed on malformed non-boolean values with a parser warning, and retain the legacy solution-text fallback only when `has_patch` is absent.
+- Add 3 Nessus semantic regressions; public bounded suite is 709 tests (78 + 76 + 168 + 80 + 117 + 67 + 123).
+- Keep SQLite schema 46, dependency package pins, scanner connectors, and the feature-frozen product scope unchanged.
 
 ## 72.0.83 — 2026-08-13
 
