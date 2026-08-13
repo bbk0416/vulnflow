@@ -40,15 +40,15 @@ def test_current_documentation_contract_passes() -> None:
 def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
     root = _copy_contract_tree(tmp_path)
     path = root / "README.md"
-    path.write_text(path.read_text(encoding="utf-8").replace("**709개**", "**708개**"), encoding="utf-8")
+    path.write_text(path.read_text(encoding="utf-8").replace("**710개**", "**709개**"), encoding="utf-8")
     assert "readme_public_test_count" in consistency_issues(root)
 
     verification_root = _copy_contract_tree(tmp_path / "verification")
     verification = verification_root / "PUBLIC_VERIFICATION.txt"
     verification.write_text(
         verification.read_text(encoding="utf-8").replace(
-            "public manifest: 677/677 PASS",
-            "public manifest: 674/674 PASS",
+            "public manifest: 678/678 PASS",
+            "public manifest: 675/675 PASS",
         ),
         encoding="utf-8",
     )
@@ -58,7 +58,7 @@ def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
     verification = release_root / "PUBLIC_VERIFICATION.txt"
     verification.write_text(
         verification.read_text(encoding="utf-8").replace(
-            "release notes: RELEASE_NOTES_72.0.84.md",
+            "release notes: RELEASE_NOTES_72.0.85.md",
             "release notes: RELEASE_NOTES_72.0.83.md",
         ),
         encoding="utf-8",

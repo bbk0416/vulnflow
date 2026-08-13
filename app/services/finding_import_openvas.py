@@ -47,6 +47,29 @@ def _greenbone_patch_available(solution: str, solution_type: str) -> str:
     return "1" if solution_key and solution_key not in {"n a", "none"} else "0"
 
 
+
+def _greenbone_result_elements(root):
+    """Return importable Greenbone results without nested delta history.
+
+    GMP delta reports may embed a previous ``<result>`` inside the current
+    result's ``<delta>`` element.  Those nested results are comparison history,
+    not independent current findings, so stop descending once an importable
+    result boundary is reached.
+    """
+    if _local_name(root.tag) == "result":
+        return [root]
+    results = []
+
+    def visit(element):
+        for child in element:
+            if _local_name(child.tag) == "result":
+                results.append(child)
+                continue
+            visit(child)
+
+    visit(root)
+    return results
+
 def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
     rows: list[dict[str, str]] = []
     source_rows: list[int] = []
@@ -107,7 +130,7 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
 
 def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
     root, xml_metadata = _safe_xml_document(content)
-    results = _children_by_name(root, "result")
+    results = _greenbone_result_elements(root)
     if not results:
         raise ValueError("OpenVAS/Greenbone 보고서에서 result 항목을 찾지 못했습니다.")
     rows: list[dict[str, str]] = []
@@ -183,4 +206,4 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
     }
 
 
-__all__ = ["_greenbone_patch_available", "_openvas_csv_rows", "_openvas_xml_rows", "_row_value"]
+__all__ = ["_greenbone_patch_available", "_greenbone_result_elements", "_openvas_csv_rows", "_openvas_xml_rows", "_row_value"]

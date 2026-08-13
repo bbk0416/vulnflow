@@ -225,6 +225,41 @@ def test_openvas_solution_type_only_vendor_fix_sets_patch_available():
         assert parsed["rows"][0]["patch_available"] == patch_available
 
 
+def test_openvas_xml_delta_history_is_not_imported_as_current_finding():
+    content = b"""<?xml version='1.0' encoding='UTF-8'?>
+    <report><results start='1' max='1'>
+      <result id='current-result'>
+        <name>Current finding</name>
+        <host>192.0.2.10<hostname>host.example.test</hostname></host>
+        <port>443/tcp</port>
+        <nvt oid='1.3.6.1.4.1.25623.1.0.100001'>
+          <name>Current NVT</name><cvss_base>9.8</cvss_base>
+          <refs><ref type='cve' id='CVE-2026-10001'/></refs>
+        </nvt>
+        <severity>9.8</severity><description>Current vulnerable result</description>
+        <delta>changed
+          <result id='previous-result'>
+            <name>Previous finding</name>
+            <host>192.0.2.10<hostname>host.example.test</hostname></host>
+            <port>443/tcp</port>
+            <nvt oid='1.3.6.1.4.1.25623.1.0.100002'>
+              <name>Previous NVT</name><cvss_base>7.5</cvss_base>
+              <refs><ref type='cve' id='CVE-2025-9999'/></refs>
+            </nvt>
+            <severity>7.5</severity><description>Historical delta comparison result</description>
+          </result>
+          <diff>changed</diff>
+        </delta>
+      </result>
+    </results></report>
+    """
+    parsed = parse_import_file(content, filename="greenbone-delta.xml")
+    assert parsed["detected_format"] == "openvas_xml"
+    assert parsed["metadata"]["result_count"] == 1
+    assert [row["cve_id"] for row in parsed["rows"]] == ["CVE-2026-10001"]
+    assert all(row["cve_id"] != "CVE-2025-9999" for row in parsed["rows"])
+
+
 def test_openvas_csv_solution_type_semantics_and_legacy_fallback():
     typed = (
         "IP,Hostname,NVT Name,CVEs,CVSS,Solution,Solution Type\n"

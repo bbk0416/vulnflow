@@ -33,7 +33,7 @@ def main() -> int:
                 importers.append(relative)
 
     checks: dict[str, bool] = {
-        "version_72_0_7": CURRENT_APP_VERSION == "72.0.84",
+        "version_72_0_7": CURRENT_APP_VERSION == "72.0.85",
         "facade_enqueue_identity": webhooks.enqueue_webhook_events is webhook_queue.enqueue_webhook_events,
         "facade_claim_identity": webhooks.list_due_webhook_events is webhook_delivery.list_due_webhook_events,
         "facade_record_identity": webhooks.record_webhook_delivery is webhook_delivery.record_webhook_delivery,
@@ -69,7 +69,7 @@ def main() -> int:
         checks["delivery_round_trip"] = delivered.get("status") == "DELIVERED"
 
     payload = {
-        "title": "VulnFlow 72.0.84 webhook repository boundary verification",
+        "title": "VulnFlow 72.0.85 webhook repository boundary verification",
         "version": CURRENT_APP_VERSION,
         "checks": checks,
         "passed": sum(checks.values()),

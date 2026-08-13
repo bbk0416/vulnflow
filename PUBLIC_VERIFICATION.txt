@@ -1,13 +1,13 @@
-VulnFlow 72.0.84 public verification summary
+VulnFlow 72.0.85 public verification summary
 
 Release scope:
-- Tenable/Nessus patch-availability correctness patch on the 72.0.72 feature-frozen line
-- release notes: RELEASE_NOTES_72.0.84.md
+- Greenbone/OpenVAS delta-result import correctness patch on the 72.0.72 feature-frozen line
+- release notes: RELEASE_NOTES_72.0.85.md
 - SQLite schema remains 46
 - Runtime/development dependency package pins remain unchanged
 
 Locally reproducible public checks required before release:
-- public manifest: 677/677 PASS
+- public manifest: 678/678 PASS
 - documentation consistency: PASS
 - version consistency: 12/12 PASS
 - public submission readiness: 31/31 PASS
@@ -15,9 +15,9 @@ Locally reproducible public checks required before release:
 - static security boundary audit: PASS
 - scanner fixture matrix: 9/9 PASS
 - scanner parser robustness: 6/6 PASS
-- public regression suite: 709/709 PASS across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 123)
+- public regression suite: 710/710 PASS across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 124)
 
 Release boundary:
-- The v72.0.84 tag and GitHub Release must only be created after Windows candidate validation and the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
+- The v72.0.85 tag and GitHub Release must only be created after Windows candidate validation and the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
 - The official v72.0.83 tag and release assets are immutable and must not be modified.
 - Real customer scanner corpus validation is not claimed unless separately provided and reproduced.
