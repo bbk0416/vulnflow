@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.83 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.84.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.84 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.85.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,14 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+
+## 72.0.85 — 2026-08-13
+
+- Exclude Greenbone/OpenVAS nested delta-history `<result>` elements from current finding imports instead of treating comparison history as independent active findings.
+- Preserve ordinary report XML and direct `get_results_response` result imports while stopping descent at the first importable result boundary.
+- Add a delta-report regression; public bounded suite is 710 tests (78 + 76 + 168 + 80 + 117 + 67 + 124).
+- Keep SQLite schema 46, dependency package pins, scanner connectors, and the feature-frozen product scope unchanged.
 
 
 ## 72.0.84 — 2026-08-13
