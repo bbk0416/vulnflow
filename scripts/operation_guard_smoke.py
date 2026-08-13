@@ -74,7 +74,7 @@ def main_smoke() -> dict[str, object]:
             assert active_cluster_lease(guard_a.coordination_db_path, lease_name) is None
 
         return {
-            "version": "72.0.83",
+            "version": "72.0.84",
             "blocked_app_status": blocked.status_code,
             "independent_app_status": allowed.status_code,
             "router_guards_distinct": guard_a is not guard_b,
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     )
     text = "\n".join(
         [
-            "VulnFlow 72.0.83 context-bound operation guard verification",
+            "VulnFlow 72.0.84 context-bound operation guard verification",
             "",
             f"restore barrier isolated: {'PASS' if result['blocked_app_status'] == 503 and result['independent_app_status'] == 200 else 'FAIL'}",
             f"router guards distinct: {'PASS' if result['router_guards_distinct'] else 'FAIL'}",

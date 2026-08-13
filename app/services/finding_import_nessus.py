@@ -36,6 +36,23 @@ def _split_cpe(value: str) -> list[str]:
     return [unquote(field).replace("\\!", "!").strip() for field in fields]
 
 
+def _nessus_patch_available(solution: str, has_patch: str) -> str:
+    """Map Tenable patch metadata to the canonical patch-available flag.
+
+    Modern .nessus exports expose a structured ``has_patch`` boolean.  When
+    present, that field is authoritative and must not be overridden by generic
+    remediation text in ``solution``.  Older exports may omit ``has_patch``;
+    retain the historical solution-text fallback for those files.
+    """
+    structured = str(has_patch or "").strip().casefold()
+    if structured:
+        if structured in {"true", "1", "yes"}:
+            return "1"
+        return "0"
+    solution_key = str(solution or "").strip().casefold()
+    return "1" if solution_key and solution_key not in {"n/a", "none"} else "0"
+
+
 def _cpe_product_version(value: str) -> tuple[str, str, str]:
     text = str(value or "").strip()
     if not text:
@@ -93,6 +110,12 @@ def _nessus_rows(content: bytes) -> dict[str, Any]:
             product = " ".join(value for value in (vendor, product_name) if value) or plugin_name or service_name
             cvss = _first_text(item, "cvss4_base_score", "cvss3_base_score", "cvss_base_score")
             solution = _first_text(item, "solution")
+            has_patch = _first_text(item, "has_patch")
+            normalized_has_patch = has_patch.strip().casefold()
+            if normalized_has_patch and normalized_has_patch not in {"true", "false", "1", "0", "yes", "no"}:
+                parser_warnings.append(
+                    f"ReportItem {item_index}: has_patch boolean 값이 올바르지 않아 패치 없음으로 처리했습니다."
+                )
             port = str(item.attrib.get("port") or "").strip()
             protocol = str(item.attrib.get("protocol") or "").strip()
             endpoint = "/".join(value for value in (port, protocol) if value and value != "0")
@@ -122,7 +145,7 @@ def _nessus_rows(content: bytes) -> dict[str, Any]:
                     "fqdn": properties.get("host-fqdn", ""),
                     "component": plugin_name,
                     "cvss": cvss,
-                    "patch_available": "1" if solution and solution.casefold() not in {"n/a", "none"} else "0",
+                    "patch_available": _nessus_patch_available(solution, has_patch),
                     "notes": notes,
                 })
                 source_rows.append(item_index)
@@ -145,4 +168,4 @@ def _nessus_rows(content: bytes) -> dict[str, Any]:
     }
 
 
-__all__ = ["_cpe_product_version", "_nessus_rows"]
+__all__ = ["_cpe_product_version", "_nessus_patch_available", "_nessus_rows"]

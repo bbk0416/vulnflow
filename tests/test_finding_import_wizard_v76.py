@@ -453,6 +453,44 @@ def test_nessus_cpe22_cvss4_and_asset_uuid_are_preserved():
     assert parsed["metadata"]["adapter_profile"] == "nessus-client-data-v2"
 
 
+
+def test_nessus_has_patch_false_overrides_solution_text():
+    payload = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='demo'>
+    <ReportHost name='host1.example.test'><HostProperties><tag name='host-ip'>192.0.2.10</tag></HostProperties>
+    <ReportItem port='443' protocol='tcp' pluginID='990001' pluginName='No vendor patch'>
+    <cve>CVE-2026-65020</cve><cvss3_base_score>7.5</cvss3_base_score>
+    <has_patch>false</has_patch><solution>Use compensating controls until a vendor fix exists.</solution>
+    </ReportItem></ReportHost></Report></NessusClientData_v2>"""
+    parsed = parse_import_file(payload, filename="has-patch-false.nessus")
+    assert parsed["rows"][0]["patch_available"] == "0"
+
+
+def test_nessus_has_patch_true_is_authoritative_even_without_solution_text():
+    payload = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='demo'>
+    <ReportHost name='host2.example.test'><HostProperties><tag name='host-ip'>192.0.2.11</tag></HostProperties>
+    <ReportItem port='0' protocol='tcp' pluginID='990002' pluginName='Vendor patch exists'>
+    <cve>CVE-2026-65021</cve><cvss3_base_score>8.1</cvss3_base_score><has_patch>true</has_patch>
+    </ReportItem></ReportHost></Report></NessusClientData_v2>"""
+    parsed = parse_import_file(payload, filename="has-patch-true.nessus")
+    assert parsed["rows"][0]["patch_available"] == "1"
+
+
+def test_nessus_has_patch_invalid_is_fail_closed_and_legacy_export_keeps_fallback():
+    invalid = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='demo'>
+    <ReportHost name='host3.example.test'><ReportItem port='0' protocol='tcp' pluginID='990003' pluginName='Malformed patch flag'>
+    <cve>CVE-2026-65022</cve><has_patch>maybe</has_patch><solution>Upgrade the affected package.</solution>
+    </ReportItem></ReportHost></Report></NessusClientData_v2>"""
+    parsed = parse_import_file(invalid, filename="has-patch-invalid.nessus")
+    assert parsed["rows"][0]["patch_available"] == "0"
+    assert any("has_patch boolean" in warning for warning in parsed["parser_warnings"])
+
+    legacy = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='demo'>
+    <ReportHost name='host4.example.test'><ReportItem port='0' protocol='tcp' pluginID='990004' pluginName='Legacy patch guidance'>
+    <cve>CVE-2026-65023</cve><solution>Upgrade the affected package.</solution>
+    </ReportItem></ReportHost></Report></NessusClientData_v2>"""
+    legacy_parsed = parse_import_file(legacy, filename="legacy-no-has-patch.nessus")
+    assert legacy_parsed["rows"][0]["patch_available"] == "1"
+
 def test_openvas_xml_extracts_cve_ref_attributes_and_solution():
     payload = (Path(__file__).parent / "fixtures" / "scanners" / "openvas-refs.xml").read_bytes()
     parsed = parse_import_file(payload, filename="openvas-refs.xml")
