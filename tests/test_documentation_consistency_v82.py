@@ -23,6 +23,7 @@ def _copy_contract_tree(tmp_path: Path) -> Path:
         "docs/12_RBAC_APPROVALS.md",
         "docs/05_OPERATIONS_GUIDE.md",
         ".github/workflows/public-ci.yml",
+        f"RELEASE_NOTES_{(ROOT / 'VERSION').read_text(encoding='utf-8').strip()}.md",
     ]
     for rel in rels:
         source = ROOT / rel
@@ -39,32 +40,30 @@ def test_current_documentation_contract_passes() -> None:
 def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
     root = _copy_contract_tree(tmp_path)
     path = root / "README.md"
-    path.write_text(path.read_text(encoding="utf-8").replace("**704개**", "**703개**"), encoding="utf-8")
+    path.write_text(path.read_text(encoding="utf-8").replace("**706개**", "**705개**"), encoding="utf-8")
     assert "readme_public_test_count" in consistency_issues(root)
 
     verification_root = _copy_contract_tree(tmp_path / "verification")
     verification = verification_root / "PUBLIC_VERIFICATION.txt"
     verification.write_text(
         verification.read_text(encoding="utf-8").replace(
-            "public manifest: 675/675 PASS",
-            "public manifest: 672/672 PASS",
+            "public manifest: 676/676 PASS",
+            "public manifest: 673/673 PASS",
         ),
         encoding="utf-8",
     )
     assert "public_verification_manifest_count" in consistency_issues(verification_root)
 
-    scope_root = _copy_contract_tree(tmp_path / "scope")
-    scope = scope_root / "PUBLIC_VERIFICATION.txt"
-    scope.write_text(
-        scope.read_text(encoding="utf-8").replace(
-            "Narrow documentation/runtime-contract consistency patch",
-            "Narrow scanner-inventory identity and reconciliation-lifecycle integrity patch",
+    release_root = _copy_contract_tree(tmp_path / "release")
+    verification = release_root / "PUBLIC_VERIFICATION.txt"
+    verification.write_text(
+        verification.read_text(encoding="utf-8").replace(
+            "release notes: RELEASE_NOTES_72.0.83.md",
+            "release notes: RELEASE_NOTES_72.0.82.md",
         ),
         encoding="utf-8",
     )
-    issues = consistency_issues(scope_root)
-    assert "public_verification_release_scope" in issues
-    assert "public_verification_stale_scanner_scope_absent" in issues
+    assert "public_verification_release_notes" in consistency_issues(release_root)
 
 
 def test_stale_account_lockout_language_fails_closed(tmp_path: Path) -> None:

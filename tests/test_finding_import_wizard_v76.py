@@ -204,6 +204,44 @@ def test_openvas_xml_adapter_extracts_result():
     ids = extract_asset_identifiers(hostname_parsed["rows"][0], scanner_source="openvas")
     assert any(item["identifier_type"] == "HOSTNAME" and item["normalized_value"] == "db01" for item in ids)
 
+
+def test_openvas_solution_type_only_vendor_fix_sets_patch_available():
+    expected = {
+        "VendorFix": "1",
+        "Vendor Fix": "1",
+        "Workaround": "0",
+        "Mitigation": "0",
+        "NoneAvailable": "0",
+        "WillNotFix": "0",
+    }
+    for solution_type, patch_available in expected.items():
+        payload = f"""<?xml version='1.0'?><get_reports_response><report><report><results>
+        <result id='solution-type'><host>192.0.2.44<hostname>greenbone.example.test</hostname></host>
+        <severity>9.8</severity><nvt><name>Greenbone solution semantics</name>
+        <refs><ref type='cve' id='CVE-2026-65010'/></refs>
+        <solution type='{solution_type}'>Remediation guidance is present.</solution></nvt></result>
+        </results></report></report></get_reports_response>""".encode()
+        parsed = parse_import_file(payload, filename=f"{solution_type}.xml")
+        assert parsed["rows"][0]["patch_available"] == patch_available
+
+
+def test_openvas_csv_solution_type_semantics_and_legacy_fallback():
+    typed = (
+        "IP,Hostname,NVT Name,CVEs,CVSS,Solution,Solution Type\n"
+        "192.0.2.50,typed.example.test,Typed,CVE-2026-65011,8.0,Temporary workaround,Workaround\n"
+        "192.0.2.51,vendor.example.test,Vendor,CVE-2026-65012,8.0,Install vendor patch,VendorFix\n"
+        "192.0.2.52,none.example.test,None,CVE-2026-65013,8.0,No fix currently exists,NoneAvailable\n"
+    ).encode()
+    parsed = parse_import_file(typed, filename="typed-greenbone.csv")
+    assert [row["patch_available"] for row in parsed["rows"]] == ["0", "1", "0"]
+
+    legacy = (
+        "Host;Hostname;Port;NVT Name;CVEs;Severity;Summary;Solution\n"
+        "198.51.100.30;;22/tcp;Legacy SSH issue;CVE-2026-65014;7.2;Legacy export;Upgrade SSH\n"
+    ).encode("utf-8-sig")
+    legacy_parsed = parse_import_file(legacy, filename="legacy-greenbone.csv", format_hint="openvas")
+    assert legacy_parsed["rows"][0]["patch_available"] == "1"
+
 def test_preview_session_is_actor_bound(tmp_path: Path):
     token = create_preview_session(
         tmp_path,

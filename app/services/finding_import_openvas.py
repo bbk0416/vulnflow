@@ -31,6 +31,22 @@ def _row_value(row: dict[str, Any], *aliases: str) -> str:
     return ""
 
 
+def _greenbone_patch_available(solution: str, solution_type: str) -> str:
+    """Map Greenbone remediation metadata to the canonical patch-available flag.
+
+    Greenbone distinguishes an official vendor fix from workarounds, mitigations,
+    and explicit no-fix states.  When a structured solution type is present we
+    therefore only report a patch as available for VendorFix.  Older exports may
+    omit the type entirely, so retain the historical solution-text fallback for
+    those files instead of silently changing their behavior.
+    """
+    type_key = "".join(ch for ch in _header_key(solution_type) if ch.isalnum())
+    if type_key:
+        return "1" if type_key == "vendorfix" else "0"
+    solution_key = _header_key(solution)
+    return "1" if solution_key and solution_key not in {"n a", "none"} else "0"
+
+
 def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
     rows: list[dict[str, str]] = []
     source_rows: list[int] = []
@@ -70,9 +86,7 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
                 "fqdn": _fqdn_value(hostname),
                 "component": product,
                 "cvss": _row_value(raw, "CVSS", "CVSS Base", "CVSS Base Score", "Severity"),
-                "patch_available": "1" if solution or (
-                    solution_type and solution_type.casefold() not in {"none", "n/a", "unknown"}
-                ) else "0",
+                "patch_available": _greenbone_patch_available(solution, solution_type),
                 "notes": notes,
             })
             source_rows.append(source_row)
@@ -148,9 +162,7 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
                 "fqdn": _fqdn_value(hostname),
                 "component": product,
                 "cvss": cvss,
-                "patch_available": "1" if solution or (
-                    solution_type and solution_type.casefold() not in {"none", "n/a", "unknown"}
-                ) else "0",
+                "patch_available": _greenbone_patch_available(solution, solution_type),
                 "notes": notes,
             })
             source_rows.append(result_index)
@@ -171,4 +183,4 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
     }
 
 
-__all__ = ["_openvas_csv_rows", "_openvas_xml_rows", "_row_value"]
+__all__ = ["_greenbone_patch_available", "_openvas_csv_rows", "_openvas_xml_rows", "_row_value"]
