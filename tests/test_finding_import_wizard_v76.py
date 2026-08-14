@@ -536,6 +536,67 @@ def test_nessus_cpe22_cvss4_and_asset_uuid_are_preserved():
 
 
 
+def test_nessus_smbios_absent_uuid_sentinels_never_false_merge_assets(tmp_path: Path):
+    def payload(ip: str, fqdn: str, bios_uuid: str, cve: str, *, mcafee_guid: str = "") -> bytes:
+        mcafee = f"<tag name='mcafee-epo-guid'>{mcafee_guid}</tag>" if mcafee_guid else ""
+        return f"""<?xml version='1.0'?><NessusClientData_v2><Report name='demo'>
+        <ReportHost name='{ip}'><HostProperties><tag name='host-ip'>{ip}</tag>
+        <tag name='host-fqdn'>{fqdn}</tag><tag name='bios-uuid'>{bios_uuid}</tag>{mcafee}</HostProperties>
+        <ReportItem port='443' protocol='tcp' pluginID='991000' pluginName='SMBIOS UUID identity'>
+        <cve>{cve}</cve><cvss3_base_score>7.5</cvss3_base_score></ReportItem>
+        </ReportHost></Report></NessusClientData_v2>""".encode()
+
+    zero = "00000000-0000-0000-0000-000000000000"
+    ff = "FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF"
+    first_parsed = parse_import_file(
+        payload("192.0.2.10", "alpha.example.test", zero, "CVE-2026-88881"),
+        filename="zero-bios-a.nessus",
+    )
+    second_parsed = parse_import_file(
+        payload("198.51.100.20", "beta.example.test", zero, "CVE-2026-88882"),
+        filename="zero-bios-b.nessus",
+    )
+    assert first_parsed["rows"][0]["asset_id"] == ""
+    assert second_parsed["rows"][0]["asset_id"] == ""
+    assert any("bios-uuid" in warning and "sentinel" in warning for warning in first_parsed["parser_warnings"])
+
+    ff_parsed = parse_import_file(
+        payload("203.0.113.30", "ff.example.test", ff, "CVE-2026-88883"),
+        filename="ff-bios.nessus",
+    )
+    assert ff_parsed["rows"][0]["asset_id"] == ""
+
+    fallback_guid = "EPO-GUID-1234"
+    fallback_parsed = parse_import_file(
+        payload("203.0.113.31", "epo.example.test", zero, "CVE-2026-88884", mcafee_guid=fallback_guid),
+        filename="zero-bios-epo.nessus",
+    )
+    assert fallback_parsed["rows"][0]["asset_id"] == fallback_guid
+
+    valid_bios = "9F5C2CB8-4FA8-4A0B-9E66-3C7C0B9D0A77"
+    valid_parsed = parse_import_file(
+        payload("203.0.113.32", "valid.example.test", valid_bios, "CVE-2026-88885"),
+        filename="valid-bios.nessus",
+    )
+    assert valid_parsed["rows"][0]["asset_id"] == valid_bios
+
+    db = tmp_path / "nessus-bios-sentinel.sqlite3"
+    init_db(db)
+    previous_db_path = main.DB_PATH
+    main.DB_PATH = db
+    try:
+        for index, parsed in enumerate((first_parsed, second_parsed)):
+            row = dict(parsed["rows"][0])
+            row["finding_id"] = f"NESSUS-BIOS-{index + 1}"
+            normalized = main.normalize_row(row, index, scanner_source="nessus")
+            apply_import_batch(db, [normalized], scanner_source="nessus", filename=f"bios-{index}.nessus")
+    finally:
+        main.DB_PATH = previous_db_path
+
+    assert len(list_assets(db)) == 2
+    assert len(list_findings(db)) == 2
+
+
 def test_nessus_has_patch_false_overrides_solution_text():
     payload = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='demo'>
     <ReportHost name='host1.example.test'><HostProperties><tag name='host-ip'>192.0.2.10</tag></HostProperties>
