@@ -8,7 +8,7 @@
 - 합성 샘플 데이터와 정책
 - 핵심 운영 문서
 - 대표 화면과 아키텍처 이미지
-- 핵심 업무 흐름을 검증하는 711개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
+- 핵심 업무 흐름을 검증하는 712개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
 - 프로젝트별 SMTP 이메일 알림과 Jira Cloud 이슈·댓글 연동
 - 프로젝트별 파일럿 준비도 점검과 고객용 경영진 보고서
 - 책임별 서비스 레지스트리와 CSV/XLSX·Nessus/OpenVAS 가져오기 모듈 경계
@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.86 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.87 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -117,6 +117,10 @@
 72.0.79는 72.0.78 이후 공격검증에서 재현된 세 가지 import identity-integrity 결함을 최소 수정합니다. scanner-independent canonical key의 component/product text를 Unicode NFC 후 casefold로 정규화해 NFC/NFD 차이만 있는 동일 구성요소가 별도 canonical finding으로 분리되지 않게 합니다. 자동 생성 finding ID의 identity fields도 동일한 Unicode canonicalization을 사용해 같은 scanner/source row가 composed/decomposed 표기만으로 다른 source record가 되지 않게 합니다. preview와 apply의 source-native finding ID 중복 판정도 source-record 계약인 NFC + casefold 기준으로 맞춰, preview에서 허용한 배치가 apply에서 뒤늦게 거부되는 불일치를 제거합니다. schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.
 
 
+
+## 72.0.87 Tenable/Nessus SMBIOS UUID sentinel integrity
+
+72.0.87은 Tenable `.nessus`에서 `host-uuid`가 없을 때 `bios-uuid`를 곧바로 authoritative scanner asset ID로 승격하던 경계에서, SMBIOS가 UUID 부재를 뜻하도록 정의한 all-zero/all-FF 값을 실제 자산 ID처럼 신뢰하던 결함을 수정합니다. 해당 sentinel은 자산 ID로 사용하지 않고, `mcafee-epo-guid`가 있으면 기존 fallback을 계속 사용합니다. `host-uuid` 우선순위와 유효한 BIOS UUID 동작은 유지합니다. 이 수정은 서로 다른 장비가 동일한 부재 sentinel 때문에 하나의 VulnFlow 자산으로 false merge되는 것을 막습니다. schema 46, dependency package pins, 지원 scanner connector 범위와 feature-frozen 제품 범위는 변경하지 않습니다.
 
 ## 72.0.86 Greenbone/OpenVAS asset identity continuity
 

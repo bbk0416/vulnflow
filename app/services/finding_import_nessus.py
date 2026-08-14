@@ -1,6 +1,7 @@
 """NessusClientData_v2 adapter for finding imports."""
 from __future__ import annotations
 
+import re
 from typing import Any
 from urllib.parse import unquote
 
@@ -34,6 +35,25 @@ def _split_cpe(value: str) -> list[str]:
         current.append("\\")
     fields.append("".join(current))
     return [unquote(field).replace("\\!", "!").strip() for field in fields]
+
+
+def _nessus_asset_id(properties: dict[str, str]) -> tuple[str, bool]:
+    """Choose a stable Nessus asset identifier without trusting absent SMBIOS UUID sentinels.
+
+    Tenable's ``host-uuid`` is preferred.  ``bios-uuid`` is used only when it
+    contains an actual SMBIOS UUID; all-zero/all-FF values mean the UUID is not
+    present and must not become an authoritative scanner asset identifier.
+    """
+    host_uuid = str(properties.get("host-uuid") or "").strip()
+    if host_uuid:
+        return host_uuid, False
+    bios_uuid = str(properties.get("bios-uuid") or "").strip()
+    if bios_uuid:
+        compact = re.sub(r"[^0-9a-fA-F]", "", bios_uuid).casefold()
+        if len(compact) == 32 and (set(compact) == {"0"} or set(compact) == {"f"}):
+            return str(properties.get("mcafee-epo-guid") or "").strip(), True
+        return bios_uuid, False
+    return str(properties.get("mcafee-epo-guid") or "").strip(), False
 
 
 def _nessus_patch_available(solution: str, has_patch: str) -> str:
@@ -91,7 +111,11 @@ def _nessus_rows(content: bytes) -> dict[str, Any]:
         ip_address = _ip_value(raw_host_ip) or _ip_value(host_name)
         if raw_host_ip and not _ip_value(raw_host_ip):
             parser_warnings.append(f"ReportHost {host_count}: host-ip 값이 올바른 IP 주소가 아닙니다.")
-        asset_id = properties.get("host-uuid") or properties.get("bios-uuid") or properties.get("mcafee-epo-guid") or ""
+        asset_id, ignored_bios_uuid = _nessus_asset_id(properties)
+        if ignored_bios_uuid:
+            parser_warnings.append(
+                f"ReportHost {host_count}: bios-uuid가 SMBIOS 미존재 sentinel이라 자산 ID로 사용하지 않았습니다."
+            )
         if not asset_name and not ip_address:
             parser_warnings.append(f"ReportHost {host_count}: 자산 식별자가 없습니다.")
         for item in [child for child in host if _local_name(child.tag) == "reportitem"]:
@@ -168,4 +192,4 @@ def _nessus_rows(content: bytes) -> dict[str, Any]:
     }
 
 
-__all__ = ["_cpe_product_version", "_nessus_patch_available", "_nessus_rows"]
+__all__ = ["_cpe_product_version", "_nessus_asset_id", "_nessus_patch_available", "_nessus_rows"]

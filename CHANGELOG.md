@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.85 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.86.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.86 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.87.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,14 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+
+## 72.0.87 — 2026-08-14
+
+- Reject SMBIOS all-zero and all-FF `bios-uuid` sentinel values from Tenable `.nessus` authoritative scanner asset identity.
+- Preserve `host-uuid` priority, valid BIOS UUIDs, and McAfee ePO GUID fallback while preventing unrelated hosts with an absent BIOS UUID from false-merging into one VulnFlow asset.
+- Add an end-to-end parser/identity false-merge regression; public bounded suite is 712 tests (78 + 76 + 168 + 80 + 117 + 67 + 126).
+- Keep SQLite schema 46, dependency package pins, scanner connectors, and the feature-frozen product scope unchanged.
 
 
 ## 72.0.86 — 2026-08-14

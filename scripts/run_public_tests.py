@@ -195,7 +195,7 @@ def main() -> int:
     env["PY_COLORS"] = "0"
     env["NO_COLOR"] = "1"
     group_timeout = max(30, int(env.get("VULNFLOW_PUBLIC_TEST_GROUP_TIMEOUT_SECONDS", "300")))
-    expected_counts = (78, 76, 168, 80, 117, 67, 125)
+    expected_counts = (78, 76, 168, 80, 117, 67, 126)
     selected = list(dict.fromkeys(args.group or range(1, len(TEST_GROUPS) + 1)))
     invalid = [index for index in selected if index < 1 or index > len(TEST_GROUPS)]
     if invalid:
