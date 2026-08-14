@@ -144,6 +144,11 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
         if not host_text:
             host_text = _first_text(host_element, "ip")
         hostname = _first_text(host_element, "hostname")
+        asset_element = next(
+            (child for child in host_element if _local_name(child.tag) == "asset"),
+            None,
+        ) if host_element is not None else None
+        asset_id = str(asset_element.attrib.get("asset_id") or "").strip() if asset_element is not None else ""
         nvt = next((child for child in result if _local_name(child.tag) == "nvt"), None)
         nvt_name = _first_text(nvt, "name")
         cves = list(dict.fromkeys(_reference_cves(nvt) + _extract_cves(_first_text(result, "cve"))))
@@ -181,6 +186,7 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
                 "product": product,
                 "cve_id": cve,
                 "asset_name": hostname or host_text,
+                "asset_id": asset_id,
                 "ip_address": _ip_value(host_text),
                 "fqdn": _fqdn_value(hostname),
                 "component": product,
