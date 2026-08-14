@@ -9,7 +9,7 @@ from openpyxl import Workbook
 import pytest
 
 import app.main as main
-from app.core.storage import apply_import_batch, get_source_reconciliation, init_db
+from app.core.storage import apply_import_batch, get_source_reconciliation, init_db, list_assets, list_findings
 from app.services.asset_identity import extract_asset_identifiers, normalize_asset_identifier
 from app.services.finding_imports import (
     auto_map_headers,
@@ -258,6 +258,53 @@ def test_openvas_xml_delta_history_is_not_imported_as_current_finding():
     assert parsed["metadata"]["result_count"] == 1
     assert [row["cve_id"] for row in parsed["rows"]] == ["CVE-2026-10001"]
     assert all(row["cve_id"] != "CVE-2025-9999" for row in parsed["rows"])
+
+
+def test_openvas_xml_preserves_greenbone_asset_uuid_across_host_changes(tmp_path: Path):
+    asset_uuid = "3f90bda4-1ca6-4f08-b9a7-e88b2a2e52c8"
+
+    def payload(result_id: str, ip: str, hostname: str) -> bytes:
+        return f"""<?xml version='1.0'?><report><results><result id='{result_id}'>
+        <name>Stable Greenbone asset</name>
+        <host>{ip}<asset asset_id='{asset_uuid}'/><hostname>{hostname}</hostname></host>
+        <port>443/tcp</port><nvt oid='1.3.6.1.4.1.25623.1.0.77777'>
+        <name>Stable Greenbone asset</name><cvss_base>8.0</cvss_base>
+        <refs><ref type='cve' id='CVE-2026-77777'/></refs></nvt>
+        <severity>8.0</severity><description>Identity continuity regression</description>
+        </result></results></report>""".encode()
+
+    first_parsed = parse_import_file(payload("r1", "192.0.2.10", "old.example.test"), filename="first.xml")
+    second_parsed = parse_import_file(payload("r2", "192.0.2.11", "new.example.test"), filename="second.xml")
+    assert first_parsed["rows"][0]["asset_id"] == asset_uuid
+    assert second_parsed["rows"][0]["asset_id"] == asset_uuid
+
+    identifiers = extract_asset_identifiers(first_parsed["rows"][0], scanner_source="openvas")
+    assert any(
+        item["identifier_type"] == "SCANNER_ASSET_ID" and item["normalized_value"] == asset_uuid
+        for item in identifiers
+    )
+
+    db = tmp_path / "greenbone-asset-identity.sqlite3"
+    init_db(db)
+    previous_db_path = main.DB_PATH
+    main.DB_PATH = db
+    try:
+        first_row = dict(first_parsed["rows"][0])
+        first_row["finding_id"] = "GB-ASSET-R1"
+        second_row = dict(second_parsed["rows"][0])
+        second_row["finding_id"] = "GB-ASSET-R2"
+        first = main.normalize_row(first_row, 0, scanner_source="openvas")
+        second = main.normalize_row(second_row, 1, scanner_source="openvas")
+        apply_import_batch(db, [first], scanner_source="openvas", filename="first.xml")
+        result = apply_import_batch(db, [second], scanner_source="openvas", filename="second.xml")
+    finally:
+        main.DB_PATH = previous_db_path
+
+    assert result["inserted"] == 0
+    assert result["updated"] == 1
+    assert result["merged"] == 1
+    assert len(list_findings(db)) == 1
+    assert len(list_assets(db)) == 1
 
 
 def test_openvas_csv_solution_type_semantics_and_legacy_fallback():

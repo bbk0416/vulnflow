@@ -8,7 +8,7 @@
 - 합성 샘플 데이터와 정책
 - 핵심 운영 문서
 - 대표 화면과 아키텍처 이미지
-- 핵심 업무 흐름을 검증하는 710개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
+- 핵심 업무 흐름을 검증하는 711개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
 - 프로젝트별 SMTP 이메일 알림과 Jira Cloud 이슈·댓글 연동
 - 프로젝트별 파일럿 준비도 점검과 고객용 경영진 보고서
 - 책임별 서비스 레지스트리와 CSV/XLSX·Nessus/OpenVAS 가져오기 모듈 경계
@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.85 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.86 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -118,9 +118,17 @@
 
 
 
-## 72.0.85 Tenable/Nessus patch availability semantics
+## 72.0.86 Greenbone/OpenVAS asset identity continuity
 
-72.0.85는 Tenable `.nessus`의 구조화된 `has_patch` boolean을 무시하고 일반 `solution` 텍스트만으로 `patch_available`을 추론하던 결함을 수정합니다. `has_patch`가 명시되면 그 값을 우선하고, malformed 값은 fail-closed로 0 처리하면서 parser warning을 남깁니다. `has_patch`가 생략된 구형 export에만 기존 solution-text fallback을 유지합니다. 이 수정은 우선순위 점수와 mitigation-required 판정에 잘못된 패치 가용성이 전달되는 것을 막습니다. schema 46, dependency package pins, 지원 scanner connector 범위와 feature-frozen 제품 범위는 변경하지 않습니다.
+72.0.86은 Greenbone XML result host의 `<asset asset_id="...">` UUID를 버리던 결함을 수정합니다. scanner-provided stable asset UUID를 canonical `asset_id`로 보존해 동일 자산의 IP/FQDN이 바뀌어도 별도 자산/finding으로 분리되지 않게 하며, UUID가 없는 export에서는 기존 IP/FQDN/hostname identity 경계를 유지합니다. schema 46, dependency package pins, 지원 scanner connector 범위와 feature-frozen 제품 범위는 변경하지 않습니다.
+
+## 72.0.85 Greenbone/OpenVAS delta-result integrity
+
+72.0.85는 Greenbone/OpenVAS XML delta report에서 현재 `<result>` 안의 비교용 과거 `<result>`를 독립 active finding으로 중복 import하던 결함을 수정합니다. 일반 report XML과 direct result 문서는 유지하면서 첫 importable result 경계에서 재귀 탐색을 멈춰 historical delta result가 현재 remediation 데이터에 섞이지 않게 합니다. schema 46, dependency package pins, 지원 scanner connector 범위와 feature-frozen 제품 범위는 변경하지 않습니다.
+
+## 72.0.84 Tenable/Nessus patch availability semantics
+
+72.0.84는 Tenable `.nessus`의 구조화된 `has_patch` boolean을 무시하고 일반 `solution` 텍스트만으로 `patch_available`을 추론하던 결함을 수정합니다. `has_patch`가 명시되면 그 값을 우선하고, malformed 값은 fail-closed로 0 처리하면서 parser warning을 남깁니다. `has_patch`가 생략된 구형 export에만 기존 solution-text fallback을 유지합니다. 이 수정은 우선순위 점수와 mitigation-required 판정에 잘못된 패치 가용성이 전달되는 것을 막습니다. schema 46, dependency package pins, 지원 scanner connector 범위와 feature-frozen 제품 범위는 변경하지 않습니다.
 
 ## 72.0.83 Greenbone/OpenVAS remediation semantics
 

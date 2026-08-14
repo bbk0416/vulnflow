@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.84 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.85.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.85 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.86.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,14 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+
+## 72.0.86 — 2026-08-14
+
+- Preserve Greenbone/OpenVAS result-host `<asset asset_id="...">` UUIDs as canonical scanner asset IDs instead of discarding the vendor's stable asset identity.
+- Keep one Greenbone asset/finding continuous across IP/FQDN changes when the scanner asset UUID is unchanged, preventing identity splits caused only by network renaming or address churn.
+- Add an end-to-end parser/identity regression; public bounded suite is 711 tests (78 + 76 + 168 + 80 + 117 + 67 + 125).
+- Keep SQLite schema 46, dependency package pins, scanner connectors, and the feature-frozen product scope unchanged.
 
 
 ## 72.0.85 — 2026-08-13

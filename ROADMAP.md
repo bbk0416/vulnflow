@@ -1,6 +1,6 @@
 # VulnFlow productization roadmap
 
-Core 72.0.85 is the current documentation/runtime-contract integrity patch on the 72.0.72 feature-frozen line. The project is **not abandoned**: development has moved from feature-building to free-product validation and, later, evidence-driven commercialization.
+Core 72.0.86 is the current documentation/runtime-contract integrity patch on the 72.0.72 feature-frozen line. The project is **not abandoned**: development has moved from feature-building to free-product validation and, later, evidence-driven commercialization.
 
 ## Phase 1 — Free Public Beta (current)
 
@@ -75,7 +75,7 @@ Do not add product analytics or hidden telemetry merely to run this roadmap. Pre
 ## Current product state
 
 ```text
-CORE_VERSION=72.0.85
+CORE_VERSION=72.0.86
 CURRENT_EDITION=VulnFlow Free — Public Beta
 CURRENT_PRICE=FREE
 PAID_SUBSCRIPTION=NOT_OFFERED
