@@ -43,7 +43,7 @@ def main_smoke() -> int:
     modules = {item["path"]: item for item in architecture["modules"]}
 
     checks = {
-        "version_72_0_7": CURRENT_APP_VERSION == "72.0.87",
+        "version_72_0_7": CURRENT_APP_VERSION == "72.0.88",
         "context_lines_bounded": modules["app/core/context.py"]["lines"] <= 130,
         "composition_lines_bounded": modules["app/core/context_composition.py"]["lines"] <= 140,
         "diagnostics_lines_bounded": modules["app/core/context_diagnostics.py"]["lines"] <= 80,
@@ -55,7 +55,7 @@ def main_smoke() -> int:
         "architecture_pass": architecture["status"] == "PASS",
     }
     report = {
-        "title": "VulnFlow 72.0.87 application context boundary verification",
+        "title": "VulnFlow 72.0.88 application context boundary verification",
         "version": CURRENT_APP_VERSION,
         "checks": checks,
         "passed": sum(checks.values()),

@@ -56,6 +56,22 @@ def _nessus_asset_id(properties: dict[str, str]) -> tuple[str, bool]:
     return str(properties.get("mcafee-epo-guid") or "").strip(), False
 
 
+def _nessus_component_identity(plugin_name: str, service_name: str, port: str, protocol: str) -> str:
+    """Preserve per-endpoint Nessus findings in canonical component identity.
+
+    A single Nessus plugin can legitimately emit separate ReportItem elements for
+    the same vulnerability on different ports.  Port zero represents a host-level
+    result and therefore keeps the historical component value unchanged.
+    """
+    base = str(plugin_name or service_name or "").strip()
+    port_key = str(port or "").strip()
+    if not port_key or port_key == "0":
+        return base
+    protocol_key = str(protocol or "").strip()
+    endpoint = "/".join(value for value in (port_key, protocol_key) if value)
+    return f"{base} [{endpoint}]" if base else endpoint
+
+
 def _nessus_patch_available(solution: str, has_patch: str) -> str:
     """Map Tenable patch metadata to the canonical patch-available flag.
 
@@ -143,6 +159,7 @@ def _nessus_rows(content: bytes) -> dict[str, Any]:
             port = str(item.attrib.get("port") or "").strip()
             protocol = str(item.attrib.get("protocol") or "").strip()
             endpoint = "/".join(value for value in (port, protocol) if value and value != "0")
+            component = _nessus_component_identity(plugin_name, service_name, port, protocol)
             notes = _truncate_notes([
                 _first_text(item, "synopsis"),
                 _first_text(item, "description"),
@@ -167,7 +184,7 @@ def _nessus_rows(content: bytes) -> dict[str, Any]:
                     "asset_id": asset_id,
                     "ip_address": ip_address,
                     "fqdn": properties.get("host-fqdn", ""),
-                    "component": plugin_name,
+                    "component": component,
                     "cvss": cvss,
                     "patch_available": _nessus_patch_available(solution, has_patch),
                     "notes": notes,
