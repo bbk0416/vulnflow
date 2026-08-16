@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.86 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.87.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.87 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.88.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -7,6 +7,14 @@
 - Replace portfolio-only support wording with best-effort Free Beta support boundaries.
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
+
+
+## 72.0.88 — 2026-08-15
+
+- Preserve the Nessus ReportItem port/protocol endpoint in canonical component identity so the same plugin/CVE on different ports remains distinct.
+- Keep host-level `port=0` plugin component identity unchanged while allowing valid multi-port `.nessus` exports to import instead of failing as duplicate canonical findings.
+- Add one end-to-end multi-port import regression; public bounded suite is 713 tests (78 + 76 + 168 + 80 + 117 + 67 + 127).
+- Keep SQLite schema 46, dependency package pins, scanner connectors, and the feature-frozen product scope unchanged.
 
 
 ## 72.0.87 — 2026-08-14

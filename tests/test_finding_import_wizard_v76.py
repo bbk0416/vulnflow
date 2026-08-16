@@ -788,3 +788,45 @@ def test_scanner_source_case_change_reuses_same_source_record(tmp_path: Path):
     detail = get_source_reconciliation(db, "CASE-1")
     assert len(detail["records"]) == 1
     assert detail["records"][0]["scanner_source"] == "nessus-dmz"
+
+
+def test_nessus_same_plugin_cve_on_multiple_ports_imports_as_distinct_findings(tmp_path: Path):
+    payload = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='multi-port'>
+    <ReportHost name='app.example.test'><HostProperties>
+    <tag name='host-ip'>192.0.2.55</tag><tag name='host-fqdn'>app.example.test</tag>
+    <tag name='host-uuid'>HOST-PORT-UUID</tag></HostProperties>
+    <ReportItem port='443' protocol='tcp' svc_name='https' pluginID='55555' pluginName='TLS component vulnerability'>
+    <cve>CVE-2026-55555</cve><cvss3_base_score>8.8</cvss3_base_score></ReportItem>
+    <ReportItem port='8443' protocol='tcp' svc_name='https-alt' pluginID='55555' pluginName='TLS component vulnerability'>
+    <cve>CVE-2026-55555</cve><cvss3_base_score>8.8</cvss3_base_score></ReportItem>
+    </ReportHost></Report></NessusClientData_v2>"""
+    parsed = parse_import_file(payload, filename="multi-port.nessus")
+    assert [row["component"] for row in parsed["rows"]] == [
+        "TLS component vulnerability [443/tcp]",
+        "TLS component vulnerability [8443/tcp]",
+    ]
+
+    host_level = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='host-level'>
+    <ReportHost name='app.example.test'><HostProperties><tag name='host-uuid'>HOST-PORT-UUID</tag></HostProperties>
+    <ReportItem port='0' protocol='tcp' svc_name='general' pluginID='55556' pluginName='Host-level vulnerability'>
+    <cve>CVE-2026-55556</cve></ReportItem></ReportHost></Report></NessusClientData_v2>"""
+    assert parse_import_file(host_level, filename="host-level.nessus")["rows"][0]["component"] == "Host-level vulnerability"
+
+    mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    rows = []
+    for index, row in enumerate(mapped):
+        prepared = dict(row)
+        prepared["finding_id"] = f"NESSUS-PORT-{index + 1}"
+        rows.append(main.normalize_row(prepared, index, scanner_source="nessus"))
+
+    db = tmp_path / "nessus-multi-port.sqlite3"
+    init_db(db)
+    result = apply_import_batch(db, rows, scanner_source="nessus", filename="multi-port.nessus")
+    findings = list_findings(db)
+    assert result["inserted"] == 2
+    assert len(findings) == 2
+    assert {item["component"] for item in findings} == {
+        "TLS component vulnerability [443/tcp]",
+        "TLS component vulnerability [8443/tcp]",
+    }
