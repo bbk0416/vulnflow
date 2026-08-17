@@ -790,6 +790,46 @@ def test_scanner_source_case_change_reuses_same_source_record(tmp_path: Path):
     assert detail["records"][0]["scanner_source"] == "nessus-dmz"
 
 
+def test_openvas_same_nvt_cve_on_multiple_ports_imports_as_distinct_findings(tmp_path: Path):
+    xml_payload = b"""<?xml version='1.0'?><report><results>
+    <result id='r443'><host>192.0.2.88<asset asset_id='GB-MULTIPORT-ASSET'/><hostname>app.example.test</hostname></host>
+    <port>443/tcp</port><nvt oid='1.3.6.1.4.1.25623.1.0.88888'><name>TLS component vulnerability</name><refs><ref type='cve' id='CVE-2026-88888'/></refs></nvt></result>
+    <result id='r8443'><host>192.0.2.88<asset asset_id='GB-MULTIPORT-ASSET'/><hostname>app.example.test</hostname></host>
+    <port>8443/tcp</port><nvt oid='1.3.6.1.4.1.25623.1.0.88888'><name>TLS component vulnerability</name><refs><ref type='cve' id='CVE-2026-88888'/></refs></nvt></result>
+    </results></report>"""
+    csv_payload = (
+        "IP,Hostname,Port,NVT Name,CVEs,CVSS,Summary\n"
+        "192.0.2.89,csv.example.test,443/tcp,TLS component vulnerability,CVE-2026-88889,8.8,one\n"
+        "192.0.2.89,csv.example.test,8443/tcp,TLS component vulnerability,CVE-2026-88889,8.8,two\n"
+    ).encode()
+
+    for filename, payload in (("multi-port.xml", xml_payload), ("multi-port.csv", csv_payload)):
+        parsed = parse_import_file(payload, filename=filename)
+        assert [row["component"] for row in parsed["rows"]] == [
+            "TLS component vulnerability [443/tcp]",
+            "TLS component vulnerability [8443/tcp]",
+        ]
+        mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+        assert errors == []
+        rows = []
+        for index, row in enumerate(mapped):
+            prepared = dict(row)
+            prepared["finding_id"] = f"OPENVAS-PORT-{filename}-{index + 1}"
+            rows.append(main.normalize_row(prepared, index, scanner_source="openvas"))
+        db = tmp_path / f"{filename}.sqlite3"
+        init_db(db)
+        result = apply_import_batch(db, rows, scanner_source="openvas", filename=filename)
+        assert result["inserted"] == 2
+        assert len(list_findings(db)) == 2
+
+    host_level_xml = b"""<?xml version='1.0'?><report><results><result id='host'>
+    <host>192.0.2.90</host><port>0/tcp</port><nvt oid='1.3.6.1.4.1.25623.1.0.88890'><name>Host-level vulnerability</name><refs><ref type='cve' id='CVE-2026-88890'/></refs></nvt>
+    </result></results></report>"""
+    assert parse_import_file(host_level_xml, filename="host-level.xml")["rows"][0]["component"] == "Host-level vulnerability"
+    general_xml = host_level_xml.replace(b"0/tcp", b"general/tcp")
+    assert parse_import_file(general_xml, filename="general.xml")["rows"][0]["component"] == "Host-level vulnerability"
+
+
 def test_nessus_same_plugin_cve_on_multiple_ports_imports_as_distinct_findings(tmp_path: Path):
     payload = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='multi-port'>
     <ReportHost name='app.example.test'><HostProperties>
