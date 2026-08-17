@@ -1,6 +1,7 @@
 """OpenVAS and Greenbone CSV/XML adapters for finding imports."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from app.core.settings import MAX_CSV_ROWS
@@ -29,6 +30,22 @@ def _row_value(row: dict[str, Any], *aliases: str) -> str:
         if value:
             return value
     return ""
+
+
+def _greenbone_component_identity(product: str, port: str) -> str:
+    """Preserve concrete Greenbone/OpenVAS endpoints in component identity.
+
+    Greenbone result ports are commonly represented as ``number/protocol``.
+    Only a non-zero numeric port is endpoint-specific; host-level markers such
+    as ``0/tcp`` or ``general/tcp`` keep the historical component value.
+    """
+    base = str(product or "").strip()
+    port_key = str(port or "").strip()
+    match = re.fullmatch(r"(\d+)(?:/([A-Za-z0-9_.+-]+))?", port_key)
+    if not match or int(match.group(1)) == 0:
+        return base
+    endpoint = match.group(1) + (f"/{match.group(2)}" if match.group(2) else "")
+    return f"{base} [{endpoint}]" if base else endpoint
 
 
 def _greenbone_patch_available(solution: str, solution_type: str) -> str:
@@ -93,12 +110,13 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
             parser_warnings.append(f"행 {source_row}: 자산 식별자가 없습니다.")
         solution = _row_value(raw, "Solution")
         solution_type = _row_value(raw, "Solution Type", "SolutionType")
+        port = _row_value(raw, "Port")
         notes = _truncate_notes([
             _row_value(raw, "Summary"),
             _row_value(raw, "Specific Result", "Result"),
             _row_value(raw, "Impact"),
             f"해결 방법: {solution}" if solution else "",
-            f"포트: {_row_value(raw, 'Port')}" if _row_value(raw, "Port") else "",
+            f"포트: {port}" if port else "",
         ])
         for cve in cves:
             rows.append({
@@ -107,7 +125,7 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
                 "asset_name": hostname or host_value,
                 "ip_address": ip_address,
                 "fqdn": _fqdn_value(hostname),
-                "component": product,
+                "component": _greenbone_component_identity(product, port),
                 "cvss": _row_value(raw, "CVSS", "CVSS Base", "CVSS Base Score", "Severity"),
                 "patch_available": _greenbone_patch_available(solution, solution_type),
                 "notes": notes,
@@ -189,7 +207,7 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
                 "asset_id": asset_id,
                 "ip_address": _ip_value(host_text),
                 "fqdn": _fqdn_value(hostname),
-                "component": product,
+                "component": _greenbone_component_identity(product, port),
                 "cvss": cvss,
                 "patch_available": _greenbone_patch_available(solution, solution_type),
                 "notes": notes,
@@ -212,4 +230,4 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
     }
 
 
-__all__ = ["_greenbone_patch_available", "_greenbone_result_elements", "_openvas_csv_rows", "_openvas_xml_rows", "_row_value"]
+__all__ = ["_greenbone_component_identity", "_greenbone_patch_available", "_greenbone_result_elements", "_openvas_csv_rows", "_openvas_xml_rows", "_row_value"]

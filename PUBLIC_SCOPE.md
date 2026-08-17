@@ -8,7 +8,7 @@
 - 합성 샘플 데이터와 정책
 - 핵심 운영 문서
 - 대표 화면과 아키텍처 이미지
-- 핵심 업무 흐름을 검증하는 713개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
+- 핵심 업무 흐름을 검증하는 714개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
 - 프로젝트별 SMTP 이메일 알림과 Jira Cloud 이슈·댓글 연동
 - 프로젝트별 파일럿 준비도 점검과 고객용 경영진 보고서
 - 책임별 서비스 레지스트리와 CSV/XLSX·Nessus/OpenVAS 가져오기 모듈 경계
@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.88 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.89 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -118,9 +118,13 @@
 
 
 
+## 72.0.89 Greenbone/OpenVAS multi-port finding identity integrity
+
+72.0.89은 Greenbone/OpenVAS CSV·XML에서 동일 NVT/CVE가 같은 자산의 여러 숫자 포트에 각각 존재할 때 `Port`/`<port>`를 notes에만 남기고 canonical component identity에서는 버려 서로 다른 endpoint finding이 같은 canonical key로 충돌하던 결함을 수정합니다. `443/tcp`, `8443/tcp`처럼 구체적인 non-zero 숫자 endpoint는 component identity에 보존하고, `0/tcp`, `general/tcp`, 빈 포트 같은 host-level 값은 기존 component identity를 유지합니다. schema 46, dependency package pins, 지원 scanner connector 범위와 feature-frozen 제품 범위는 변경하지 않습니다.
+
 ## 72.0.88 Tenable/Nessus multi-port finding identity integrity
 
-72.0.88은 Tenable `.nessus`가 같은 취약점 플러그인을 동일 호스트의 여러 포트에서 각각 `ReportItem`으로 내보낼 수 있는데도, port/protocol을 notes에만 남기고 canonical component identity에서 버려 같은 CVE/plugin의 multi-port 결과를 하나로 충돌시키던 결함을 수정합니다. `port>0` 결과는 component identity에 `port/protocol` endpoint를 보존해 서로 다른 포트 finding을 독립적으로 가져오며, `port=0` host-level 플러그인은 기존 component identity를 유지합니다. schema 46, dependency package pins, 지원 scanner connector 범위와 feature-frozen 제품 범위는 변경하지 않습니다.
+72.0.88은 Tenable `.nessus`가 같은 취약점 플러인을 동일 호스트의 여러 포트에서 각각 `ReportItem`으로 내보낼 수 있는데도, port/protocol을 notes에만 남기고 canonical component identity에서 버려 같은 CVE/plugin의 multi-port 결과를 하나로 충돌시키던 결함을 수정합니다. `port>0` 결과는 component identity에 `port/protocol` endpoint를 보존해 서로 다른 포트 finding을 독립적으로 가져오며, `port=0` host-level 플러그인은 기존 component identity를 유지합니다. schema 46, dependency package pins, 지원 scanner connector 범위와 feature-frozen 제품 범위는 변경하지 않습니다.
 
 ## 72.0.87 Tenable/Nessus SMBIOS UUID sentinel integrity
 

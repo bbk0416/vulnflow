@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.87 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.88.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.88 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.89.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -8,6 +8,14 @@
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
 
+
+
+## 72.0.89 — 2026-08-17
+
+- Preserve concrete Greenbone/OpenVAS numeric port endpoints in canonical component identity for both CSV and XML imports.
+- Keep host-level `0/tcp`, `general/tcp`, and empty port values backward-compatible.
+- Add one end-to-end XML+CSV multi-port import regression; public bounded suite is 714 tests (78 + 76 + 168 + 80 + 117 + 67 + 128).
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 ## 72.0.88 — 2026-08-15
 

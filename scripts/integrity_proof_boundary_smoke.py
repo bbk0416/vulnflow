@@ -57,7 +57,7 @@ def main_smoke() -> None:
         and "app.services.integrity_proofs" in set(item.get("internal_imports") or [])
     ]
     checks = {
-        "version_72_0_7": CURRENT_APP_VERSION == "72.0.88",
+        "version_72_0_7": CURRENT_APP_VERSION == "72.0.89",
         "schema_42": CURRENT_SCHEMA_VERSION == 46,
         "proof_v9_registry": PROOF_FORMAT == "vulnflow-integrity-proof/9",
         "architecture_pass": architecture["status"] == "PASS",
@@ -72,7 +72,7 @@ def main_smoke() -> None:
         "hmac_round_trip": result["valid"] is True and result["proof_format"] == "vulnflow-integrity-proof/1",
     }
     payload = {
-        "title": "VulnFlow 72.0.88 integrity proof boundary verification",
+        "title": "VulnFlow 72.0.89 integrity proof boundary verification",
         "version": CURRENT_APP_VERSION,
         "checks": [{"name": name, "passed": passed} for name, passed in checks.items()],
         "result": f"{sum(checks.values())}/{len(checks)}",
