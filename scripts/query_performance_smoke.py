@@ -178,7 +178,7 @@ def main() -> None:
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     lines = [
-        "VulnFlow 72.0.89 FTS5 search and cursor pagination verification",
+        "VulnFlow 72.0.90 FTS5 search and cursor pagination verification",
         f"Synthetic findings: {payload['dataset_rows']}",
         f"Filtered findings: {payload['filtered_count']}",
         f"Indexed page query median: {payload['indexed_query_ms_median']:.3f} ms",

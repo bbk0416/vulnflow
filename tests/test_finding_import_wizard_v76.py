@@ -830,6 +830,31 @@ def test_openvas_same_nvt_cve_on_multiple_ports_imports_as_distinct_findings(tmp
     assert parse_import_file(general_xml, filename="general.xml")["rows"][0]["component"] == "Host-level vulnerability"
 
 
+
+def test_openvas_modern_port_protocol_csv_header_preserves_multi_port_identity(tmp_path: Path):
+    payload = (
+        "IP,Hostname,Port/Protocol,NVT Name,CVEs,CVSS,Summary\n"
+        "192.0.2.111,modern.example.test,443/tcp,TLS component vulnerability,CVE-2026-90111,8.8,one\n"
+        "192.0.2.111,modern.example.test,8443/tcp,TLS component vulnerability,CVE-2026-90111,8.8,two\n"
+    ).encode()
+    parsed = parse_import_file(payload, filename="modern-greenbone.csv", format_hint="openvas")
+    assert [row["component"] for row in parsed["rows"]] == [
+        "TLS component vulnerability [443/tcp]",
+        "TLS component vulnerability [8443/tcp]",
+    ]
+    mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    rows = []
+    for index, row in enumerate(mapped):
+        prepared = dict(row)
+        prepared["finding_id"] = f"OPENVAS-MODERN-PORT-{index + 1}"
+        rows.append(main.normalize_row(prepared, index, scanner_source="openvas"))
+    db = tmp_path / "openvas-modern-port-protocol.sqlite3"
+    init_db(db)
+    result = apply_import_batch(db, rows, scanner_source="openvas", filename="modern-greenbone.csv")
+    assert result["inserted"] == 2
+    assert len(list_findings(db)) == 2
+
 def test_nessus_same_plugin_cve_on_multiple_ports_imports_as_distinct_findings(tmp_path: Path):
     payload = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='multi-port'>
     <ReportHost name='app.example.test'><HostProperties>
