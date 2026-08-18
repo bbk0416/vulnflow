@@ -33,7 +33,7 @@ def main_smoke() -> int:
     except RuntimeError:
         collision_blocked = True
     checks = [
-        ("version_72_0_7", main.CURRENT_APP_VERSION == "72.0.89"),
+        ("version_72_0_7", main.CURRENT_APP_VERSION == "72.0.90"),
         ("schema_42", main.CURRENT_SCHEMA_VERSION == 46),
         ("registry_count", snapshot["service_export_count"] == len(APPLICATION_SERVICE_EXPORTS) >= 250),
         ("registry_fingerprint", len(snapshot["service_export_name_sha256"]) == 64),
@@ -46,7 +46,7 @@ def main_smoke() -> int:
     ]
     passed = sum(bool(value) for _, value in checks)
     payload = {
-        "title": "VulnFlow 72.0.89 application service registry verification",
+        "title": "VulnFlow 72.0.90 application service registry verification",
         "version": main.CURRENT_APP_VERSION,
         "schema_version": main.CURRENT_SCHEMA_VERSION,
         "service_export_count": snapshot["service_export_count"],

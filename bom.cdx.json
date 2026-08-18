@@ -406,7 +406,7 @@
         "pkg:pypi/watchfiles@1.2.0",
         "pkg:pypi/websockets@16.0"
       ],
-      "ref": "pkg:generic/vulnflow@72.0.89"
+      "ref": "pkg:generic/vulnflow@72.0.90"
     },
     {
       "dependsOn": [],
@@ -525,11 +525,11 @@
   ],
   "metadata": {
     "component": {
-      "bom-ref": "pkg:generic/vulnflow@72.0.89",
+      "bom-ref": "pkg:generic/vulnflow@72.0.90",
       "description": "Local vulnerability operations with append-only public integrity-proof transparency logs, signed revocation checkpoints, independent witness quorum, multi-scanner reconciliation, governed VEX, evidence-backed remediation verification, policy governance, RBAC approvals, durable automation, audit integrity, backup and restore",
       "name": "VulnFlow",
       "type": "application",
-      "version": "72.0.89"
+      "version": "72.0.90"
     },
     "timestamp": "2026-08-03T00:00:00Z"
   },

@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.88 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.89.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.89 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.90.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -9,6 +9,13 @@
 - Keep feature development evidence-driven during the free validation phase.
 
 
+
+## 72.0.90 — 2026-08-18
+
+- Recognize the modern Greenbone/OpenVAS CSV `Port/Protocol` header as the endpoint source instead of only accepting the legacy `Port` header.
+- Preserve concrete multi-port endpoint identity for modern CSV exports so same NVT/CVE findings on `443/tcp` and `8443/tcp` do not collapse into one canonical key and reject the batch.
+- Add one end-to-end modern CSV header regression; public bounded suite is 715 tests (78 + 76 + 168 + 80 + 117 + 67 + 129).
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 ## 72.0.89 — 2026-08-17
 

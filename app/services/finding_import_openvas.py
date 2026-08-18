@@ -110,7 +110,7 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
             parser_warnings.append(f"행 {source_row}: 자산 식별자가 없습니다.")
         solution = _row_value(raw, "Solution")
         solution_type = _row_value(raw, "Solution Type", "SolutionType")
-        port = _row_value(raw, "Port")
+        port = _row_value(raw, "Port", "Port/Protocol")
         notes = _truncate_notes([
             _row_value(raw, "Summary"),
             _row_value(raw, "Specific Result", "Result"),
