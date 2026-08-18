@@ -1,7 +1,7 @@
 services:
   vulnflow:
     build: .
-    image: "${VULNFLOW_IMAGE:-vulnflow:72.0.90}"
+    image: "${VULNFLOW_IMAGE:-vulnflow:72.0.91}"
     expose:
       - "8000"
     volumes:

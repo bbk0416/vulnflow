@@ -8,7 +8,7 @@
 - 합성 샘플 데이터와 정책
 - 핵심 운영 문서
 - 대표 화면과 아키텍처 이미지
-- 핵심 업무 흐름을 검증하는 715개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
+- 핵심 업무 흐름을 검증하는 716개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
 - 프로젝트별 SMTP 이메일 알림과 Jira Cloud 이슈·댓글 연동
 - 프로젝트별 파일럿 준비도 점검과 고객용 경영진 보고서
 - 책임별 서비스 레지스트리와 CSV/XLSX·Nessus/OpenVAS 가져오기 모듈 경계
@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.90 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.91 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -117,6 +117,10 @@
 72.0.79는 72.0.78 이후 공격검증에서 재현된 세 가지 import identity-integrity 결함을 최소 수정합니다. scanner-independent canonical key의 component/product text를 Unicode NFC 후 casefold로 정규화해 NFC/NFD 차이만 있는 동일 구성요소가 별도 canonical finding으로 분리되지 않게 합니다. 자동 생성 finding ID의 identity fields도 동일한 Unicode canonicalization을 사용해 같은 scanner/source row가 composed/decomposed 표기만으로 다른 source record가 되지 않게 합니다. preview와 apply의 source-native finding ID 중복 판정도 source-record 계약인 NFC + casefold 기준으로 맞춰, preview에서 허용한 배치가 apply에서 뒤늦게 거부되는 불일치를 제거합니다. schema 46, dependency package pins, scanner connector 및 기능 동결 범위는 변경하지 않습니다.
 
 
+
+## 72.0.91 Greenbone/OpenVAS customizable CSV schema compatibility
+
+72.0.91은 Greenbone/OpenVAS Customizable CSV에서 endpoint가 `Port`와 `Port Protocol` 두 컬럼으로 분리되고 취약점명이 `VT Name`으로 제공되는 형식을 정상화합니다. 72.0.90은 `Port Protocol`을 canonical endpoint에 합치지 않아 같은 숫자 포트의 TCP/UDP finding이 충돌할 수 있었고, `VT Name`을 scanner auto-detect/product alias로 인식하지 못했습니다. 72.0.91은 `Port` + `Port Protocol`을 `port/protocol` endpoint로 결합하고 `VT Name` 기반 CSV를 OpenVAS adapter로 자동 감지합니다. 기존 `Port/Protocol`, legacy `NVT Name`/`Port`, XML 및 host-level identity 동작은 유지하며 schema 46, dependency package pins와 feature-frozen 제품 범위는 변경하지 않습니다.
 
 ## 72.0.90 Greenbone/OpenVAS modern CSV Port/Protocol identity integrity
 

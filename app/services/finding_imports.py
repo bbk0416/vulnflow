@@ -60,7 +60,12 @@ def detect_import_format(filename: str, content: bytes, format_hint: str = "auto
     if suffix in {".csv", ".txt", ""}:
         parsed = _csv_rows(content)
         keys = {_header_key(header) for header in parsed["headers"]}
-        if ({"nvt name", "cves"} <= keys) or ({"nvtname", "cve"} <= keys):
+        has_cve_header = bool(keys & {"cve", "cves", "cve ids"})
+        if (
+            ({"nvt name", "cves"} <= keys)
+            or ({"nvtname", "cve"} <= keys)
+            or ("vt name" in keys and has_cve_header)
+        ):
             return "openvas_csv"
         return "csv"
     raise ValueError("지원 형식은 CSV, XLSX, Nessus(.nessus), OpenVAS CSV/XML입니다.")
