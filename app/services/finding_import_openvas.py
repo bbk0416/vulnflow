@@ -95,7 +95,7 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
     for index, raw in enumerate(parsed["rows"]):
         source_row = parsed["source_rows"][index]
         cves = _extract_cves(_row_value(raw, "CVEs", "CVE", "CVE IDs", "Vulnerability IDs"))
-        product = _row_value(raw, "NVT Name", "Vulnerability Name", "Name", "Finding")
+        product = _row_value(raw, "NVT Name", "VT Name", "Vulnerability Name", "Name", "Finding")
         hostname = _row_value(raw, "Hostname", "Host Name", "DNS Name")
         host_value = _row_value(raw, "IP", "IP Address", "Host IP", "Host")
         ip_address = _ip_value(host_value)
@@ -111,6 +111,9 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
         solution = _row_value(raw, "Solution")
         solution_type = _row_value(raw, "Solution Type", "SolutionType")
         port = _row_value(raw, "Port", "Port/Protocol")
+        port_protocol = _row_value(raw, "Port Protocol")
+        if port_protocol and re.fullmatch(r"\d+", port):
+            port = f"{port}/{port_protocol}"
         notes = _truncate_notes([
             _row_value(raw, "Summary"),
             _row_value(raw, "Specific Result", "Result"),

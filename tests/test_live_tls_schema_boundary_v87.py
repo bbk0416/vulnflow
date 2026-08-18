@@ -25,7 +25,7 @@ def _path_endswith_components(value: str, *components: str) -> bool:
 
 
 def test_database_schema_facade_reexports_central_versions() -> None:
-    assert CURRENT_APP_VERSION == "72.0.90"
+    assert CURRENT_APP_VERSION == "72.0.91"
     assert CURRENT_SCHEMA_VERSION == 46
     assert database_schema.CURRENT_APP_VERSION == CURRENT_APP_VERSION
     assert database_schema.CURRENT_SCHEMA_VERSION == CURRENT_SCHEMA_VERSION

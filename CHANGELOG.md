@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.89 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.90.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.90 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.91.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -9,6 +9,13 @@
 - Keep feature development evidence-driven during the free validation phase.
 
 
+
+## 72.0.91 — 2026-08-18
+
+- Support Greenbone/OpenVAS Customizable CSV exports that separate endpoint data into `Port` and `Port Protocol`, preserving `443/tcp` versus `443/udp` canonical identity.
+- Recognize the current `VT Name` header for OpenVAS CSV auto-detection and product/component naming while retaining legacy `NVT Name` aliases.
+- Add one end-to-end customizable CSV regression covering auto-detection, VT naming, protocol-preserving component identity, and successful two-row batch import; public bounded suite is 716 tests (78 + 76 + 168 + 80 + 117 + 67 + 130).
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 ## 72.0.90 — 2026-08-18
 
