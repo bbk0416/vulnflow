@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.91 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.92.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.92 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.93.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -9,6 +9,13 @@
 - Keep feature development evidence-driven during the free validation phase.
 
 
+
+## 72.0.93 — 2026-08-19
+
+- Preserve current Greenbone OPENVAS SECURITY INTELLIGENCE/OPENVAS REPORT detailed CSV `EPSS score` and `EPSS percentile` values through scanner-specific canonical import instead of silently dropping them.
+- Expose `epss_percentile` in the canonical import mapping contract so the scanner adapter can carry both official EPSS fields into the existing schema 46 finding fields.
+- Add one end-to-end regression covering current detailed CSV parse, canonical mapping, normalization, batch import, and persisted EPSS score/percentile; public collection contract is 718 tests (78 + 76 + 168 + 80 + 117 + 67 + 132), with platform-specific skips reported explicitly.
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 ## 72.0.92 — 2026-08-19
 

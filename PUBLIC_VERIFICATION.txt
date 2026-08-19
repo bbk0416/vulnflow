@@ -1,13 +1,13 @@
-VulnFlow 72.0.92 public verification summary
+VulnFlow 72.0.93 public verification summary
 
 Release scope:
 - current Greenbone detailed CSV `CVE references` compatibility correctness patch on the 72.0.72 feature-frozen line
-- release notes: RELEASE_NOTES_72.0.92.md
+- release notes: RELEASE_NOTES_72.0.93.md
 - SQLite schema remains 46
 - Runtime/development dependency package pins remain unchanged
 
 Locally reproducible public checks required before release:
-- public manifest: 685/685 PASS
+- public manifest: 686/686 PASS
 - documentation consistency: PASS
 - version consistency: 12/12 PASS
 - public submission readiness: 31/31 PASS
@@ -15,9 +15,9 @@ Locally reproducible public checks required before release:
 - static security boundary audit: PASS
 - scanner fixture matrix: 9/9 PASS
 - scanner parser robustness: 6/6 PASS
-- public regression collection contract: 717/717 collected across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 131); platform-specific skips remain explicit
+- public regression collection contract: 718/718 collected across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 132); platform-specific skips remain explicit
 
 Release boundary:
-- The v72.0.92 tag and GitHub Release must only be created after Windows candidate validation and the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
+- The v72.0.93 tag and GitHub Release must only be created after Windows candidate validation and the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
 - The official v72.0.91 tag and release assets are immutable and must not be modified.
 - Real customer scanner corpus validation is not claimed unless separately provided and reproduced.
