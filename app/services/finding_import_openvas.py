@@ -94,7 +94,7 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
     parser_warnings: list[str] = []
     for index, raw in enumerate(parsed["rows"]):
         source_row = parsed["source_rows"][index]
-        cves = _extract_cves(_row_value(raw, "CVEs", "CVE", "CVE IDs", "Vulnerability IDs"))
+        cves = _extract_cves(_row_value(raw, "CVEs", "CVE", "CVE IDs", "CVE References", "Vulnerability IDs"))
         product = _row_value(raw, "NVT Name", "VT Name", "Vulnerability Name", "Name", "Finding")
         hostname = _row_value(raw, "Hostname", "Host Name", "DNS Name")
         host_value = _row_value(raw, "IP", "IP Address", "Host IP", "Host")

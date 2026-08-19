@@ -885,6 +885,43 @@ def test_openvas_customizable_csv_split_port_protocol_and_vt_name_imports_distin
     assert len(list_findings(db)) == 2
 
 
+def test_greenbone_current_security_intelligence_csv_cve_references_imports_distinct_findings(tmp_path: Path):
+    payload = (
+        "Vulnerability name,Port/Protocol,CVE references,Host name,IP address,Severity,Solution type,Solution,QoD,Summary,Impact\n"
+        "TLS component vulnerability,443/tcp,CVE-2026-90200,current.example.test,192.0.2.200,8.8,VendorFix,Upgrade,95,one,impact one\n"
+        "TLS component vulnerability,8443/tcp,CVE-2026-90200,current.example.test,192.0.2.200,8.8,VendorFix,Upgrade,95,two,impact two\n"
+    ).encode()
+    parsed = parse_import_file(payload, filename="vulnerabilities_with_affected_assets.csv")
+    assert parsed["detected_format"] == "openvas_csv"
+    assert parsed["adapter"] == "openvas"
+    assert [row["cve_id"] for row in parsed["rows"]] == ["CVE-2026-90200", "CVE-2026-90200"]
+    assert [row["product"] for row in parsed["rows"]] == [
+        "TLS component vulnerability",
+        "TLS component vulnerability",
+    ]
+    assert [row["component"] for row in parsed["rows"]] == [
+        "TLS component vulnerability [443/tcp]",
+        "TLS component vulnerability [8443/tcp]",
+    ]
+    mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    rows = []
+    for index, row in enumerate(mapped):
+        prepared = dict(row)
+        prepared["finding_id"] = f"GREENBONE-CURRENT-CSV-{index + 1}"
+        rows.append(main.normalize_row(prepared, index, scanner_source="openvas"))
+    db = tmp_path / "greenbone-current-security-intelligence.sqlite3"
+    init_db(db)
+    result = apply_import_batch(
+        db,
+        rows,
+        scanner_source="openvas",
+        filename="vulnerabilities_with_affected_assets.csv",
+    )
+    assert result["inserted"] == 2
+    assert len(list_findings(db)) == 2
+
+
 def test_nessus_same_plugin_cve_on_multiple_ports_imports_as_distinct_findings(tmp_path: Path):
     payload = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='multi-port'>
     <ReportHost name='app.example.test'><HostProperties>

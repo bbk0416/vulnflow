@@ -101,7 +101,7 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
             "public_verification_test_contract",
             _contains(
                 verification,
-                f"public regression suite: {public_total}/{public_total} PASS across seven bounded groups ({group_text})",
+                f"public regression collection contract: {public_total}/{public_total} collected across seven bounded groups ({group_text}); platform-specific skips remain explicit",
             ),
         ),
         ("public_verification_version", _contains(verification, f"VulnFlow {version} public verification summary")),

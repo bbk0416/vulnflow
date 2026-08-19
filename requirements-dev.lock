@@ -1,4 +1,4 @@
-# VulnFlow 72.0.91 development dependency lock.
+# VulnFlow 72.0.92 development dependency lock.
 -r requirements.lock
 certifi==2026.5.20
 charset-normalizer==3.4.7
