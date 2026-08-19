@@ -955,6 +955,44 @@ def test_greenbone_current_detailed_csv_preserves_epss_and_percentile(tmp_path: 
     assert finding["epss_percentile"] == 0.99
 
 
+
+def test_greenbone_current_xml_preserves_max_severity_epss_and_percentile(tmp_path: Path):
+    payload = b"""<?xml version='1.0'?><get_reports_response><report><report><results>
+    <result id='epss-xml'><host>192.0.2.211<hostname>epss-xml.example.test</hostname></host>
+    <port>443/tcp</port><severity>9.8</severity><nvt oid='1.3.6.1.4.1.25623.1.0.90301'>
+    <name>Greenbone XML EPSS vulnerability</name><refs><ref type='cve' id='CVE-2026-90301'/></refs>
+    <epss><max_severity><score>0.82</score><percentile>0.99</percentile>
+    <cve id='CVE-2026-90301'><severity>9.8</severity></cve></max_severity>
+    <max_epss><score>0.91</score><percentile>0.995</percentile>
+    <cve id='CVE-2026-90301'><severity>9.8</severity></cve></max_epss></epss>
+    </nvt></result></results></report></report></get_reports_response>"""
+    parsed = parse_import_file(payload, filename="greenbone-current-epss.xml")
+    assert parsed["detected_format"] == "openvas_xml"
+    assert parsed["adapter"] == "openvas"
+    assert parsed["rows"][0]["epss"] == "0.82"
+    assert parsed["rows"][0]["epss_percentile"] == "0.99"
+
+    mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    prepared = dict(mapped[0])
+    prepared["finding_id"] = "GREENBONE-CURRENT-XML-EPSS-1"
+    normalized = main.normalize_row(prepared, 0, scanner_source="openvas")
+    assert normalized["epss"] == 0.82
+    assert normalized["epss_percentile"] == 0.99
+
+    db = tmp_path / "greenbone-current-xml-epss.sqlite3"
+    init_db(db)
+    result = apply_import_batch(
+        db,
+        [normalized],
+        scanner_source="openvas",
+        filename="greenbone-current-epss.xml",
+    )
+    assert result["inserted"] == 1
+    finding = list_findings(db)[0]
+    assert finding["epss"] == 0.82
+    assert finding["epss_percentile"] == 0.99
+
 def test_nessus_same_plugin_cve_on_multiple_ports_imports_as_distinct_findings(tmp_path: Path):
     payload = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='multi-port'>
     <ReportHost name='app.example.test'><HostProperties>

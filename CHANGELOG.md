@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.92 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.93.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.93 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.94.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -9,6 +9,13 @@
 - Keep feature development evidence-driven during the free validation phase.
 
 
+
+## 72.0.94 — 2026-08-19
+
+- Preserve current Greenbone GMP XML `nvt/epss/max_severity/score` and `percentile` values through scanner-specific canonical import instead of silently dropping them.
+- Follow the GMP `max_severity` EPSS semantics explicitly; do not substitute the separate `max_epss` aggregate.
+- Add one end-to-end regression covering XML parse, canonical mapping, normalization, batch import, and persisted EPSS score/percentile; public collection contract is 719 tests (78 + 76 + 168 + 80 + 117 + 67 + 133), with platform-specific skips reported explicitly.
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 ## 72.0.93 — 2026-08-19
 
