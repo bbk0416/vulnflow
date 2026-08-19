@@ -188,6 +188,10 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
         )
         solution_type = str(solution_element.attrib.get("type") or "").strip() if solution_element is not None else ""
         cvss = _first_text(nvt, "cvss_base", "cvss3_base", "cvss_base_score") or _first_text(result, "severity")
+        epss_element = next((child for child in nvt if _local_name(child.tag) == "epss"), None) if nvt is not None else None
+        epss_max_severity = next((child for child in epss_element if _local_name(child.tag) == "max_severity"), None) if epss_element is not None else None
+        epss = _first_text(epss_max_severity, "score")
+        epss_percentile = _first_text(epss_max_severity, "percentile")
         if not cves:
             source_errors.append({
                 "row_number": result_index,
@@ -214,6 +218,8 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
                 "fqdn": _fqdn_value(hostname),
                 "component": _greenbone_component_identity(product, port),
                 "cvss": cvss,
+                "epss": epss,
+                "epss_percentile": epss_percentile,
                 "patch_available": _greenbone_patch_available(solution, solution_type),
                 "notes": notes,
             })
