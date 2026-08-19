@@ -21,6 +21,7 @@ CANONICAL_IMPORT_FIELDS: tuple[dict[str, Any], ...] = (
     {"name": "component", "label": "구성요소·플러그인", "required": False, "group": "advanced"},
     {"name": "component_version", "label": "구성요소 버전", "required": False, "group": "advanced"},
     {"name": "epss", "label": "EPSS", "required": False, "group": "advanced"},
+    {"name": "epss_percentile", "label": "EPSS percentile", "required": False, "group": "advanced"},
     {"name": "kev", "label": "CISA KEV 여부", "required": False, "group": "advanced"},
     {"name": "internet_exposed", "label": "인터넷 노출", "required": False, "group": "advanced"},
     {"name": "patch_available", "label": "패치·해결책 존재", "required": False, "group": "advanced"},
@@ -55,6 +56,7 @@ _HEADER_ALIASES: dict[str, tuple[str, ...]] = {
         "cvss v3", "severity score",
     ),
     "epss": ("epss", "epss score", "epss probability"),
+    "epss_percentile": ("epss percentile", "epss_percentile", "epss percentile score"),
     "kev": ("kev", "cisa kev", "known exploited", "known exploited vulnerability"),
     "internet_exposed": ("internet_exposed", "internet exposed", "external", "public", "인터넷 노출"),
     "patch_available": (

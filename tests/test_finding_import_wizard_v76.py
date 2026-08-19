@@ -922,6 +922,39 @@ def test_greenbone_current_security_intelligence_csv_cve_references_imports_dist
     assert len(list_findings(db)) == 2
 
 
+def test_greenbone_current_detailed_csv_preserves_epss_and_percentile(tmp_path: Path):
+    payload = (
+        "Severity,EPSS score,EPSS percentile,Vulnerability name,Solution type,Solution,QoD,Summary,Impact,Specific result,CVE references,Port/Protocol,Host name,IP address\n"
+        "8.8,0.82,0.99,TLS component vulnerability,Vendor fix,Upgrade,95,one,impact,detail,CVE-2026-90300,443/tcp,epss.example.test,192.0.2.210\n"
+    ).encode()
+    parsed = parse_import_file(payload, filename="vulnerabilities_with_affected_assets.csv")
+    assert parsed["detected_format"] == "openvas_csv"
+    assert parsed["adapter"] == "openvas"
+    assert parsed["rows"][0]["epss"] == "0.82"
+    assert parsed["rows"][0]["epss_percentile"] == "0.99"
+
+    mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    prepared = dict(mapped[0])
+    prepared["finding_id"] = "GREENBONE-CURRENT-EPSS-1"
+    normalized = main.normalize_row(prepared, 0, scanner_source="openvas")
+    assert normalized["epss"] == 0.82
+    assert normalized["epss_percentile"] == 0.99
+
+    db = tmp_path / "greenbone-current-epss.sqlite3"
+    init_db(db)
+    result = apply_import_batch(
+        db,
+        [normalized],
+        scanner_source="openvas",
+        filename="vulnerabilities_with_affected_assets.csv",
+    )
+    assert result["inserted"] == 1
+    finding = list_findings(db)[0]
+    assert finding["epss"] == 0.82
+    assert finding["epss_percentile"] == 0.99
+
+
 def test_nessus_same_plugin_cve_on_multiple_ports_imports_as_distinct_findings(tmp_path: Path):
     payload = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='multi-port'>
     <ReportHost name='app.example.test'><HostProperties>

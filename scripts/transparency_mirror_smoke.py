@@ -96,7 +96,7 @@ def main() -> None:
         )
         checks.extend([
             {"name": "schema_42", "passed": validate_database_file(db)["schema_version"] == CURRENT_SCHEMA_VERSION == 46},
-            {"name": "app_72_0_4", "passed": CURRENT_APP_VERSION == "72.0.92"},
+            {"name": "app_72_0_4", "passed": CURRENT_APP_VERSION == "72.0.93"},
             {"name": "two_independent_mirrors", "passed": len(documents) == 2},
             {"name": "mirror_quorum", "passed": gossip["quorum"] == 2},
             {"name": "trusted_receipt", "passed": gossip["trusted_receipt_observed"] is True},
@@ -110,7 +110,7 @@ def main() -> None:
 
     passed = sum(bool(item["passed"]) for item in checks)
     payload = {
-        "title": "VulnFlow 72.0.92 transparency mirror gossip verification",
+        "title": "VulnFlow 72.0.93 transparency mirror gossip verification",
         "version": CURRENT_APP_VERSION,
         "schema_version": CURRENT_SCHEMA_VERSION,
         "passed": passed,

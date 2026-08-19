@@ -130,6 +130,8 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
                 "fqdn": _fqdn_value(hostname),
                 "component": _greenbone_component_identity(product, port),
                 "cvss": _row_value(raw, "CVSS", "CVSS Base", "CVSS Base Score", "Severity"),
+                "epss": _row_value(raw, "EPSS score", "EPSS"),
+                "epss_percentile": _row_value(raw, "EPSS percentile"),
                 "patch_available": _greenbone_patch_available(solution, solution_type),
                 "notes": notes,
             })
