@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.90 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.91.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.91 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.92.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -9,6 +9,13 @@
 - Keep feature development evidence-driven during the free validation phase.
 
 
+
+## 72.0.92 — 2026-08-19
+
+- Support current Greenbone OPENVAS SECURITY INTELLIGENCE/OPENVAS REPORT detailed CSV exports that use `CVE references` together with `Vulnerability name`, host identity fields, and optional `Port/Protocol`.
+- Route the current Greenbone header profile through the OpenVAS CSV adapter so CVE identity and endpoint-specific canonical components are preserved instead of falling back to generic CSV handling with a missing `cve_id`.
+- Add one end-to-end current-export regression covering auto-detection, `CVE references`, vulnerability naming, distinct `443/tcp` versus `8443/tcp` component identity, and successful two-row batch import; public collection contract is 717 tests (78 + 76 + 168 + 80 + 117 + 67 + 131), with platform-specific skips reported explicitly.
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 ## 72.0.91 — 2026-08-18
 

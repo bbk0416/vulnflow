@@ -60,11 +60,17 @@ def detect_import_format(filename: str, content: bytes, format_hint: str = "auto
     if suffix in {".csv", ".txt", ""}:
         parsed = _csv_rows(content)
         keys = {_header_key(header) for header in parsed["headers"]}
-        has_cve_header = bool(keys & {"cve", "cves", "cve ids"})
+        has_cve_header = bool(keys & {"cve", "cves", "cve ids", "cve references"})
+        current_greenbone = (
+            {"vulnerability name", "cve references"} <= keys
+            and bool(keys & {"host name", "ip address"})
+            and bool(keys & {"qod", "solution type", "port protocol"})
+        )
         if (
             ({"nvt name", "cves"} <= keys)
             or ({"nvtname", "cve"} <= keys)
             or ("vt name" in keys and has_cve_header)
+            or current_greenbone
         ):
             return "openvas_csv"
         return "csv"
