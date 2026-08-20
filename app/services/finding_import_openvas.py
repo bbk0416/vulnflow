@@ -189,9 +189,15 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
         solution_type = str(solution_element.attrib.get("type") or "").strip() if solution_element is not None else ""
         cvss = _first_text(nvt, "cvss_base", "cvss3_base", "cvss_base_score") or _first_text(result, "severity")
         epss_element = next((child for child in nvt if _local_name(child.tag) == "epss"), None) if nvt is not None else None
-        epss_max_severity = next((child for child in epss_element if _local_name(child.tag) == "max_severity"), None) if epss_element is not None else None
-        epss = _first_text(epss_max_severity, "score")
-        epss_percentile = _first_text(epss_max_severity, "percentile")
+        epss_by_cve: dict[str, tuple[str, str]] = {}
+        for epss_kind in ("max_epss", "max_severity"):
+            epss_group = next((child for child in epss_element if _local_name(child.tag) == epss_kind), None) if epss_element is not None else None
+            epss_cve = next((child for child in epss_group if _local_name(child.tag) == "cve"), None) if epss_group is not None else None
+            epss_cve_id = str(epss_cve.attrib.get("id") or "").strip().upper() if epss_cve is not None else ""
+            if not epss_cve_id and len(cves) == 1:
+                epss_cve_id = cves[0]
+            if epss_cve_id:
+                epss_by_cve[epss_cve_id] = (_first_text(epss_group, "score"), _first_text(epss_group, "percentile"))
         if not cves:
             source_errors.append({
                 "row_number": result_index,
@@ -218,8 +224,8 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
                 "fqdn": _fqdn_value(hostname),
                 "component": _greenbone_component_identity(product, port),
                 "cvss": cvss,
-                "epss": epss,
-                "epss_percentile": epss_percentile,
+                "epss": epss_by_cve.get(cve, ("", ""))[0],
+                "epss_percentile": epss_by_cve.get(cve, ("", ""))[1],
                 "patch_available": _greenbone_patch_available(solution, solution_type),
                 "notes": notes,
             })

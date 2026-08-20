@@ -26,7 +26,7 @@ def main_smoke() -> None:
         and "app.core.storage" in set(item.get("internal_imports") or [])
     ]
     checks = [
-        ("version_72_0_7", storage.CURRENT_APP_VERSION == "72.0.94"),
+        ("version_72_0_7", storage.CURRENT_APP_VERSION == "72.0.95"),
         ("schema_42", storage.CURRENT_SCHEMA_VERSION == 46),
         ("facade_schema_identity", storage.init_db is database_schema.init_db),
         ("facade_audit_identity", storage.add_audit_event is audit.add_audit_event),
@@ -38,7 +38,7 @@ def main_smoke() -> None:
         ("no_internal_facade_imports", offenders == [] and report["status"] == "PASS"),
     ]
     payload = {
-        "title": "VulnFlow 72.0.94 internal storage facade boundary verification",
+        "title": "VulnFlow 72.0.95 internal storage facade boundary verification",
         "version": storage.CURRENT_APP_VERSION,
         "checks": [{"name": name, "passed": passed} for name, passed in checks],
         "passed": sum(bool(passed) for _, passed in checks),

@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.93 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.94.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.94 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.95.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -9,6 +9,13 @@
 - Keep feature development evidence-driven during the free validation phase.
 
 
+
+## 72.0.95 — 2026-08-20
+
+- Bind Greenbone GMP XML EPSS tuples to the representative nested `cve@id` instead of copying one NVT-level `max_severity` score onto every expanded CVE row.
+- Preserve both representative contracts: `max_severity` for the highest-severity CVE and `max_epss` for the highest-EPSS CVE, leaving unrelated referenced CVEs without scanner-supplied EPSS.
+- Add one end-to-end two-CVE attribution regression covering XML parse, canonical mapping, normalization, batch import, and persisted per-CVE EPSS values; public collection contract is 720 tests (78 + 76 + 168 + 80 + 117 + 67 + 134), with platform-specific skips reported explicitly.
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 ## 72.0.94 — 2026-08-19
 
