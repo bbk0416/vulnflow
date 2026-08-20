@@ -91,7 +91,7 @@ def main() -> None:
             json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8"
         )
         lines = [
-            "VulnFlow 72.0.96 SQLite online maintenance verification", "",
+            "VulnFlow 72.0.97 SQLite online maintenance verification", "",
             f"WAL before: {payload['wal_bytes_before']} bytes",
             f"WAL after: {payload['wal_bytes_after']} bytes",
             f"PASSIVE checkpoint: {payload['checkpoint']['passive']}",

@@ -831,6 +831,35 @@ def test_openvas_same_nvt_cve_on_multiple_ports_imports_as_distinct_findings(tmp
 
 
 
+
+def test_greenbone_xml_result_path_preserves_distinct_finding_identity(tmp_path: Path):
+    payload = b"""<?xml version='1.0'?><report><results>
+    <result id='path-a'><host>192.0.2.144<hostname>pkg.example.test</hostname></host>
+    <port>general/tcp</port><path>/opt/app-a/libssl.so</path><nvt oid='1.3.6.1.4.1.25623.1.0.99001'>
+    <name>Local package vulnerability</name><refs><ref type='cve' id='CVE-2026-99001'/></refs></nvt></result>
+    <result id='path-b'><host>192.0.2.144<hostname>pkg.example.test</hostname></host>
+    <port>general/tcp</port><path>/srv/app-b/libssl.so</path><nvt oid='1.3.6.1.4.1.25623.1.0.99001'>
+    <name>Local package vulnerability</name><refs><ref type='cve' id='CVE-2026-99001'/></refs></nvt></result>
+    </results></report>"""
+    parsed = parse_import_file(payload, filename="greenbone-result-path.xml")
+    assert parsed["detected_format"] == "openvas_xml"
+    assert [row["component"] for row in parsed["rows"]] == [
+        "Local package vulnerability [/opt/app-a/libssl.so]",
+        "Local package vulnerability [/srv/app-b/libssl.so]",
+    ]
+    assert "/opt/app-a/libssl.so" in parsed["rows"][0]["notes"]
+    assert "/srv/app-b/libssl.so" in parsed["rows"][1]["notes"]
+    mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    normalized = [main.normalize_row(row, index, scanner_source="openvas") for index, row in enumerate(mapped)]
+    assert normalized[0]["finding_id"] != normalized[1]["finding_id"]
+    db = tmp_path / "greenbone-result-path.sqlite3"
+    init_db(db)
+    result = apply_import_batch(db, normalized, scanner_source="openvas", filename="greenbone-result-path.xml")
+    assert result["inserted"] == 2
+    assert len(list_findings(db)) == 2
+
+
 def test_openvas_modern_port_protocol_csv_header_preserves_multi_port_identity(tmp_path: Path):
     payload = (
         "IP,Hostname,Port/Protocol,NVT Name,CVEs,CVSS,Summary\n"

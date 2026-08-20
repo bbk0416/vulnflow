@@ -8,7 +8,7 @@
 - 합성 샘플 데이터와 정책
 - 핵심 운영 문서
 - 대표 화면과 아키텍처 이미지
-- 핵심 업무 흐름을 검증하는 721개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
+- 핵심 업무 흐름을 검증하는 722개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
 - 프로젝트별 SMTP 이메일 알림과 Jira Cloud 이슈·댓글 연동
 - 프로젝트별 파일럿 준비도 점검과 고객용 경영진 보고서
 - 책임별 서비스 레지스트리와 CSV/XLSX·Nessus/OpenVAS 가져오기 모듈 경계
@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.96 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.97 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -118,9 +118,9 @@
 
 
 
-## 72.0.96 Greenbone CSV multi-CVE EPSS attribution fail-safe
+## 72.0.97 Greenbone XML result path identity
 
-72.0.96은 Greenbone 상세 CSV의 `EPSS score`/`EPSS percentile`이 NVT의 highest-severity CVE 대표값인데 CSV 행 자체에는 그 대표 CVE ID가 없는 경계를 fail-safe로 처리합니다. 72.0.95까지는 `CVE references`가 여러 개인 행을 canonical CVE별로 확장하면서 하나의 EPSS tuple을 모든 CVE에 복제해 다른 CVE의 우선순위 입력값을 잘못 채울 수 있었습니다. 72.0.96은 단일-CVE 행의 EPSS 보존은 유지하고, 다중-CVE 행은 대표 CVE를 추측하지 않고 CVE별 EPSS를 비우며 parser warning을 남깁니다. 72.0.95의 XML nested `cve@id` 기반 정확한 귀속, schema 46과 dependency package pins는 변경하지 않습니다.
+72.0.97은 Greenbone GMP XML result의 non-empty `<path>`를 canonical component identity와 notes에 보존합니다. 72.0.96까지는 동일 자산·CVE·NVT·host-level port에 서로 다른 로컬 파일 경로가 있는 별도 scanner result가 같은 component와 generated finding identity로 충돌해 하나가 duplicate로 거부될 수 있었습니다. 72.0.97은 서로 다른 result path를 별도 finding으로 유지하며, path가 없는 XML과 기존 numeric port identity, 72.0.96의 CSV multi-CVE EPSS fail-safe, 72.0.95의 XML per-CVE EPSS 귀속, schema 46과 dependency package pins는 변경하지 않습니다.
 
 
 ## 72.0.95 Greenbone XML per-CVE EPSS attribution

@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.95 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.96.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.96 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.97.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -8,6 +8,14 @@
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
 
+
+
+## 72.0.97 — 2026-08-20
+
+- Preserve Greenbone GMP XML result-level `<path>` in canonical component identity and notes so separate local file locations for the same asset/CVE/NVT do not collapse into one generated finding identity.
+- Keep existing non-zero numeric `port/protocol` endpoint identity and path-absent XML behavior unchanged; Greenbone CSV, Nessus, generic imports, per-CVE XML EPSS attribution and multi-CVE CSV EPSS fail-safe remain unchanged.
+- Add one end-to-end two-path XML regression covering parse, mapping, generated identity, batch import, and two persisted findings; public collection contract is 722 tests (78 + 76 + 168 + 80 + 117 + 67 + 136), with platform-specific skips reported explicitly.
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 
 ## 72.0.96 — 2026-08-20
