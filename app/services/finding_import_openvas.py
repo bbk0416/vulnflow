@@ -32,7 +32,7 @@ def _row_value(row: dict[str, Any], *aliases: str) -> str:
     return ""
 
 
-def _greenbone_component_identity(product: str, port: str) -> str:
+def _greenbone_component_identity(product: str, port: str, path: str = "") -> str:
     """Preserve concrete Greenbone/OpenVAS endpoints in component identity.
 
     Greenbone result ports are commonly represented as ``number/protocol``.
@@ -42,10 +42,11 @@ def _greenbone_component_identity(product: str, port: str) -> str:
     base = str(product or "").strip()
     port_key = str(port or "").strip()
     match = re.fullmatch(r"(\d+)(?:/([A-Za-z0-9_.+-]+))?", port_key)
-    if not match or int(match.group(1)) == 0:
-        return base
-    endpoint = match.group(1) + (f"/{match.group(2)}" if match.group(2) else "")
-    return f"{base} [{endpoint}]" if base else endpoint
+    if match and int(match.group(1)) != 0:
+        endpoint = match.group(1) + (f"/{match.group(2)}" if match.group(2) else "")
+        base = f"{base} [{endpoint}]" if base else endpoint
+    path_key = str(path or "").strip()
+    return f"{base} [{path_key}]" if path_key else base
 
 
 def _greenbone_patch_available(solution: str, solution_type: str) -> str:
@@ -214,10 +215,12 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
             parser_warnings.append(f"result {result_index}: 자산 식별자가 없습니다.")
         product = nvt_name or _first_text(result, "name") or "OpenVAS finding"
         port = _first_text(result, "port")
+        path = _first_text(result, "path")
         notes = _truncate_notes([
             description,
             f"해결 방법: {solution}" if solution else "",
             f"포트: {port}" if port else "",
+            f"경로: {path}" if path else "",
         ])
         for cve in cves:
             rows.append({
@@ -227,7 +230,7 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
                 "asset_id": asset_id,
                 "ip_address": _ip_value(host_text),
                 "fqdn": _fqdn_value(hostname),
-                "component": _greenbone_component_identity(product, port),
+                "component": _greenbone_component_identity(product, port, path),
                 "cvss": cvss,
                 "epss": epss_by_cve.get(cve, ("", ""))[0],
                 "epss_percentile": epss_by_cve.get(cve, ("", ""))[1],
