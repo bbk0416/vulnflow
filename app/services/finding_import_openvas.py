@@ -121,6 +121,11 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
             f"해결 방법: {solution}" if solution else "",
             f"포트: {port}" if port else "",
         ])
+        epss = _row_value(raw, "EPSS score", "EPSS")
+        epss_percentile = _row_value(raw, "EPSS percentile")
+        if len(cves) > 1 and (epss or epss_percentile):
+            parser_warnings.append(f"행 {source_row}: 다중-CVE Greenbone CSV의 EPSS 대표 CVE를 식별할 수 없어 CVE별 EPSS를 비웁니다.")
+            epss = epss_percentile = ""
         for cve in cves:
             rows.append({
                 "product": product or "OpenVAS finding",
@@ -130,8 +135,8 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
                 "fqdn": _fqdn_value(hostname),
                 "component": _greenbone_component_identity(product, port),
                 "cvss": _row_value(raw, "CVSS", "CVSS Base", "CVSS Base Score", "Severity"),
-                "epss": _row_value(raw, "EPSS score", "EPSS"),
-                "epss_percentile": _row_value(raw, "EPSS percentile"),
+                "epss": epss,
+                "epss_percentile": epss_percentile,
                 "patch_available": _greenbone_patch_available(solution, solution_type),
                 "notes": notes,
             })

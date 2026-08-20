@@ -97,7 +97,7 @@ def main() -> None:
             checks.append({"name": "duplicate_witness_rejected", "passed": False})
 
     passed = sum(bool(item["passed"]) for item in checks)
-    payload = {"title": "VulnFlow 72.0.95 checkpoint witness quorum verification", "version": CURRENT_APP_VERSION,
+    payload = {"title": "VulnFlow 72.0.96 checkpoint witness quorum verification", "version": CURRENT_APP_VERSION,
                "schema_version": CURRENT_SCHEMA_VERSION, "passed": passed, "total": len(checks), "checks": checks}
     REPORTS.mkdir(parents=True, exist_ok=True)
     (REPORTS / "checkpoint_witness_verification.json").write_text(

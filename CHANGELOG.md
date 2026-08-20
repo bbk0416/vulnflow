@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.94 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.95.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.95 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.96.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -8,6 +8,14 @@
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
 
+
+
+## 72.0.96 — 2026-08-20
+
+- Stop copying one Greenbone detailed-CSV NVT-level `EPSS score`/`EPSS percentile` tuple onto every expanded CVE when `CVE references` contains multiple CVEs and the representative CVE ID is unavailable.
+- Preserve scanner-supplied EPSS for single-CVE CSV rows; for multi-CVE rows, leave per-CVE EPSS empty and emit a parser warning rather than guessing which CVE owns the metric.
+- Add one end-to-end multi-CVE CSV regression covering parse, canonical expansion, normalization, batch import, persisted fail-safe values, and warning behavior; public collection contract is 721 tests (78 + 76 + 168 + 80 + 117 + 67 + 135), with platform-specific skips reported explicitly.
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 
 ## 72.0.95 — 2026-08-20
