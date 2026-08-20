@@ -993,6 +993,42 @@ def test_greenbone_current_xml_preserves_max_severity_epss_and_percentile(tmp_pa
     assert finding["epss"] == 0.82
     assert finding["epss_percentile"] == 0.99
 
+def test_greenbone_xml_epss_is_attributed_to_representative_cve(tmp_path: Path):
+    payload = b"""<?xml version='1.0'?><get_reports_response><report><report><results>
+    <result id='multi-epss'><host>192.0.2.220<hostname>multi-epss.example.test</hostname></host>
+    <port>443/tcp</port><severity>9.8</severity><nvt oid='1.3.6.1.4.1.25623.1.0.91000'>
+    <name>Greenbone multi-CVE EPSS vulnerability</name><refs>
+    <ref type='cve' id='CVE-2026-91001'/><ref type='cve' id='CVE-2026-91002'/></refs>
+    <epss><max_severity><score>0.10</score><percentile>0.40</percentile>
+    <cve id='CVE-2026-91001'><severity>9.8</severity></cve></max_severity>
+    <max_epss><score>0.90</score><percentile>0.99</percentile>
+    <cve id='CVE-2026-91002'><severity>7.5</severity></cve></max_epss></epss>
+    </nvt></result></results></report></report></get_reports_response>"""
+    parsed = parse_import_file(payload, filename="greenbone-multi-cve-epss.xml")
+    assert parsed["detected_format"] == "openvas_xml"
+    by_cve = {row["cve_id"]: row for row in parsed["rows"]}
+    assert (by_cve["CVE-2026-91001"]["epss"], by_cve["CVE-2026-91001"]["epss_percentile"]) == ("0.10", "0.40")
+    assert (by_cve["CVE-2026-91002"]["epss"], by_cve["CVE-2026-91002"]["epss_percentile"]) == ("0.90", "0.99")
+
+    mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    normalized = []
+    for index, row in enumerate(mapped, start=1):
+        prepared = dict(row)
+        prepared["finding_id"] = f"GREENBONE-MULTI-EPSS-{index}"
+        normalized.append(main.normalize_row(prepared, index - 1, scanner_source="openvas"))
+
+    db = tmp_path / "greenbone-multi-cve-epss.sqlite3"
+    init_db(db)
+    result = apply_import_batch(db, normalized, scanner_source="openvas", filename="greenbone-multi-cve-epss.xml")
+    assert result["inserted"] == 2
+    persisted = {finding["cve_id"]: finding for finding in list_findings(db)}
+    assert persisted["CVE-2026-91001"]["epss"] == 0.10
+    assert persisted["CVE-2026-91001"]["epss_percentile"] == 0.40
+    assert persisted["CVE-2026-91002"]["epss"] == 0.90
+    assert persisted["CVE-2026-91002"]["epss_percentile"] == 0.99
+
+
 def test_nessus_same_plugin_cve_on_multiple_ports_imports_as_distinct_findings(tmp_path: Path):
     payload = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='multi-port'>
     <ReportHost name='app.example.test'><HostProperties>

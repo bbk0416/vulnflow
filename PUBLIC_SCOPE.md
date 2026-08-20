@@ -8,7 +8,7 @@
 - 합성 샘플 데이터와 정책
 - 핵심 운영 문서
 - 대표 화면과 아키텍처 이미지
-- 핵심 업무 흐름을 검증하는 719개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
+- 핵심 업무 흐름을 검증하는 720개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
 - 프로젝트별 SMTP 이메일 알림과 Jira Cloud 이슈·댓글 연동
 - 프로젝트별 파일럿 준비도 점검과 고객용 경영진 보고서
 - 책임별 서비스 레지스트리와 CSV/XLSX·Nessus/OpenVAS 가져오기 모듈 경계
@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.94 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.95 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -118,9 +118,13 @@
 
 
 
+## 72.0.95 Greenbone XML per-CVE EPSS attribution
+
+72.0.95는 Greenbone GMP XML result NVT의 `epss/max_severity`와 `epss/max_epss`가 각각 nested `cve@id`로 지정하는 대표 CVE를 확인한 뒤 해당 CVE의 canonical `epss`/`epss_percentile`에만 값을 귀속합니다. 72.0.94는 `max_severity` 값을 보존했지만 다중-CVE NVT에서 그 값을 모든 expanded CVE 행에 복제해 다른 CVE의 우선순위 입력값을 잘못 덮을 수 있었습니다. 72.0.95는 XML이 명시한 두 대표 CVE 외의 CVE에는 scanner-supplied EPSS를 임의로 복제하지 않습니다. schema 46과 dependency package pins는 변경하지 않습니다.
+
 ## 72.0.94 current Greenbone XML EPSS preservation
 
-72.0.94는 현재 Greenbone GMP XML result NVT의 `epss/max_severity/score`와 `epss/max_severity/percentile`을 canonical `epss`/`epss_percentile`로 보존합니다. 72.0.93은 현재 상세 CSV EPSS 필드는 보존했지만 XML adapter가 공식 GMP EPSS 구조를 읽지 않아 XML import에서 우선순위 입력값이 유실될 수 있었습니다. 72.0.94는 Greenbone이 일반 `epss_score`에 대응시키는 `max_severity` 의미를 따르며 별도의 `max_epss` 값을 대체 사용하지 않습니다. schema 46과 dependency package pins는 변경하지 않습니다.
+72.0.94는 Greenbone GMP XML result NVT의 `epss/max_severity/score`와 `epss/max_severity/percentile`을 canonical `epss`/`epss_percentile`로 보존합니다. 72.0.93은 현재 상세 CSV EPSS 필드는 보존했지만 XML adapter가 공식 GMP EPSS 구조를 읽지 않아 XML import에서 우선순위 입력값이 유실될 수 있었습니다. 72.0.94는 Greenbone의 `max_severity` 대표 값을 읽되, 당시에는 다중-CVE NVT의 per-CVE 귀속까지 구분하지 않았습니다. schema 46과 dependency package pins는 변경하지 않았습니다.
 
 ## 72.0.93 current Greenbone EPSS preservation
 
