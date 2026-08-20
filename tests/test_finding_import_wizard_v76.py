@@ -956,6 +956,37 @@ def test_greenbone_current_detailed_csv_preserves_epss_and_percentile(tmp_path: 
 
 
 
+
+def test_greenbone_current_detailed_csv_does_not_misattribute_epss_across_multiple_cves(tmp_path: Path):
+    payload = (
+        "Severity,EPSS score,EPSS percentile,Vulnerability name,Solution type,Solution,QoD,Summary,Impact,Specific result,CVE references,Port/Protocol,Host name,IP address\n"
+        '8.8,0.82,0.99,Multi-CVE Greenbone VT,Vendor fix,Upgrade,95,one,impact,detail,"CVE-2026-90301; CVE-2026-90302",443/tcp,epss-multi.example.test,192.0.2.211\n'
+    ).encode()
+    parsed = parse_import_file(payload, filename="vulnerabilities_with_affected_assets.csv")
+    assert parsed["detected_format"] == "openvas_csv"
+    assert [row["cve_id"] for row in parsed["rows"]] == ["CVE-2026-90301", "CVE-2026-90302"]
+    assert [row["epss"] for row in parsed["rows"]] == ["", ""]
+    assert [row["epss_percentile"] for row in parsed["rows"]] == ["", ""]
+    assert any("다중-CVE" in warning and "EPSS" in warning for warning in parsed["parser_warnings"])
+
+    mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    normalized = []
+    for index, row in enumerate(mapped):
+        prepared = dict(row)
+        prepared["finding_id"] = f"GREENBONE-CURRENT-MULTI-EPSS-{index + 1}"
+        normalized.append(main.normalize_row(prepared, index, scanner_source="openvas"))
+    assert [row["epss"] for row in normalized] == [0.0, 0.0]
+    assert [row["epss_percentile"] for row in normalized] == [0.0, 0.0]
+
+    db = tmp_path / "greenbone-current-multi-epss.sqlite3"
+    init_db(db)
+    result = apply_import_batch(db, normalized, scanner_source="openvas", filename="vulnerabilities_with_affected_assets.csv")
+    assert result["inserted"] == 2
+    findings = sorted(list_findings(db), key=lambda row: row["cve_id"])
+    assert [row["epss"] for row in findings] == [0.0, 0.0]
+    assert [row["epss_percentile"] for row in findings] == [0.0, 0.0]
+
 def test_greenbone_current_xml_preserves_max_severity_epss_and_percentile(tmp_path: Path):
     payload = b"""<?xml version='1.0'?><get_reports_response><report><report><results>
     <result id='epss-xml'><host>192.0.2.211<hostname>epss-xml.example.test</hostname></host>

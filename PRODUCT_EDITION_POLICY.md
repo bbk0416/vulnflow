@@ -1,7 +1,7 @@
 # VulnFlow product edition policy
 
 Status: Free Public Beta policy
-Core release: 72.0.95
+Core release: 72.0.96
 
 This is a product-direction document, not legal or tax advice. Commercial licensing, billing and terms must be reviewed before the first paid transaction.
 
@@ -12,7 +12,7 @@ This is a product-direction document, not legal or tax advice. Commercial licens
 - Price: free.
 - Distribution: public GitHub source/release assets.
 - Deployment: local/self-hosted.
-- Core license for 72.0.95: MIT License.
+- Core license for 72.0.96: MIT License.
 - Billing, paid subscription, paid SLA and paid support: not currently offered.
 
 The current Free edition exists to validate real scanner compatibility and the remediation-closeout workflow, not to simulate a commercial service before one exists.
@@ -54,7 +54,7 @@ These items are not promises and should not be implemented merely to create a fe
 
 ## MIT release boundary
 
-The existing 72.0.72 release and the current 72.0.95 defect-patch release are distributed under the MIT License. Their existing license grants are not retroactively removed by a future commercial edition.
+The existing 72.0.72 release and the current 72.0.96 defect-patch release are distributed under the MIT License. Their existing license grants are not retroactively removed by a future commercial edition.
 
 A future paid product may combine the MIT-licensed Free core with separately developed commercial components or may use a different licensing structure for new code where legally available. The exact commercial licensing model must be reviewed before the first paid transaction.
 
