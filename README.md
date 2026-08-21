@@ -1,4 +1,4 @@
-# VulnFlow Free — Public Beta (Core 72.0.97)
+# VulnFlow Free — Public Beta (Core 72.0.98)
 
 [![public-ci](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml/badge.svg)](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml)
 
@@ -17,10 +17,10 @@
 
 ### 현재 상태 — Free Public Beta
 
-VulnFlow는 현재 **무료 공개 베타(Free Public Beta)** 로 제공합니다. 코어 버전은 `72.0.97`이며, 신규 기능을 선제적으로 늘리기보다 실제 스캐너 호환성, 사용 흐름의 막힘, 보안·신뢰성 결함에서 확인된 문제만 수정합니다.
+VulnFlow는 현재 **무료 공개 베타(Free Public Beta)** 로 제공합니다. 코어 버전은 `72.0.98`이며, 신규 기능을 선제적으로 늘리기보다 실제 스캐너 호환성, 사용 흐름의 막힘, 보안·신뢰성 결함에서 확인된 문제만 수정합니다.
 
 - 현재 결제, 유료 구독, 상용 SLA 또는 유료 지원 상품은 제공하지 않습니다.
-- 현재 공개된 `72.0.97` 소스는 MIT License이며 해당 버전에 부여된 권리는 그대로 유지됩니다.
+- 현재 공개된 `72.0.98` 소스는 MIT License이며 해당 버전에 부여된 권리는 그대로 유지됩니다.
 - 기본 제품은 사용자가 직접 운영하는 로컬/self-hosted 방식입니다. 이메일·Jira·OSV 등 외부 연동을 직접 설정하면 해당 기능에 필요한 외부 통신이 발생할 수 있습니다.
 - 향후 사업 운영 기반이 마련되면 **구독형 유료 에디션(working name: VulnFlow Pro)** 을 별도로 도입할 수 있습니다. 기능·가격·라이선스는 아직 확정하지 않았으며, 현재 MIT 릴리스의 권리를 소급해 제한하지 않습니다.
 
@@ -28,7 +28,7 @@ VulnFlow는 현재 **무료 공개 베타(Free Public Beta)** 로 제공합니�
 
 ### 업그레이드
 
-72.0.24 이하에서 업그레이드하는 경우 서비스를 중지하고 `data/` 전체를 별도 복사한 뒤 처음 실행하세요. 세부 버전별 변경과 마이그레이션 경계는 [CHANGELOG.md](CHANGELOG.md)와 현재 [릴리스 노트](RELEASE_NOTES_72.0.97.md)를 확인하세요.
+72.0.24 이하에서 업그레이드하는 경우 서비스를 중지하고 `data/` 전체를 별도 복사한 뒤 처음 실행하세요. 세부 버전별 변경과 마이그레이션 경계는 [CHANGELOG.md](CHANGELOG.md)와 현재 [릴리스 노트](RELEASE_NOTES_72.0.98.md)를 확인하세요.
 
 ## 핵심 흐름
 
@@ -172,7 +172,7 @@ python scripts/production_validation.py --docker auto --json-output reports/prod
 
 ## 공개 검증 범위
 
-공개 핵심 회귀시험 수집 계약은 **722개**이며 7개의 비중복 bounded pytest 그룹으로 실행합니다. 플랫폼별 skip은 실제 pass와 구분해 명시합니다. 별도로 Chromium 브라우저 E2E 3개가 기본 사용자 흐름을 검증합니다.
+공개 핵심 회귀시험 수집 계약은 **723개**이며 7개의 비중복 bounded pytest 그룹으로 실행합니다. 플랫폼별 skip은 실제 pass와 구분해 명시합니다. 별도로 Chromium 브라우저 E2E 3개가 기본 사용자 흐름을 검증합니다.
 
 ```bash
 python scripts/run_public_tests.py
@@ -185,7 +185,7 @@ python scripts/run_quality_gates.py
 
 핵심 회귀는 인증, 스캐너 수집, 우선순위, 조치·검증·승인, 자산, 증거, SBOM/OSV, 백업·복구와 동일 호스트 coordination을 포함합니다. 브라우저 E2E는 대시보드→조치 상태 변경, 파일 가져오기→검색, 위험수용 요청→승인 흐름을 실제 Chromium으로 확인합니다.
 
-현재 공개 CI는 Windows와 Ubuntu의 Python 3.12·3.13에서 잠금 런타임과 공개 회귀를 검증합니다. 72.0.97 코어는 Greenbone GMP XML result의 non-empty `<path>`를 canonical component identity와 notes에 보존해 동일 자산·CVE·NVT의 서로 다른 로컬 파일 위치가 하나의 finding으로 충돌하지 않게 합니다. path가 없는 XML의 기존 component identity와 non-zero numeric `<port>` endpoint identity는 유지합니다. 72.0.96의 Greenbone 상세 CSV 다중-CVE EPSS fail-safe, 72.0.95의 GMP XML nested `cve@id` 기반 per-CVE EPSS 귀속, Customizable/legacy CSV, Nessus 및 generic import 동작은 변경하지 않습니다. schema 46과 dependency package pins, 지원 scanner connector 범위도 변경하지 않습니다. Docker engine 또는 실제 고객 스캐너 corpus가 없는 환경은 `unavailable`/`not-provided`로 구분하며 제품 PASS로 꾸미지 않습니다.
+현재 공개 CI는 Windows와 Ubuntu의 Python 3.12·3.13에서 잠금 런타임과 공개 회귀를 검증합니다. 72.0.98 코어는 Greenbone 다중-CVE 결과의 NVT-level CVSS를 모든 CVE에 복제하지 않습니다. GMP XML은 `epss/max_severity`와 `epss/max_epss`의 nested `cve@id/severity`가 명시한 대표 CVE에만 scanner-supplied CVSS를 귀속하고, detailed CSV는 대표 CVE ID가 없어 다중-CVE 행의 per-CVE CVSS를 비우며 warning을 남깁니다. 단일-CVE CVSS, 72.0.97의 XML result-path identity, 72.0.96의 CSV multi-CVE EPSS fail-safe, 72.0.95의 XML per-CVE EPSS 귀속, Nessus 및 generic import 동작은 유지합니다. schema 46과 dependency package pins, 지원 scanner connector 범위도 변경하지 않습니다. Docker engine 또는 실제 고객 스캐너 corpus가 없는 환경은 `unavailable`/`not-provided`로 구분하며 제품 PASS로 꾸미지 않습니다.
 
 ## 기술 구성
 
@@ -236,7 +236,7 @@ python scripts/run_quality_gates.py
 - Free/향후 유료 에디션 정책: [PRODUCT_EDITION_POLICY.md](PRODUCT_EDITION_POLICY.md)
 - 제품화 로드맵: [ROADMAP.md](ROADMAP.md)
 - 전체 변경 이력: [CHANGELOG.md](CHANGELOG.md)
-- 현재 릴리스 노트: [RELEASE_NOTES_72.0.97.md](RELEASE_NOTES_72.0.97.md)
+- 현재 릴리스 노트: [RELEASE_NOTES_72.0.98.md](RELEASE_NOTES_72.0.98.md)
 - 과거 세부 릴리스 노트: [`docs/archive/releases/`](docs/archive/releases/)
 
 ## 확인된 한계
@@ -262,4 +262,4 @@ MIT License. 자세한 내용은 [LICENSE](LICENSE)를 확인하세요.
 
 ## Version identifier
 
-`72.0.97` is an internal iteration identifier retained from the development process. It does not represent 72 public major releases. Public changes after this initial publication are tracked through normal issues, branches, pull requests, and commits.
+`72.0.98` is an internal iteration identifier retained from the development process. It does not represent 72 public major releases. Public changes after this initial publication are tracked through normal issues, branches, pull requests, and commits.

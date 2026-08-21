@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.96 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.97.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.97 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.98.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -8,6 +8,14 @@
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
 
+
+
+## 72.0.98 — 2026-08-21
+
+- Stop copying one Greenbone NVT-level CVSS value onto every expanded CVE in multi-CVE XML and detailed CSV results.
+- For GMP XML, bind nested `epss/max_severity` and `epss/max_epss` `cve@id/severity` values to the represented CVE; for multi-CVE CSV, leave per-CVE CVSS empty and warn when the representative CVE cannot be identified.
+- Preserve single-CVE CVSS behavior and the 72.0.97 result-path, 72.0.96 CSV EPSS, and 72.0.95 XML EPSS fixes; add one end-to-end Greenbone CVSS attribution regression. Public collection contract is 723 tests (78 + 76 + 168 + 80 + 117 + 67 + 137), with platform-specific skips reported explicitly.
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 
 ## 72.0.97 — 2026-08-20

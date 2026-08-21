@@ -1,13 +1,13 @@
-VulnFlow 72.0.97 public verification summary
+VulnFlow 72.0.98 public verification summary
 
 Release scope:
-- Greenbone GMP XML result-path finding-identity correctness patch on the 72.0.72 feature-frozen line
-- release notes: RELEASE_NOTES_72.0.97.md
+- Greenbone multi-CVE CVSS attribution correctness patch on the 72.0.72 feature-frozen line
+- release notes: RELEASE_NOTES_72.0.98.md
 - SQLite schema remains 46
 - Runtime/development dependency package pins remain unchanged
 
 Locally reproducible public checks required before release:
-- public manifest: 690/690 PASS
+- public manifest: 691/691 PASS
 - documentation consistency: PASS
 - version consistency: 12/12 PASS
 - public submission readiness: 31/31 PASS
@@ -15,9 +15,9 @@ Locally reproducible public checks required before release:
 - static security boundary audit: PASS
 - scanner fixture matrix: 9/9 PASS
 - scanner parser robustness: 6/6 PASS
-- public regression collection contract: 722/722 collected across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 136); platform-specific skips remain explicit
+- public regression collection contract: 723/723 collected across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 137); platform-specific skips remain explicit
 
 Release boundary:
-- The v72.0.97 tag and GitHub Release must only be created after Windows candidate validation and the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
-- The official v72.0.96 predecessor baseline is immutable; previously released tags and release assets must not be modified.
+- The v72.0.98 tag and GitHub Release must only be created after Windows candidate validation and the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
+- The official v72.0.97 predecessor baseline is immutable; previously released tags and release assets must not be modified.
 - Real customer scanner corpus validation is not claimed unless separately provided and reproduced.
