@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import re
 from typing import Any
-
 from app.core.settings import MAX_CSV_ROWS
 from app.services.finding_import_common import (
     CANONICAL_FIELD_NAMES,
@@ -21,7 +20,6 @@ from app.services.finding_import_xml import (
     _reference_cves,
     _safe_xml_document,
 )
-
 def _row_value(row: dict[str, Any], *aliases: str) -> str:
     values = {_header_key(key): _clean_cell(value) for key, value in row.items()}
     for alias in aliases:
@@ -29,8 +27,7 @@ def _row_value(row: dict[str, Any], *aliases: str) -> str:
         if value:
             return value
     return ""
-
-def _greenbone_component_identity(product: str, port: str, path: str = "") -> str:
+def _greenbone_component_identity(product: str, port: str, path: str = "", oci_image: str = "") -> str:
     """Preserve concrete Greenbone/OpenVAS endpoints in component identity.
 
     Greenbone result ports are commonly represented as ``number/protocol``.
@@ -44,8 +41,9 @@ def _greenbone_component_identity(product: str, port: str, path: str = "") -> st
         endpoint = match.group(1) + (f"/{match.group(2)}" if match.group(2) else "")
         base = f"{base} [{endpoint}]" if base else endpoint
     path_key = str(path or "").strip()
-    return f"{base} [{path_key}]" if path_key else base
-
+    base = f"{base} [{path_key}]" if path_key else base
+    image_key = str(oci_image or "").strip()
+    return f"{base} [oci:{image_key}]" if image_key else base
 def _greenbone_patch_available(solution: str, solution_type: str) -> str:
     """Map Greenbone remediation metadata to the canonical patch-available flag.
 
@@ -60,7 +58,6 @@ def _greenbone_patch_available(solution: str, solution_type: str) -> str:
         return "1" if type_key == "vendorfix" else "0"
     solution_key = _header_key(solution)
     return "1" if solution_key and solution_key not in {"n a", "none"} else "0"
-
 def _greenbone_result_elements(root):
     """Return importable Greenbone results without nested delta history.
 
@@ -82,7 +79,6 @@ def _greenbone_result_elements(root):
 
     visit(root)
     return results
-
 def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
     rows: list[dict[str, str]] = []
     source_rows: list[int] = []
@@ -156,7 +152,6 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
         },
     }
 
-
 def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
     root, xml_metadata = _safe_xml_document(content)
     results = _greenbone_result_elements(root)
@@ -218,11 +213,16 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
         product = nvt_name or _first_text(result, "name") or "OpenVAS finding"
         port = _first_text(result, "port")
         path = _first_text(result, "path")
+        oci_element = next((child for child in result if _local_name(child.tag) == "oci_image"), None)
+        oci_digest, oci_name = _first_text(oci_element, "digest"), _first_text(oci_element, "name")
+        oci_identity = oci_digest or oci_name
         notes = _truncate_notes([
             description,
             f"해결 방법: {solution}" if solution else "",
             f"포트: {port}" if port else "",
             f"경로: {path}" if path else "",
+            f"OCI 이미지: {oci_name}" if oci_name else "",
+            f"OCI digest: {oci_digest}" if oci_digest else "",
         ])
         for cve in cves:
             rows.append({
@@ -232,7 +232,7 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
                 "asset_id": asset_id,
                 "ip_address": _ip_value(host_text),
                 "fqdn": _fqdn_value(hostname),
-                "component": _greenbone_component_identity(product, port, path),
+                "component": _greenbone_component_identity(product, port, path, oci_identity),
                 "cvss": epss_by_cve.get(cve, ("", "", ""))[2] or (cvss if len(cves) == 1 else ""),
                 "epss": epss_by_cve.get(cve, ("", "", ""))[0],
                 "epss_percentile": epss_by_cve.get(cve, ("", "", ""))[1],

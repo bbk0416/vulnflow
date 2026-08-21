@@ -122,8 +122,8 @@ def main() -> int:
 
     passed = sum(ok for _, ok, _ in checks)
     payload = {
-        "title": "VulnFlow 72.0.99 context-bound SQLite transaction verification",
-        "version": "72.0.99",
+        "title": "VulnFlow 72.0.100 context-bound SQLite transaction verification",
+        "version": "72.0.100",
         "passed": passed,
         "total": len(checks),
         "checks": [

@@ -860,6 +860,38 @@ def test_greenbone_xml_result_path_preserves_distinct_finding_identity(tmp_path:
     assert len(list_findings(db)) == 2
 
 
+
+def test_greenbone_xml_oci_image_digest_preserves_distinct_finding_identity(tmp_path: Path):
+    payload = b"""<?xml version='1.0'?><get_results_response><result id='oci-a'>
+    <host>192.0.2.145<asset asset_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'/><hostname>oci.example.test</hostname></host>
+    <port>general/tcp</port><path>/usr/lib/libssl.so</path><oci_image><name>registry.example/team/app:1.0</name>
+    <digest>sha256:aaaaaaaa</digest><registry>registry.example</registry><path>team</path><short_name>app:1.0</short_name></oci_image>
+    <nvt oid='1.3.6.1.4.1.25623.1.0.99002'><name>OCI package vulnerability</name><cvss_base>9.8</cvss_base>
+    <refs><ref type='cve' id='CVE-2026-99002'/></refs></nvt><severity>9.8</severity><description>image one</description></result>
+    <result id='oci-b'><host>192.0.2.145<asset asset_id='aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'/><hostname>oci.example.test</hostname></host>
+    <port>general/tcp</port><path>/usr/lib/libssl.so</path><oci_image><name>registry.example/team/app:2.0</name>
+    <digest>sha256:bbbbbbbb</digest><registry>registry.example</registry><path>team</path><short_name>app:2.0</short_name></oci_image>
+    <nvt oid='1.3.6.1.4.1.25623.1.0.99002'><name>OCI package vulnerability</name><cvss_base>9.8</cvss_base>
+    <refs><ref type='cve' id='CVE-2026-99002'/></refs></nvt><severity>9.8</severity><description>image two</description></result>
+    </get_results_response>"""
+    parsed = parse_import_file(payload, filename="greenbone-oci-results.xml")
+    assert parsed["detected_format"] == "openvas_xml"
+    assert [row["component"] for row in parsed["rows"]] == [
+        "OCI package vulnerability [/usr/lib/libssl.so] [oci:sha256:aaaaaaaa]",
+        "OCI package vulnerability [/usr/lib/libssl.so] [oci:sha256:bbbbbbbb]",
+    ]
+    assert "registry.example/team/app:1.0" in parsed["rows"][0]["notes"]
+    assert "sha256:bbbbbbbb" in parsed["rows"][1]["notes"]
+    mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    normalized = [main.normalize_row(row, index, scanner_source="openvas") for index, row in enumerate(mapped)]
+    assert normalized[0]["finding_id"] != normalized[1]["finding_id"]
+    db = tmp_path / "greenbone-oci-results.sqlite3"
+    init_db(db)
+    result = apply_import_batch(db, normalized, scanner_source="openvas", filename="greenbone-oci-results.xml")
+    assert result["inserted"] == 2
+    assert len(list_findings(db)) == 2
+
 def test_openvas_modern_port_protocol_csv_header_preserves_multi_port_identity(tmp_path: Path):
     payload = (
         "IP,Hostname,Port/Protocol,NVT Name,CVEs,CVSS,Summary\n"
