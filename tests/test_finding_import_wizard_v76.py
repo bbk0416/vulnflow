@@ -1129,3 +1129,42 @@ def test_nessus_same_plugin_cve_on_multiple_ports_imports_as_distinct_findings(t
         "TLS component vulnerability [443/tcp]",
         "TLS component vulnerability [8443/tcp]",
     }
+
+
+def test_greenbone_multi_cve_cvss_is_attributed_without_cross_cve_copy(tmp_path: Path):
+    xml_payload = b"""<?xml version='1.0'?><get_reports_response><report><results>
+    <result id='multi-cvss'><host>192.0.2.230<hostname>multi-cvss.example.test</hostname></host>
+    <port>443/tcp</port><severity>9.8</severity><nvt oid='1.3.6.1.4.1.25623.1.0.98000'>
+    <name>Greenbone multi-CVE CVSS vulnerability</name><cvss_base>9.8</cvss_base><refs>
+    <ref type='cve' id='CVE-2026-98001'/><ref type='cve' id='CVE-2026-98002'/></refs>
+    <epss><max_severity><score>0.10</score><percentile>0.40</percentile>
+    <cve id='CVE-2026-98001'><severity>9.8</severity></cve></max_severity>
+    <max_epss><score>0.90</score><percentile>0.99</percentile>
+    <cve id='CVE-2026-98002'><severity>5.3</severity></cve></max_epss></epss>
+    </nvt></result></results></report></get_reports_response>"""
+    parsed_xml = parse_import_file(xml_payload, filename="greenbone-multi-cve-cvss.xml")
+    xml_by_cve = {row["cve_id"]: row for row in parsed_xml["rows"]}
+    assert xml_by_cve["CVE-2026-98001"]["cvss"] == "9.8"
+    assert xml_by_cve["CVE-2026-98002"]["cvss"] == "5.3"
+
+    mapped, _, errors = map_import_rows(parsed_xml["rows"], parsed_xml["source_rows"], parsed_xml["mapping"])
+    assert errors == []
+    normalized = []
+    for index, row in enumerate(mapped, start=1):
+        prepared = dict(row)
+        prepared["finding_id"] = f"GREENBONE-MULTI-CVSS-{index}"
+        normalized.append(main.normalize_row(prepared, index - 1, scanner_source="openvas"))
+    db = tmp_path / "greenbone-multi-cve-cvss.sqlite3"
+    init_db(db)
+    assert apply_import_batch(db, normalized, scanner_source="openvas", filename="greenbone-multi-cve-cvss.xml")["inserted"] == 2
+    persisted = {finding["cve_id"]: finding for finding in list_findings(db)}
+    assert persisted["CVE-2026-98001"]["cvss"] == 9.8
+    assert persisted["CVE-2026-98002"]["cvss"] == 5.3
+
+    csv_payload = (
+        "Severity,EPSS score,EPSS percentile,Vulnerability name,Solution type,Solution,QoD,CVE references,Port/Protocol,Host name,IP address\n"
+        '9.8,0.10,0.40,Greenbone multi-CVE CVSS vulnerability,VendorFix,Upgrade,95,"CVE-2026-98001; CVE-2026-98002",443/tcp,multi-cvss.example.test,192.0.2.230\n'
+    ).encode()
+    parsed_csv = parse_import_file(csv_payload, filename="vulnerabilities_with_affected_assets.csv")
+    assert [row["cvss"] for row in parsed_csv["rows"]] == ["", ""]
+    assert any("다중-CVE" in warning and "CVSS" in warning for warning in parsed_csv["parser_warnings"])

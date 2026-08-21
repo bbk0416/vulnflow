@@ -22,7 +22,6 @@ from app.services.finding_import_xml import (
     _safe_xml_document,
 )
 
-
 def _row_value(row: dict[str, Any], *aliases: str) -> str:
     values = {_header_key(key): _clean_cell(value) for key, value in row.items()}
     for alias in aliases:
@@ -30,7 +29,6 @@ def _row_value(row: dict[str, Any], *aliases: str) -> str:
         if value:
             return value
     return ""
-
 
 def _greenbone_component_identity(product: str, port: str, path: str = "") -> str:
     """Preserve concrete Greenbone/OpenVAS endpoints in component identity.
@@ -48,7 +46,6 @@ def _greenbone_component_identity(product: str, port: str, path: str = "") -> st
     path_key = str(path or "").strip()
     return f"{base} [{path_key}]" if path_key else base
 
-
 def _greenbone_patch_available(solution: str, solution_type: str) -> str:
     """Map Greenbone remediation metadata to the canonical patch-available flag.
 
@@ -63,8 +60,6 @@ def _greenbone_patch_available(solution: str, solution_type: str) -> str:
         return "1" if type_key == "vendorfix" else "0"
     solution_key = _header_key(solution)
     return "1" if solution_key and solution_key not in {"n a", "none"} else "0"
-
-
 
 def _greenbone_result_elements(root):
     """Return importable Greenbone results without nested delta history.
@@ -122,11 +117,16 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
             f"해결 방법: {solution}" if solution else "",
             f"포트: {port}" if port else "",
         ])
+        cvss = _row_value(raw, "CVSS", "CVSS Base", "CVSS Base Score", "Severity")
         epss = _row_value(raw, "EPSS score", "EPSS")
         epss_percentile = _row_value(raw, "EPSS percentile")
-        if len(cves) > 1 and (epss or epss_percentile):
-            parser_warnings.append(f"행 {source_row}: 다중-CVE Greenbone CSV의 EPSS 대표 CVE를 식별할 수 없어 CVE별 EPSS를 비웁니다.")
-            epss = epss_percentile = ""
+        if len(cves) > 1:
+            if cvss:
+                parser_warnings.append(f"행 {source_row}: 다중-CVE Greenbone CSV의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다.")
+                cvss = ""
+            if epss or epss_percentile:
+                parser_warnings.append(f"행 {source_row}: 다중-CVE Greenbone CSV의 EPSS 대표 CVE를 식별할 수 없어 CVE별 EPSS를 비웁니다.")
+                epss = epss_percentile = ""
         for cve in cves:
             rows.append({
                 "product": product or "OpenVAS finding",
@@ -135,7 +135,7 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
                 "ip_address": ip_address,
                 "fqdn": _fqdn_value(hostname),
                 "component": _greenbone_component_identity(product, port),
-                "cvss": _row_value(raw, "CVSS", "CVSS Base", "CVSS Base Score", "Severity"),
+                "cvss": cvss,
                 "epss": epss,
                 "epss_percentile": epss_percentile,
                 "patch_available": _greenbone_patch_available(solution, solution_type),
@@ -195,7 +195,7 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
         solution_type = str(solution_element.attrib.get("type") or "").strip() if solution_element is not None else ""
         cvss = _first_text(nvt, "cvss_base", "cvss3_base", "cvss_base_score") or _first_text(result, "severity")
         epss_element = next((child for child in nvt if _local_name(child.tag) == "epss"), None) if nvt is not None else None
-        epss_by_cve: dict[str, tuple[str, str]] = {}
+        epss_by_cve: dict[str, tuple[str, str, str]] = {}
         for epss_kind in ("max_epss", "max_severity"):
             epss_group = next((child for child in epss_element if _local_name(child.tag) == epss_kind), None) if epss_element is not None else None
             epss_cve = next((child for child in epss_group if _local_name(child.tag) == "cve"), None) if epss_group is not None else None
@@ -203,7 +203,9 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
             if not epss_cve_id and len(cves) == 1:
                 epss_cve_id = cves[0]
             if epss_cve_id:
-                epss_by_cve[epss_cve_id] = (_first_text(epss_group, "score"), _first_text(epss_group, "percentile"))
+                epss_by_cve[epss_cve_id] = (
+                    _first_text(epss_group, "score"), _first_text(epss_group, "percentile"), _first_text(epss_cve, "severity")
+                )
         if not cves:
             source_errors.append({
                 "row_number": result_index,
@@ -231,9 +233,9 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
                 "ip_address": _ip_value(host_text),
                 "fqdn": _fqdn_value(hostname),
                 "component": _greenbone_component_identity(product, port, path),
-                "cvss": cvss,
-                "epss": epss_by_cve.get(cve, ("", ""))[0],
-                "epss_percentile": epss_by_cve.get(cve, ("", ""))[1],
+                "cvss": epss_by_cve.get(cve, ("", "", ""))[2] or (cvss if len(cves) == 1 else ""),
+                "epss": epss_by_cve.get(cve, ("", "", ""))[0],
+                "epss_percentile": epss_by_cve.get(cve, ("", "", ""))[1],
                 "patch_available": _greenbone_patch_available(solution, solution_type),
                 "notes": notes,
             })
