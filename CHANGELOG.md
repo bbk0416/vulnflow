@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.98 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.99.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.99 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.100.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -8,6 +8,14 @@
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
 
+
+
+## 72.0.100 — 2026-08-21
+
+- Preserve Greenbone GMP 22.8 OCI-image result identity by adding `oci_image` digest to the canonical component discriminator, with full image name as fallback when no digest is present.
+- Preserve OCI image name and digest in operator notes so two results with identical host/NVT/CVE/port/path but different container images remain distinct findings instead of colliding on one automatic finding ID.
+- Preserve 72.0.99 Nessus multi-CVE CVSS fail-safe, 72.0.98 Greenbone CVSS attribution, 72.0.97 path identity, and existing scanner behavior; add one end-to-end OCI-image identity regression. Public collection contract is 725 tests (78 + 76 + 168 + 80 + 117 + 67 + 139), with platform-specific skips reported explicitly.
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 
 ## 72.0.99 — 2026-08-21
