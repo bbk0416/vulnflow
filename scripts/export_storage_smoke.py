@@ -109,7 +109,7 @@ def main_smoke() -> None:
     (reports / "export_storage_governance_verification.json").write_text(
         json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
     )
-    lines = ["VulnFlow 72.0.100 export storage governance smoke", ""]
+    lines = ["VulnFlow 72.0.101 export storage governance smoke", ""]
     lines += [f"PASS {item}" for item in checks]
     lines += ["", f"checks={len(checks)}", f"evicted={status['evicted_count']}", f"pinned={status['pinned_count']}"]
     (reports / "export_storage_governance_verification.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
