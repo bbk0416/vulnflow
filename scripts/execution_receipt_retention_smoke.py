@@ -100,7 +100,7 @@ def main() -> None:
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
     REPORT_JSON.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     lines = [
-        "VulnFlow 72.0.98 execution receipt retention archive verification", "",
+        "VulnFlow 72.0.99 execution receipt retention archive verification", "",
         f"version: {result['version']}", f"schema version: {result['schema_version']}",
         f"checks: {result['passed']}/{result['total']}", "",
     ]

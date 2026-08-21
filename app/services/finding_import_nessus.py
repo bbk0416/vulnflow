@@ -149,6 +149,11 @@ def _nessus_rows(content: bytes) -> dict[str, Any]:
                     break
             product = " ".join(value for value in (vendor, product_name) if value) or plugin_name or service_name
             cvss = _first_text(item, "cvss4_base_score", "cvss3_base_score", "cvss_base_score")
+            if len(cves) > 1 and cvss:
+                parser_warnings.append(
+                    f"ReportItem {item_index}: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+                )
+                cvss = ""
             solution = _first_text(item, "solution")
             has_patch = _first_text(item, "has_patch")
             normalized_has_patch = has_patch.strip().casefold()

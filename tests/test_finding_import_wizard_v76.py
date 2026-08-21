@@ -1131,6 +1131,39 @@ def test_nessus_same_plugin_cve_on_multiple_ports_imports_as_distinct_findings(t
     }
 
 
+def test_nessus_multi_cve_plugin_cvss_is_not_copied_to_every_cve(tmp_path: Path):
+    payload = b"""<?xml version='1.0'?><NessusClientData_v2><Report name='multi-cve'>
+    <ReportHost name='nessus.example.test'><HostProperties>
+    <tag name='host-ip'>192.0.2.99</tag><tag name='host-fqdn'>nessus.example.test</tag>
+    <tag name='host-uuid'>NESSUS-MULTI-CVE-UUID</tag></HostProperties>
+    <ReportItem port='8834' protocol='tcp' svc_name='www' pluginID='184164' pluginName='Multiple vulnerabilities'>
+    <cve>CVE-2023-45853</cve><cve>CVE-2023-4807</cve><cve>CVE-2023-5847</cve>
+    <cvss3_base_score>8.8</cvss3_base_score><has_patch>true</has_patch><solution>Upgrade.</solution>
+    </ReportItem></ReportHost></Report></NessusClientData_v2>"""
+    parsed = parse_import_file(payload, filename="nessus-multi-cve.nessus")
+    assert [row["cve_id"] for row in parsed["rows"]] == [
+        "CVE-2023-45853", "CVE-2023-4807", "CVE-2023-5847"
+    ]
+    assert [row["cvss"] for row in parsed["rows"]] == ["", "", ""]
+    assert any("다중-CVE" in warning and "CVSS" in warning for warning in parsed["parser_warnings"])
+
+    mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    normalized = []
+    for index, row in enumerate(mapped, start=1):
+        prepared = dict(row)
+        prepared["finding_id"] = f"NESSUS-MULTI-CVSS-{index}"
+        normalized.append(main.normalize_row(prepared, index - 1, scanner_source="nessus"))
+    assert [row["cvss"] for row in normalized] == [0.0, 0.0, 0.0]
+
+    db = tmp_path / "nessus-multi-cve-cvss.sqlite3"
+    init_db(db)
+    result = apply_import_batch(db, normalized, scanner_source="nessus", filename="nessus-multi-cve.nessus")
+    assert result["inserted"] == 3
+    persisted = sorted(list_findings(db), key=lambda row: row["cve_id"])
+    assert [row["cvss"] for row in persisted] == [0.0, 0.0, 0.0]
+
+
 def test_greenbone_multi_cve_cvss_is_attributed_without_cross_cve_copy(tmp_path: Path):
     xml_payload = b"""<?xml version='1.0'?><get_reports_response><report><results>
     <result id='multi-cvss'><host>192.0.2.230<hostname>multi-cvss.example.test</hostname></host>

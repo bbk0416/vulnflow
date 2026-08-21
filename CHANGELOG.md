@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.97 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.98.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.98 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.99.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -8,6 +8,14 @@
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
 
+
+
+## 72.0.99 — 2026-08-21
+
+- Stop copying one Nessus plugin-level CVSS value onto every expanded CVE when a `ReportItem` references multiple CVEs.
+- For multi-CVE `.nessus` items, leave per-CVE CVSS empty and emit a parser warning because the export does not identify which CVE owns the plugin-level score.
+- Preserve single-CVE Nessus CVSS2/3/4 behavior and the 72.0.98 Greenbone CVSS, 72.0.97 path identity, 72.0.96 CSV EPSS, and 72.0.95 XML EPSS fixes; add one end-to-end Nessus CVSS attribution regression. Public collection contract is 724 tests (78 + 76 + 168 + 80 + 117 + 67 + 138), with platform-specific skips reported explicitly.
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 
 ## 72.0.98 — 2026-08-21
