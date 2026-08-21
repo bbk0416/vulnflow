@@ -1,6 +1,6 @@
 # VulnFlow productization roadmap
 
-Core 72.0.100 is the current Greenbone GMP OCI-image result identity correctness patch on the 72.0.72 feature-frozen line. The project is **not abandoned**: development has moved from feature-building to free-product validation and, later, evidence-driven commercialization.
+Core 72.0.101 is the current Greenbone detailed-CSV affected-software identity correctness patch on the 72.0.72 feature-frozen line. The project is **not abandoned**: development has moved from feature-building to free-product validation and, later, evidence-driven commercialization.
 
 ## Phase 1 — Free Public Beta (current)
 
@@ -75,7 +75,7 @@ Do not add product analytics or hidden telemetry merely to run this roadmap. Pre
 ## Current product state
 
 ```text
-CORE_VERSION=72.0.100
+CORE_VERSION=72.0.101
 CURRENT_EDITION=VulnFlow Free — Public Beta
 CURRENT_PRICE=FREE
 PAID_SUBSCRIPTION=NOT_OFFERED

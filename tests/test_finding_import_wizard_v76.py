@@ -916,6 +916,30 @@ def test_openvas_modern_port_protocol_csv_header_preserves_multi_port_identity(t
     assert result["inserted"] == 2
     assert len(list_findings(db)) == 2
 
+def test_greenbone_current_csv_affected_software_preserves_distinct_finding_identity(tmp_path: Path):
+    payload = (
+        "Severity,Vulnerability name,Solution type,Solution,QoD,Summary,Impact,Affected software/operating system,CVE references,Port/Protocol,Host name,IP address\n"
+        "8.8,Package vulnerability,VendorFix,Upgrade,95,one,,openssl 3.0,CVE-2026-99101,general/tcp,host.example,192.0.2.10\n"
+        "8.8,Package vulnerability,VendorFix,Upgrade,95,two,,libssl 3.0,CVE-2026-99101,general/tcp,host.example,192.0.2.10\n"
+    ).encode()
+    parsed = parse_import_file(payload, filename="vulnerabilities_with_affected_assets.csv")
+    assert parsed["detected_format"] == "openvas_csv"
+    assert [row["component"] for row in parsed["rows"]] == [
+        "Package vulnerability [affected:openssl 3.0]",
+        "Package vulnerability [affected:libssl 3.0]",
+    ]
+    assert "openssl 3.0" in parsed["rows"][0]["notes"]
+    mapped, _, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    normalized = [main.normalize_row(row, index, scanner_source="openvas") for index, row in enumerate(mapped)]
+    assert normalized[0]["finding_id"] != normalized[1]["finding_id"]
+    db = tmp_path / "greenbone-affected-software.sqlite3"
+    init_db(db)
+    result = apply_import_batch(db, normalized, scanner_source="openvas", filename="vulnerabilities_with_affected_assets.csv")
+    assert result["inserted"] == 2
+    assert len(list_findings(db)) == 2
+
+
 def test_openvas_customizable_csv_split_port_protocol_and_vt_name_imports_distinct_findings(tmp_path: Path):
     payload = (
         "IP,Hostname,Port,Port Protocol,VT Name,CVEs,Severity,Severity Level,Summary\n"

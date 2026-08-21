@@ -1,4 +1,4 @@
-# VulnFlow 72.0.100 runtime dependency lock.
+# VulnFlow 72.0.101 runtime dependency lock.
 # Public maintenance pins refreshed against the verified closure on 2026-07-29.
 # Every package is pinned exactly; distribution artifact hashes are not included
 # because the build environment did not have package-index access.

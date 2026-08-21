@@ -1,6 +1,5 @@
 """OpenVAS and Greenbone CSV/XML adapters for finding imports."""
 from __future__ import annotations
-
 import re
 from typing import Any
 from app.core.settings import MAX_CSV_ROWS
@@ -69,14 +68,12 @@ def _greenbone_result_elements(root):
     if _local_name(root.tag) == "result":
         return [root]
     results = []
-
     def visit(element):
         for child in element:
             if _local_name(child.tag) == "result":
                 results.append(child)
                 continue
             visit(child)
-
     visit(root)
     return results
 def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
@@ -106,12 +103,15 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
         port_protocol = _row_value(raw, "Port Protocol")
         if port_protocol and re.fullmatch(r"\d+", port):
             port = f"{port}/{port_protocol}"
+        affected_software = _row_value(raw, "Affected software/operating system", "Affected software")
+        component = _greenbone_component_identity(product, port) + (f" [affected:{affected_software}]" if affected_software else "")
         notes = _truncate_notes([
             _row_value(raw, "Summary"),
             _row_value(raw, "Specific Result", "Result"),
             _row_value(raw, "Impact"),
             f"해결 방법: {solution}" if solution else "",
             f"포트: {port}" if port else "",
+            f"영향 소프트웨어/운영체제: {affected_software}" if affected_software else "",
         ])
         cvss = _row_value(raw, "CVSS", "CVSS Base", "CVSS Base Score", "Severity")
         epss = _row_value(raw, "EPSS score", "EPSS")
@@ -130,7 +130,7 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
                 "asset_name": hostname or host_value,
                 "ip_address": ip_address,
                 "fqdn": _fqdn_value(hostname),
-                "component": _greenbone_component_identity(product, port),
+                "component": component,
                 "cvss": cvss,
                 "epss": epss,
                 "epss_percentile": epss_percentile,

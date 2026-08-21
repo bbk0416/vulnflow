@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.99 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.100.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.99 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.101.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -8,6 +8,14 @@
 - Add scanner-compatibility and beta-feedback issue templates with explicit sensitive-data safeguards.
 - Keep feature development evidence-driven during the free validation phase.
 
+
+
+## 72.0.101 — 2026-08-21
+
+- Preserve Greenbone official detailed-CSV affected-software identity by retaining `Affected software/operating system` in the canonical component discriminator and operator notes.
+- Prevent two rows with the same host/CVE/VT/port but different affected software from producing one automatic finding ID and failing the import as a duplicate.
+- Preserve 72.0.100 OCI image identity, 72.0.99 Nessus multi-CVE CVSS fail-safe, 72.0.98 Greenbone CVSS attribution, and existing scanner behavior; add one end-to-end affected-software identity regression. Public collection contract is 726 tests (78 + 76 + 168 + 80 + 117 + 67 + 140), with platform-specific skips reported explicitly.
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 
 ## 72.0.100 — 2026-08-21
