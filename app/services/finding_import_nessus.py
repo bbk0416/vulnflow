@@ -6,7 +6,7 @@ from typing import Any
 from urllib.parse import unquote
 
 from app.core.settings import MAX_CSV_ROWS
-from app.services.finding_import_common import CANONICAL_FIELD_NAMES, _ip_value, _truncate_notes
+from app.services.finding_import_common import CANONICAL_FIELD_NAMES, _fqdn_value, _ip_value, _truncate_notes
 from app.services.finding_import_xml import (
     _children_by_name,
     _first_text,
@@ -188,7 +188,7 @@ def _nessus_rows(content: bytes) -> dict[str, Any]:
                     "asset_name": asset_name or ip_address,
                     "asset_id": asset_id,
                     "ip_address": ip_address,
-                    "fqdn": properties.get("host-fqdn", ""),
+                    "fqdn": _fqdn_value(properties.get("host-fqdn", "")),
                     "component": component,
                     "cvss": cvss,
                     "patch_available": _nessus_patch_available(solution, has_patch),

@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.99 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.101.md`.
+> Historical per-iteration release notes from 72.0.11 through 72.0.99 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.102.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -9,6 +9,14 @@
 - Keep feature development evidence-driven during the free validation phase.
 
 
+
+
+## 72.0.102 — 2026-08-22
+
+- Fix a real NessusClientData_v2 compatibility defect where a single-label `host-fqdn` value such as `kali` was copied into the canonical FQDN field and caused an otherwise valid IP-backed CVE finding to be rejected during preview.
+- Keep the short scanner host label as `asset_name` while leaving canonical `fqdn` blank unless the value is actually FQDN-shaped; valid dotted Nessus FQDN values are unchanged.
+- Add one end-to-end regression covering parse, normalization, and persistence. Public collection contract is 727 tests (78 + 76 + 168 + 80 + 117 + 67 + 141), with platform-specific skips reported explicitly.
+- SQLite schema remains 46 and dependency package pins are unchanged.
 
 ## 72.0.101 — 2026-08-21
 

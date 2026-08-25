@@ -154,6 +154,40 @@ def test_nessus_adapter_extracts_cves_and_reports_non_cve_plugins():
     extract_asset_identifiers(malformed_parsed["rows"][0], scanner_source="nessus")
 
 
+
+def test_nessus_single_label_host_fqdn_keeps_hostname_without_rejecting_ip_backed_finding(tmp_path: Path):
+    payload = b"""<?xml version='1.0'?>
+<NessusClientData_v2><Report name='real-short-hostname'><ReportHost name='192.168.1.5'>
+<HostProperties><tag name='host-ip'>192.168.1.5</tag><tag name='host-fqdn'>kali</tag></HostProperties>
+<ReportItem port='8834' protocol='tcp' svc_name='www' pluginID='2004' pluginName='SSL Certificate Signed Using Weak Hashing Algorithm'>
+<cve>CVE-2004-2761</cve><cvss_base_score>4.0</cvss_base_score><has_patch>true</has_patch>
+</ReportItem></ReportHost></Report></NessusClientData_v2>"""
+    parsed = parse_import_file(payload, filename="single-label-host-fqdn.nessus")
+    assert parsed["detected_format"] == "nessus"
+    assert len(parsed["rows"]) == 1
+    row = parsed["rows"][0]
+    assert row["asset_name"] == "kali"
+    assert row["ip_address"] == "192.168.1.5"
+    assert row["fqdn"] == ""
+
+    mapped, source_rows, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
+    assert errors == []
+    assert source_rows == [1]
+    prepared = dict(mapped[0])
+    prepared["finding_id"] = "NESSUS-SINGLE-LABEL-FQDN-1"
+    normalized = main.normalize_row(prepared, 0, scanner_source="nessus")
+
+    db = tmp_path / "nessus-single-label-fqdn.sqlite3"
+    init_db(db)
+    result = apply_import_batch(db, [normalized], scanner_source="nessus", filename="single-label-host-fqdn.nessus")
+    assert result["inserted"] == 1
+    findings = list_findings(db)
+    assert len(findings) == 1
+    assert findings[0]["cve_id"] == "CVE-2004-2761"
+    assets = list_assets(db)
+    assert len(assets) == 1
+
+
 def test_openvas_csv_is_detected_and_mapped():
     content = (
         "IP,Hostname,Port,NVT Name,CVEs,CVSS,Summary\n"
