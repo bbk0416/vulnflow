@@ -8,7 +8,7 @@
 - 합성 샘플 데이터와 정책
 - 핵심 운영 문서
 - 대표 화면과 아키텍처 이미지
-- 핵심 업무 흐름을 검증하는 726개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
+- 핵심 업무 흐름을 검증하는 727개 수집형 핵심 회귀시험과 Chromium 브라우저 E2E 3개
 - 프로젝트별 SMTP 이메일 알림과 Jira Cloud 이슈·댓글 연동
 - 프로젝트별 파일럿 준비도 점검과 고객용 경영진 보고서
 - 책임별 서비스 레지스트리와 CSV/XLSX·Nessus/OpenVAS 가져오기 모듈 경계
@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.101 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.102 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -192,6 +192,11 @@
 
 72.0.99는 하나의 Nessus `ReportItem`이 여러 CVE를 참조할 때 plugin-level CVSS를 모든 expanded CVE에 복제하지 않습니다. `.nessus`의 multi-CVE plugin에는 CVSS가 어떤 CVE의 점수인지 식별하는 per-CVE owner 정보가 없으므로 per-CVE CVSS를 비우고 parser warning을 남깁니다. 단일-CVE Nessus CVSS2/3/4, 72.0.98 Greenbone multi-CVE CVSS 귀속, 72.0.97 result-path identity, 72.0.96 CSV EPSS fail-safe, 72.0.95 XML per-CVE EPSS 귀속, schema 46과 dependency package pins는 변경하지 않습니다.
 
+
+
+## 72.0.102 Nessus single-label host-fqdn compatibility
+
+72.0.102는 실제 NessusClientData_v2 export에서 `host-fqdn`이 `kali`처럼 single-label hostname으로 제공되는 경우 그 값을 canonical FQDN으로 강제하지 않습니다. short label은 asset name/hostname 문맥에 남기고, 유효한 IP 주소와 CVE finding은 정상적으로 preview·normalize·persist할 수 있게 합니다. dotted FQDN 동작, 72.0.101 Greenbone affected-software identity, 72.0.100 OCI image identity, schema 46과 dependency package pins는 변경하지 않습니다.
 
 ## 72.0.101 Greenbone affected-software CSV identity
 

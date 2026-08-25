@@ -733,7 +733,7 @@ def main() -> None:
         report = ROOT / "reports" / "http_smoke_results.txt"
         report.parent.mkdir(parents=True, exist_ok=True)
         report.write_text(
-            "VulnFlow 72.0.101 HTTP TestClient smoke\n"
+            "VulnFlow 72.0.102 HTTP TestClient smoke\n"
             f"{len(checks)} checks passed\n"
             "Includes redacted configuration baseline, drift recording, approved configuration change request/decision/promotion, snapshot export queue, artifact SHA-256 download verification, SQL finding pagination metadata, governed asset merge dry-run, operator request, approver recovery point and approval; "
             "portable signed integrity proof create/verify/download; redacted execution receipt UI/API; multi-source reconciliation, candidate rejection, SBOM/VEX, evidence, recovery, policy and automation flows.\n",

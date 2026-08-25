@@ -36,7 +36,7 @@ def main_smoke() -> int:
     asyncio.run(job_worker_runtime.job_worker_loop(context, stop_event=stop_event))
 
     checks = {
-        "version_72_0_7": main.CURRENT_APP_VERSION == "72.0.101",
+        "version_72_0_7": main.CURRENT_APP_VERSION == "72.0.102",
         "facade_dispatch_identity": job_runtime.execute_background_job is job_dispatch.execute_background_job,
         "facade_worker_identity": job_runtime.job_worker_loop is job_worker_runtime.job_worker_loop,
         "internal_facade_importers_zero": not importers,
@@ -48,7 +48,7 @@ def main_smoke() -> int:
         "architecture_pass": architecture["status"] == "PASS" and architecture["route_count"] == 261,
     }
     payload = {
-        "title": "VulnFlow 72.0.101 background job runtime boundary verification",
+        "title": "VulnFlow 72.0.102 background job runtime boundary verification",
         "version": main.CURRENT_APP_VERSION,
         "checks": [{"name": name, "passed": passed} for name, passed in checks.items()],
         "internal_facade_importers": sorted(set(importers)),
