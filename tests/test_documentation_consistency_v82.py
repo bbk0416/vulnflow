@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import shutil
 from pathlib import Path
 
@@ -40,16 +41,37 @@ def test_current_documentation_contract_passes() -> None:
 def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
     root = _copy_contract_tree(tmp_path)
     path = root / "README.md"
-    path.write_text(path.read_text(encoding="utf-8").replace("**727개**", "**724개**"), encoding="utf-8")
+    readme_text = path.read_text(encoding="utf-8")
+    count_matches = list(re.finditer(r"\*\*(\d+)개\*\*", readme_text))
+    assert len(count_matches) == 1
+    count_match = count_matches[0]
+    current_public_test_count = int(count_match.group(1))
+    stale_public_test_count = max(0, current_public_test_count - 1)
+    path.write_text(
+        readme_text[: count_match.start(1)]
+        + str(stale_public_test_count)
+        + readme_text[count_match.end(1) :],
+        encoding="utf-8",
+    )
     assert "readme_public_test_count" in consistency_issues(root)
 
     verification_root = _copy_contract_tree(tmp_path / "verification")
     verification = verification_root / "PUBLIC_VERIFICATION.txt"
+    verification_text = verification.read_text(encoding="utf-8")
+    manifest_match = re.search(
+        r"public manifest: (\d+)/(\d+) PASS",
+        verification_text,
+    )
+    assert manifest_match is not None
+    assert manifest_match.group(1) == manifest_match.group(2)
+    current_manifest_count = int(manifest_match.group(1))
+    stale_manifest_count = max(0, current_manifest_count - 1)
     verification.write_text(
-        verification.read_text(encoding="utf-8").replace(
-            "public manifest: 702/702 PASS",
-            "public manifest: 679/679 PASS",
-        ),
+        verification_text[: manifest_match.start(1)]
+        + str(stale_manifest_count)
+        + "/"
+        + str(stale_manifest_count)
+        + verification_text[manifest_match.end(2) :],
         encoding="utf-8",
     )
     assert "public_verification_manifest_count" in consistency_issues(verification_root)
