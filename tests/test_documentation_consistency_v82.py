@@ -47,7 +47,7 @@ def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
     verification = verification_root / "PUBLIC_VERIFICATION.txt"
     verification.write_text(
         verification.read_text(encoding="utf-8").replace(
-            "public manifest: 695/695 PASS",
+            "public manifest: 702/702 PASS",
             "public manifest: 679/679 PASS",
         ),
         encoding="utf-8",

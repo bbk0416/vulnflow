@@ -1,0 +1,2130 @@
+{
+  "cases": [
+    {
+      "apply": {
+        "first_findings": 36,
+        "first_summary": {
+          "batch_id": "IMP-EF8DF16193A5490F",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 36,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 36,
+          "scanner_source": "nessus",
+          "stale": 0,
+          "updated": 0,
+          "verification_ready": 0
+        },
+        "reimport_ids_stable": true,
+        "second_findings": 36,
+        "second_summary": {
+          "batch_id": "IMP-437079B1FE0A4CCF",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 0,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 36,
+          "scanner_source": "nessus",
+          "stale": 0,
+          "updated": 36,
+          "verification_ready": 0
+        }
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true
+      },
+      "case_id": "NESSUS_001",
+      "corrected_technical_status": "SEMANTIC_REVIEW_REQUIRED",
+      "explicit_cveless_exclusion_classes": [
+        {
+          "count": 189,
+          "message": "CVE가 없는 Nessus 플러그인 결과는 현재 데이터 모델에 넣을 수 없습니다."
+        }
+      ],
+      "explicit_cveless_exclusion_count": 189,
+      "file_name": "sample.nessus",
+      "file_sha256": "d16684ed2e16e35ee302c16fc09ba6d2060e0a678136f195dd745b66dc3626b9",
+      "format": {
+        "adapter": "nessus",
+        "detected": "nessus",
+        "expected": "nessus"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 36,
+          "component": 36,
+          "component_version": 0,
+          "cve_id": 36,
+          "cvss": 6,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 36,
+          "ip_address": 36,
+          "notes": 36,
+          "product": 36,
+          "product_version": 6
+        },
+        "mapped_rows": 36,
+        "source_records": 225,
+        "valid_rows": 36
+      },
+      "parser_warning_classes": [
+        {
+          "count": 1,
+          "message": "ReportItem 139: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 140: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 141: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 142: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 143: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 144: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 151: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 152: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 153: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 154: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 155: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 156: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        }
+      ],
+      "parser_warning_count": 12,
+      "provenance_correction": null,
+      "source_inventory": {
+        "bytes": 1240508,
+        "source_affected_software_sample": [],
+        "source_cve_count": 6,
+        "source_cves_sample": [
+          "CVE-2004-2761",
+          "CVE-2011-3389",
+          "CVE-2012-4929",
+          "CVE-2012-4930",
+          "CVE-2016-2183",
+          "CVE-2016-6329"
+        ],
+        "source_endpoints_sample": [
+          "2053/tcp",
+          "2083/tcp",
+          "2087/tcp",
+          "2096/tcp",
+          "443/tcp",
+          "8443/tcp"
+        ],
+        "source_hosts": 1,
+        "source_multi_cve_results": 12,
+        "source_multi_cve_with_cvss": 12,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 213
+      },
+      "technical_reason": "technical invariants pass; canonical findings=36, valid normalized rows=36, parser_warnings=12, explicit_CVEless_exclusions=189",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 0
+    },
+    {
+      "apply": {
+        "first_findings": 22,
+        "first_summary": {
+          "batch_id": "IMP-E5B18B339ED74300",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 22,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 22,
+          "scanner_source": "nessus",
+          "stale": 0,
+          "updated": 0,
+          "verification_ready": 0
+        },
+        "reimport_ids_stable": true,
+        "second_findings": 22,
+        "second_summary": {
+          "batch_id": "IMP-936CFEBAE1CE4E4D",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 0,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 22,
+          "scanner_source": "nessus",
+          "stale": 0,
+          "updated": 22,
+          "verification_ready": 0
+        }
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true,
+        "nessus_single_label_fqdn_regression_closed": true
+      },
+      "case_id": "NESSUS_002",
+      "corrected_technical_status": "SEMANTIC_REVIEW_REQUIRED",
+      "explicit_cveless_exclusion_classes": [
+        {
+          "count": 153,
+          "message": "CVE가 없는 Nessus 플러그인 결과는 현재 데이터 모델에 넣을 수 없습니다."
+        }
+      ],
+      "explicit_cveless_exclusion_count": 153,
+      "file_name": "Nessus.xml",
+      "file_sha256": "6d268a41a0f605dcbcb266abfe18572a415ddfb0c7faf09db1551343c4d51254",
+      "format": {
+        "adapter": "nessus",
+        "detected": "nessus",
+        "expected": "nessus"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 22,
+          "component": 22,
+          "component_version": 0,
+          "cve_id": 22,
+          "cvss": 9,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 0,
+          "ip_address": 22,
+          "notes": 22,
+          "product": 22,
+          "product_version": 1
+        },
+        "mapped_rows": 22,
+        "source_records": 175,
+        "valid_rows": 22
+      },
+      "parser_warning_classes": [
+        {
+          "count": 1,
+          "message": "ReportItem 119: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 141: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        }
+      ],
+      "parser_warning_count": 2,
+      "provenance_correction": null,
+      "source_inventory": {
+        "bytes": 248697,
+        "source_affected_software_sample": [],
+        "source_cve_count": 15,
+        "source_cves_sample": [
+          "CVE-1999-0170",
+          "CVE-1999-0211",
+          "CVE-1999-0511",
+          "CVE-1999-0524",
+          "CVE-1999-0554",
+          "CVE-1999-0632",
+          "CVE-1999-0678",
+          "CVE-2003-1567",
+          "CVE-2004-2320",
+          "CVE-2004-2761",
+          "CVE-2008-0166",
+          "CVE-2008-5161",
+          "CVE-2010-0386",
+          "CVE-2011-0657",
+          "CVE-2012-0053"
+        ],
+        "source_endpoints_sample": [
+          "111/udp",
+          "2049/tcp",
+          "2049/udp",
+          "22/tcp",
+          "5355/udp",
+          "80/tcp",
+          "8834/tcp"
+        ],
+        "source_hosts": 7,
+        "source_multi_cve_results": 2,
+        "source_multi_cve_with_cvss": 2,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 171
+      },
+      "technical_reason": "technical invariants pass; canonical findings=22, valid normalized rows=22, parser_warnings=2, explicit_CVEless_exclusions=153",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 0
+    },
+    {
+      "apply": {
+        "first_findings": 942,
+        "first_summary": {
+          "batch_id": "IMP-EDB94EAB6DEE4DCA",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 942,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 942,
+          "scanner_source": "nessus",
+          "stale": 0,
+          "updated": 0,
+          "verification_ready": 0
+        },
+        "reimport_ids_stable": true,
+        "second_findings": 942,
+        "second_summary": {
+          "batch_id": "IMP-87227493164F4E10",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 0,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 942,
+          "scanner_source": "nessus",
+          "stale": 0,
+          "updated": 942,
+          "verification_ready": 0
+        }
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true
+      },
+      "case_id": "NESSUS_003",
+      "corrected_technical_status": "SEMANTIC_REVIEW_REQUIRED",
+      "explicit_cveless_exclusion_classes": [
+        {
+          "count": 207,
+          "message": "CVE가 없는 Nessus 플러그인 결과는 현재 데이터 모델에 넣을 수 없습니다."
+        }
+      ],
+      "explicit_cveless_exclusion_count": 207,
+      "file_name": "MetaSploitable2_Scan_oet9kb.nessus",
+      "file_sha256": "5a4288335972a543c71ee618148c2df4d6699a2e83801648c9f247415acf2291",
+      "format": {
+        "adapter": "nessus",
+        "detected": "nessus",
+        "expected": "nessus"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 942,
+          "component": 942,
+          "component_version": 0,
+          "cve_id": 942,
+          "cvss": 117,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 0,
+          "ip_address": 942,
+          "notes": 942,
+          "product": 942,
+          "product_version": 0
+        },
+        "mapped_rows": 942,
+        "source_records": 1149,
+        "valid_rows": 942
+      },
+      "parser_warning_classes": [
+        {
+          "count": 1,
+          "message": "ReportItem 14: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 35: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 36: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 64: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 75: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 76: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 77: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 78: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 79: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 80: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 81: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 82: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 83: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 84: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 85: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 86: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 87: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 88: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 89: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 91: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 92: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 96: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 97: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 98: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 99: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 101: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 102: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 103: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 104: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 105: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 107: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 108: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 109: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 110: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 111: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 114: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 115: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 116: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 117: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 126: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 127: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 128: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 130: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 133: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 135: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 136: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 141: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 144: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 145: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 146: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 147: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 148: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 151: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 152: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 153: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 155: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 156: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 157: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 159: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 160: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 161: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 165: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 166: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 167: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 168: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 170: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 173: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 174: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 175: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 176: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 177: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 180: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 181: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 182: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 183: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 184: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 187: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 189: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 191: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 195: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 196: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 200: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 201: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 202: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 208: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 209: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 211: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 212: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 213: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 214: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 218: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 220: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 223: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 226: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 230: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 231: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 232: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 233: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 235: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 238: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 240: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 241: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 242: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 243: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 248: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 250: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 254: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 257: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 258: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 261: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 263: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 267: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 269: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 270: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 272: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 274: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 277: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 279: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 282: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 283: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 284: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 285: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 290: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 291: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 292: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 294: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 295: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 297: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 299: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 301: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 302: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 303: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 310: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 334: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 398: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        }
+      ],
+      "parser_warning_count": 135,
+      "provenance_correction": null,
+      "source_inventory": {
+        "bytes": 2764522,
+        "source_affected_software_sample": [],
+        "source_cve_count": 817,
+        "source_cves_sample": [
+          "CVE-1999-0170",
+          "CVE-1999-0211",
+          "CVE-1999-0524",
+          "CVE-1999-0554",
+          "CVE-1999-0618",
+          "CVE-1999-0632",
+          "CVE-1999-0651",
+          "CVE-2003-1567",
+          "CVE-2004-2320",
+          "CVE-2006-2607",
+          "CVE-2006-7243",
+          "CVE-2007-1858",
+          "CVE-2007-4572",
+          "CVE-2007-5498",
+          "CVE-2007-5925"
+        ],
+        "source_endpoints_sample": [
+          "111/udp",
+          "2049/udp",
+          "22/tcp",
+          "25/tcp",
+          "445/tcp",
+          "512/tcp",
+          "513/tcp",
+          "514/tcp",
+          "53/udp",
+          "5432/tcp",
+          "80/tcp"
+        ],
+        "source_hosts": 1,
+        "source_multi_cve_results": 135,
+        "source_multi_cve_with_cvss": 135,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 461
+      },
+      "technical_reason": "technical invariants pass; canonical findings=942, valid normalized rows=942, parser_warnings=135, explicit_CVEless_exclusions=207",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 0
+    },
+    {
+      "apply": {
+        "first_findings": 138,
+        "first_summary": {
+          "batch_id": "IMP-9D47366530D04C45",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 138,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 138,
+          "scanner_source": "nessus",
+          "stale": 0,
+          "updated": 0,
+          "verification_ready": 0
+        },
+        "reimport_ids_stable": true,
+        "second_findings": 138,
+        "second_summary": {
+          "batch_id": "IMP-45CCF62D4D2E4BDE",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 0,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 138,
+          "scanner_source": "nessus",
+          "stale": 0,
+          "updated": 138,
+          "verification_ready": 0
+        }
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true
+      },
+      "case_id": "NESSUS_004",
+      "corrected_technical_status": "SEMANTIC_REVIEW_REQUIRED",
+      "explicit_cveless_exclusion_classes": [
+        {
+          "count": 30,
+          "message": "CVE가 없는 Nessus 플러그인 결과는 현재 데이터 모델에 넣을 수 없습니다."
+        }
+      ],
+      "explicit_cveless_exclusion_count": 30,
+      "file_name": "nessus_with_cvssv3.nessus",
+      "file_sha256": "ffe0306a4ec2b33b4a0c39031fe556aa0425f1359fd7f0fef24700eb79de6928",
+      "format": {
+        "adapter": "nessus",
+        "detected": "nessus",
+        "expected": "nessus"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 138,
+          "component": 138,
+          "component_version": 0,
+          "cve_id": 138,
+          "cvss": 3,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 138,
+          "ip_address": 138,
+          "notes": 138,
+          "product": 138,
+          "product_version": 0
+        },
+        "mapped_rows": 138,
+        "source_records": 168,
+        "valid_rows": 138
+      },
+      "parser_warning_classes": [
+        {
+          "count": 1,
+          "message": "ReportItem 11: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 12: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 14: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 15: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 16: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 17: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 18: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 19: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 20: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 21: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 22: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 23: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 24: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 25: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "ReportItem 26: 다중-CVE Nessus plugin의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        }
+      ],
+      "parser_warning_count": 15,
+      "provenance_correction": null,
+      "source_inventory": {
+        "bytes": 1492498,
+        "source_affected_software_sample": [],
+        "source_cve_count": 136,
+        "source_cves_sample": [
+          "CVE-1999-0524",
+          "CVE-2006-1015",
+          "CVE-2006-1549",
+          "CVE-2006-2660",
+          "CVE-2006-4486",
+          "CVE-2006-4625",
+          "CVE-2006-4812",
+          "CVE-2006-5465",
+          "CVE-2006-5706",
+          "CVE-2006-6383",
+          "CVE-2006-7205",
+          "CVE-2007-0448",
+          "CVE-2007-0905",
+          "CVE-2007-0906",
+          "CVE-2007-0907"
+        ],
+        "source_endpoints_sample": [
+          "80/tcp"
+        ],
+        "source_hosts": 1,
+        "source_multi_cve_results": 15,
+        "source_multi_cve_with_cvss": 15,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 49
+      },
+      "technical_reason": "technical invariants pass; canonical findings=138, valid normalized rows=138, parser_warnings=15, explicit_CVEless_exclusions=30",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 0
+    },
+    {
+      "apply": {
+        "first_findings": 10,
+        "first_summary": {
+          "batch_id": "IMP-7591C3EEA1934E9A",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 10,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 10,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 0,
+          "verification_ready": 0
+        },
+        "reimport_ids_stable": true,
+        "second_findings": 10,
+        "second_summary": {
+          "batch_id": "IMP-4BBF01013CE14BFC",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 0,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 10,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 10,
+          "verification_ready": 0
+        }
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true
+      },
+      "case_id": "GBXML_001",
+      "corrected_technical_status": "SEMANTIC_REVIEW_REQUIRED",
+      "explicit_cveless_exclusion_classes": [
+        {
+          "count": 21,
+          "message": "CVE가 없는 OpenVAS 결과는 현재 데이터 모델에 넣을 수 없습니다."
+        }
+      ],
+      "explicit_cveless_exclusion_count": 21,
+      "file_name": "openvas-report.xml",
+      "file_sha256": "9b5a65e0d92cc7d853084d129ea6260ab34b46136fb05ec6aa2f80db4830356e",
+      "format": {
+        "adapter": "openvas",
+        "detected": "openvas_xml",
+        "expected": "openvas_xml"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 10,
+          "component": 10,
+          "component_version": 0,
+          "cve_id": 10,
+          "cvss": 7,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 0,
+          "ip_address": 10,
+          "notes": 10,
+          "product": 10,
+          "product_version": 0
+        },
+        "mapped_rows": 10,
+        "source_records": 31,
+        "valid_rows": 10
+      },
+      "parser_warning_classes": [],
+      "parser_warning_count": 0,
+      "provenance_correction": null,
+      "source_inventory": {
+        "bytes": 42201,
+        "source_affected_software_sample": [],
+        "source_cve_count": 7,
+        "source_cves_sample": [
+          "CVE-1999-0103",
+          "CVE-1999-0516",
+          "CVE-1999-0524",
+          "CVE-1999-0635",
+          "CVE-1999-0636",
+          "CVE-2002-1561",
+          "CVE-2012-0207"
+        ],
+        "source_endpoints_sample": [
+          "135/tcp",
+          "161/tcp",
+          "17/tcp",
+          "17/udp",
+          "19/udp",
+          "7/tcp",
+          "7/udp",
+          "9/tcp",
+          "general/icmp",
+          "general/tcp"
+        ],
+        "source_hosts": 1,
+        "source_multi_cve_results": null,
+        "source_multi_cve_with_cvss": null,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 31
+      },
+      "technical_reason": "technical invariants pass; canonical findings=10, valid normalized rows=10, parser_warnings=0, explicit_CVEless_exclusions=21",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 0
+    },
+    {
+      "apply": {
+        "first_findings": 55,
+        "first_summary": {
+          "batch_id": "IMP-04E8AC02786B433B",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 55,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 55,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 0,
+          "verification_ready": 0
+        },
+        "reimport_ids_stable": true,
+        "second_findings": 55,
+        "second_summary": {
+          "batch_id": "IMP-E8AC4C69F18E4FB1",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 0,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 55,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 55,
+          "verification_ready": 0
+        }
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true
+      },
+      "case_id": "GBXML_002",
+      "corrected_technical_status": "SEMANTIC_REVIEW_REQUIRED",
+      "explicit_cveless_exclusion_classes": [
+        {
+          "count": 21,
+          "message": "CVE가 없는 OpenVAS 결과는 현재 데이터 모델에 넣을 수 없습니다."
+        }
+      ],
+      "explicit_cveless_exclusion_count": 21,
+      "file_name": "26.09.2023_openvas_metasploitable2-scan.xml",
+      "file_sha256": "fbfcf5cc8c3e031ca4139241f4006bd79f9d9ee0f2c2d31e4744c0ebe8135339",
+      "format": {
+        "adapter": "openvas",
+        "detected": "openvas_xml",
+        "expected": "openvas_xml"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 55,
+          "component": 55,
+          "component_version": 0,
+          "cve_id": 55,
+          "cvss": 15,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 0,
+          "ip_address": 0,
+          "notes": 55,
+          "product": 55,
+          "product_version": 0
+        },
+        "mapped_rows": 55,
+        "source_records": 76,
+        "valid_rows": 55
+      },
+      "parser_warning_classes": [],
+      "parser_warning_count": 0,
+      "provenance_correction": null,
+      "source_inventory": {
+        "bytes": 89465,
+        "source_affected_software_sample": [],
+        "source_cve_count": 46,
+        "source_cves_sample": [
+          "CVE-1999-0497",
+          "CVE-1999-0501",
+          "CVE-1999-0502",
+          "CVE-1999-0507",
+          "CVE-1999-0508",
+          "CVE-1999-0618",
+          "CVE-1999-0678",
+          "CVE-2001-1594",
+          "CVE-2003-1567",
+          "CVE-2004-2320",
+          "CVE-2004-2687",
+          "CVE-2004-2763",
+          "CVE-2005-3398",
+          "CVE-2006-4683",
+          "CVE-2007-2447"
+        ],
+        "source_endpoints_sample": [
+          "21/tcp",
+          "2121/tcp",
+          "3632/tcp",
+          "445/tcp",
+          "512/tcp",
+          "5432/tcp",
+          "6667/tcp",
+          "6697/tcp",
+          "80/tcp"
+        ],
+        "source_hosts": 1,
+        "source_multi_cve_results": null,
+        "source_multi_cve_with_cvss": null,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 44
+      },
+      "technical_reason": "technical invariants pass; canonical findings=55, valid normalized rows=55, parser_warnings=0, explicit_CVEless_exclusions=21",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 0
+    },
+    {
+      "apply": {
+        "first_findings": 55,
+        "first_summary": {
+          "batch_id": "IMP-7ABE4F8F161649BA",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 55,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 55,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 0,
+          "verification_ready": 0
+        },
+        "reimport_ids_stable": true,
+        "second_findings": 55,
+        "second_summary": {
+          "batch_id": "IMP-3B4FB09C3FC94CCF",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 0,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 55,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 55,
+          "verification_ready": 0
+        }
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true
+      },
+      "case_id": "GBXML_003",
+      "corrected_technical_status": "SEMANTIC_REVIEW_REQUIRED",
+      "explicit_cveless_exclusion_classes": [
+        {
+          "count": 21,
+          "message": "CVE가 없는 OpenVAS 결과는 현재 데이터 모델에 넣을 수 없습니다."
+        }
+      ],
+      "explicit_cveless_exclusion_count": 21,
+      "file_name": "26.09.2023_openvas_metasploitable2-scan.xml",
+      "file_sha256": "bb88fdad0451bab6374591884816dcc81630739b18d674d9a71122a2ea47ec9b",
+      "format": {
+        "adapter": "openvas",
+        "detected": "openvas_xml",
+        "expected": "openvas_xml"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 55,
+          "component": 55,
+          "component_version": 0,
+          "cve_id": 55,
+          "cvss": 15,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 0,
+          "ip_address": 55,
+          "notes": 55,
+          "product": 55,
+          "product_version": 0
+        },
+        "mapped_rows": 55,
+        "source_records": 76,
+        "valid_rows": 55
+      },
+      "parser_warning_classes": [],
+      "parser_warning_count": 0,
+      "provenance_correction": null,
+      "source_inventory": {
+        "bytes": 90455,
+        "source_affected_software_sample": [],
+        "source_cve_count": 46,
+        "source_cves_sample": [
+          "CVE-1999-0497",
+          "CVE-1999-0501",
+          "CVE-1999-0502",
+          "CVE-1999-0507",
+          "CVE-1999-0508",
+          "CVE-1999-0618",
+          "CVE-1999-0678",
+          "CVE-2001-1594",
+          "CVE-2003-1567",
+          "CVE-2004-2320",
+          "CVE-2004-2687",
+          "CVE-2004-2763",
+          "CVE-2005-3398",
+          "CVE-2006-4683",
+          "CVE-2007-2447"
+        ],
+        "source_endpoints_sample": [
+          "21/tcp",
+          "2121/tcp",
+          "3632/tcp",
+          "445/tcp",
+          "512/tcp",
+          "5432/tcp",
+          "6667/tcp",
+          "6697/tcp",
+          "80/tcp"
+        ],
+        "source_hosts": 1,
+        "source_multi_cve_results": null,
+        "source_multi_cve_with_cvss": null,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 44
+      },
+      "technical_reason": "technical invariants pass; canonical findings=55, valid normalized rows=55, parser_warnings=0, explicit_CVEless_exclusions=21",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 0
+    },
+    {
+      "apply": {
+        "first_findings": 12,
+        "first_summary": {
+          "batch_id": "IMP-3186C3A78F7B4C8B",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 12,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 12,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 0,
+          "verification_ready": 0
+        },
+        "reimport_ids_stable": true,
+        "second_findings": 12,
+        "second_summary": {
+          "batch_id": "IMP-6F02AEF77AF042DD",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 0,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 12,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 12,
+          "verification_ready": 0
+        }
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true
+      },
+      "case_id": "GBXML_004",
+      "corrected_technical_status": "TECHNICAL_PASS",
+      "explicit_cveless_exclusion_classes": [],
+      "explicit_cveless_exclusion_count": 0,
+      "file_name": "28.09.2023_openvas_dc01-testlab-scan.xml",
+      "file_sha256": "f78cbc429c0f156bd8cd1678288835de76a71ce3bf37184da88cc80fc8522bb5",
+      "format": {
+        "adapter": "openvas",
+        "detected": "openvas_xml",
+        "expected": "openvas_xml"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 12,
+          "component": 12,
+          "component_version": 0,
+          "cve_id": 12,
+          "cvss": 0,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 0,
+          "ip_address": 12,
+          "notes": 12,
+          "product": 12,
+          "product_version": 0
+        },
+        "mapped_rows": 12,
+        "source_records": 12,
+        "valid_rows": 12
+      },
+      "parser_warning_classes": [],
+      "parser_warning_count": 0,
+      "provenance_correction": null,
+      "source_inventory": {
+        "bytes": 5752,
+        "source_affected_software_sample": [],
+        "source_cve_count": 12,
+        "source_cves_sample": [
+          "CVE-2023-4573",
+          "CVE-2023-4574",
+          "CVE-2023-4575",
+          "CVE-2023-4576",
+          "CVE-2023-4577",
+          "CVE-2023-4578",
+          "CVE-2023-4579",
+          "CVE-2023-4580",
+          "CVE-2023-4581",
+          "CVE-2023-4583",
+          "CVE-2023-4584",
+          "CVE-2023-4585"
+        ],
+        "source_endpoints_sample": [
+          "general/tcp"
+        ],
+        "source_hosts": 1,
+        "source_multi_cve_results": null,
+        "source_multi_cve_with_cvss": null,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 1
+      },
+      "technical_reason": "parse/evaluate/apply/reimport plus automatically-checkable CVE/identity fields pass; human semantic review still required for P0 closure",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 0
+    },
+    {
+      "apply": {
+        "first_findings": null,
+        "first_summary": null,
+        "reimport_ids_stable": null,
+        "second_findings": null,
+        "second_summary": null
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true
+      },
+      "case_id": "GBCSV_001",
+      "corrected_technical_status": "SEMANTIC_REVIEW_REQUIRED",
+      "explicit_cveless_exclusion_classes": [
+        {
+          "count": 14,
+          "message": "CVE가 없는 OpenVAS 결과는 현재 데이터 모델에 넣을 수 없습니다."
+        }
+      ],
+      "explicit_cveless_exclusion_count": 14,
+      "file_name": "20250413-CSV.Results.csv",
+      "file_sha256": "808e198ae15e12b27dfc8a730b9ad0294ecfb23d2bf9511171d0e8beaa3b219d",
+      "format": {
+        "adapter": "openvas",
+        "detected": "openvas_csv",
+        "expected": "openvas_csv"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 33,
+          "component": 33,
+          "component_version": 0,
+          "cve_id": 33,
+          "cvss": 11,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 33,
+          "ip_address": 33,
+          "notes": 33,
+          "product": 33,
+          "product_version": 0
+        },
+        "mapped_rows": 44,
+        "source_records": 58,
+        "valid_rows": 33
+      },
+      "parser_warning_classes": [
+        {
+          "count": 1,
+          "message": "행 2: 다중-CVE Greenbone CSV의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "행 17: 다중-CVE Greenbone CSV의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        },
+        {
+          "count": 1,
+          "message": "행 32: 다중-CVE Greenbone CSV의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        }
+      ],
+      "parser_warning_count": 3,
+      "provenance_correction": {
+        "classification": "VALIDATION_TOOLING_DEFECT_SOURCE_DUPLICATE",
+        "duplicate_cves": [
+          "CVE-2003-1567",
+          "CVE-2004-2320",
+          "CVE-2004-2763",
+          "CVE-2005-3398",
+          "CVE-2006-4683",
+          "CVE-2007-3008",
+          "CVE-2008-7253",
+          "CVE-2009-2823",
+          "CVE-2010-0386",
+          "CVE-2012-2223",
+          "CVE-2014-7883"
+        ],
+        "reason": "The two target Greenbone CSV records differ only in scanner Result ID. Released 72.0.102 canonical finding identity intentionally excludes scanner Result ID, so the 11 duplicate-finding-id preview errors are source-duplicate provenance, not a Core defect.",
+        "source_duplicate_diff_fields": [
+          "Result ID"
+        ],
+        "source_duplicate_result_ids": [
+          "d766a82b-8765-4a23-8a1-89846bf6cbd4",
+          "a8b81531-f2b7-4dd5-ad11-245141e96676"
+        ]
+      },
+      "source_inventory": {
+        "bytes": 41690,
+        "source_affected_software_sample": [],
+        "source_cve_count": 13,
+        "source_cves_sample": [
+          "CVE-1999-0524",
+          "CVE-2003-1567",
+          "CVE-2004-2320",
+          "CVE-2004-2763",
+          "CVE-2005-3398",
+          "CVE-2006-4683",
+          "CVE-2007-3008",
+          "CVE-2008-7253",
+          "CVE-2009-2823",
+          "CVE-2010-0386",
+          "CVE-2012-2223",
+          "CVE-2014-7883",
+          "CVE-2023-32082"
+        ],
+        "source_endpoints_sample": [
+          "2379/tcp",
+          "80/tcp",
+          "8443/tcp"
+        ],
+        "source_hosts": null,
+        "source_multi_cve_results": null,
+        "source_multi_cve_with_cvss": null,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 28
+      },
+      "technical_reason": "source duplicate proven: two Greenbone records differ only Result ID; duplicate canonical finding IDs are semantic-review provenance, not Core failure",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 11
+    },
+    {
+      "apply": {
+        "first_findings": 11,
+        "first_summary": {
+          "batch_id": "IMP-24561FADB60547C1",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 11,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 11,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 0,
+          "verification_ready": 0
+        },
+        "reimport_ids_stable": true,
+        "second_findings": 11,
+        "second_summary": {
+          "batch_id": "IMP-DA667266A9324880",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 0,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 11,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 11,
+          "verification_ready": 0
+        }
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true
+      },
+      "case_id": "GBCSV_002",
+      "corrected_technical_status": "SEMANTIC_REVIEW_REQUIRED",
+      "explicit_cveless_exclusion_classes": [
+        {
+          "count": 2,
+          "message": "CVE가 없는 OpenVAS 결과는 현재 데이터 모델에 넣을 수 없습니다."
+        }
+      ],
+      "explicit_cveless_exclusion_count": 2,
+      "file_name": "report-6d0cb9ca-364b-46a7-9993-9360e7a34c1b.csv",
+      "file_sha256": "ff92d3f4b7f019bb4f3b335ff437e7cc268bada99fd487801c70949c8a5036eb",
+      "format": {
+        "adapter": "openvas",
+        "detected": "openvas_csv",
+        "expected": "openvas_csv"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 11,
+          "component": 11,
+          "component_version": 0,
+          "cve_id": 11,
+          "cvss": 0,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 0,
+          "ip_address": 11,
+          "notes": 11,
+          "product": 11,
+          "product_version": 0
+        },
+        "mapped_rows": 11,
+        "source_records": 13,
+        "valid_rows": 11
+      },
+      "parser_warning_classes": [
+        {
+          "count": 1,
+          "message": "행 2: 다중-CVE Greenbone CSV의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        }
+      ],
+      "parser_warning_count": 1,
+      "provenance_correction": null,
+      "source_inventory": {
+        "bytes": 4766,
+        "source_affected_software_sample": [],
+        "source_cve_count": 11,
+        "source_cves_sample": [
+          "CVE-2003-1567",
+          "CVE-2004-2320",
+          "CVE-2004-2763",
+          "CVE-2005-3398",
+          "CVE-2006-4683",
+          "CVE-2007-3008",
+          "CVE-2008-7253",
+          "CVE-2009-2823",
+          "CVE-2010-0386",
+          "CVE-2012-2223",
+          "CVE-2014-7883"
+        ],
+        "source_endpoints_sample": [
+          "9080/tcp"
+        ],
+        "source_hosts": null,
+        "source_multi_cve_results": null,
+        "source_multi_cve_with_cvss": null,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 3
+      },
+      "technical_reason": "technical invariants pass; canonical findings=11, valid normalized rows=11, parser_warnings=1, explicit_CVEless_exclusions=2",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 0
+    },
+    {
+      "apply": {
+        "first_findings": 93,
+        "first_summary": {
+          "batch_id": "IMP-1FBF7659B18C4783",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 93,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 93,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 0,
+          "verification_ready": 0
+        },
+        "reimport_ids_stable": true,
+        "second_findings": 93,
+        "second_summary": {
+          "batch_id": "IMP-5803CF95C2854AE1",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 0,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 93,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 93,
+          "verification_ready": 0
+        }
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true
+      },
+      "case_id": "GBCSV_003",
+      "corrected_technical_status": "SEMANTIC_REVIEW_REQUIRED",
+      "explicit_cveless_exclusion_classes": [],
+      "explicit_cveless_exclusion_count": 0,
+      "file_name": "report_detail_v2.csv",
+      "file_sha256": "4ff858e7a9d2bfe3d60cb8a95cec357936711ae2e87ccc82a0ecd349edf0d29a",
+      "format": {
+        "adapter": "openvas",
+        "detected": "openvas_csv",
+        "expected": "openvas_csv"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 93,
+          "component": 93,
+          "component_version": 0,
+          "cve_id": 93,
+          "cvss": 0,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 0,
+          "ip_address": 93,
+          "notes": 93,
+          "product": 93,
+          "product_version": 0
+        },
+        "mapped_rows": 93,
+        "source_records": 93,
+        "valid_rows": 93
+      },
+      "parser_warning_classes": [
+        {
+          "count": 1,
+          "message": "행 2: 다중-CVE Greenbone CSV의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        }
+      ],
+      "parser_warning_count": 1,
+      "provenance_correction": null,
+      "source_inventory": {
+        "bytes": 2983,
+        "source_affected_software_sample": [],
+        "source_cve_count": 93,
+        "source_cves_sample": [
+          "CVE-2025-36350",
+          "CVE-2025-36357",
+          "CVE-2025-47159",
+          "CVE-2025-47971",
+          "CVE-2025-47972",
+          "CVE-2025-47973",
+          "CVE-2025-47975",
+          "CVE-2025-47976",
+          "CVE-2025-47980",
+          "CVE-2025-47981",
+          "CVE-2025-47982",
+          "CVE-2025-47984",
+          "CVE-2025-47985",
+          "CVE-2025-47986",
+          "CVE-2025-47987"
+        ],
+        "source_endpoints_sample": [
+          "42/tcp"
+        ],
+        "source_hosts": null,
+        "source_multi_cve_results": null,
+        "source_multi_cve_with_cvss": null,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 1
+      },
+      "technical_reason": "technical invariants pass; canonical findings=93, valid normalized rows=93, parser_warnings=1, explicit_CVEless_exclusions=0",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 0
+    },
+    {
+      "apply": {
+        "first_findings": 2,
+        "first_summary": {
+          "batch_id": "IMP-775D0CAFB99644E3",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 2,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 2,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 0,
+          "verification_ready": 0
+        },
+        "reimport_ids_stable": true,
+        "second_findings": 2,
+        "second_summary": {
+          "batch_id": "IMP-DDA7C48039A244AC",
+          "conflicts": 0,
+          "identity_candidates": 0,
+          "inserted": 0,
+          "merged": 0,
+          "mode": "incremental",
+          "reopened": 0,
+          "row_count": 2,
+          "scanner_source": "openvas",
+          "stale": 0,
+          "updated": 2,
+          "verification_ready": 0
+        }
+      },
+      "automatic_semantic_checks": {
+        "cve_set_preserved": true,
+        "endpoint_values_preserved": true
+      },
+      "case_id": "GBCSV_004",
+      "corrected_technical_status": "SEMANTIC_REVIEW_REQUIRED",
+      "explicit_cveless_exclusion_classes": [
+        {
+          "count": 3,
+          "message": "CVE가 없는 OpenVAS 결과는 현재 데이터 모델에 넣을 수 없습니다."
+        }
+      ],
+      "explicit_cveless_exclusion_count": 3,
+      "file_name": "many_vuln.csv",
+      "file_sha256": "ba081714418b334b9feb8d2426e076f9ff01c60de02fa66ea191679a625d3026",
+      "format": {
+        "adapter": "openvas",
+        "detected": "openvas_csv",
+        "expected": "openvas_csv"
+      },
+      "machine_semantic_blockers": [],
+      "normalization": {
+        "coverage_nonempty": {
+          "asset_name": 2,
+          "component": 2,
+          "component_version": 0,
+          "cve_id": 2,
+          "cvss": 0,
+          "epss": 0,
+          "epss_percentile": 0,
+          "fqdn": 0,
+          "ip_address": 2,
+          "notes": 2,
+          "product": 2,
+          "product_version": 0
+        },
+        "mapped_rows": 2,
+        "source_records": 5,
+        "valid_rows": 2
+      },
+      "parser_warning_classes": [
+        {
+          "count": 1,
+          "message": "행 43: 다중-CVE Greenbone CSV의 CVSS 대표 CVE를 식별할 수 없어 CVE별 CVSS를 비웁니다."
+        }
+      ],
+      "parser_warning_count": 1,
+      "provenance_correction": null,
+      "source_inventory": {
+        "bytes": 7669,
+        "source_affected_software_sample": [],
+        "source_cve_count": 2,
+        "source_cves_sample": [
+          "CVE-2011-3389",
+          "CVE-2015-0204"
+        ],
+        "source_endpoints_sample": [
+          "9200/tcp"
+        ],
+        "source_hosts": null,
+        "source_multi_cve_results": null,
+        "source_multi_cve_with_cvss": null,
+        "source_oci_sample": [],
+        "source_paths_sample": [],
+        "source_results": 4
+      },
+      "technical_reason": "technical invariants pass; canonical findings=2, valid normalized rows=2, parser_warnings=1, explicit_CVEless_exclusions=3",
+      "unexpected_error_classes_corrected": [],
+      "unexpected_error_count_corrected": 0,
+      "unexpected_error_count_original": 0
+    }
+  ],
+  "core_version": "72.0.102",
+  "gbcsv_001_fix2_provenance": {
+    "case_id": "GBCSV_001",
+    "classification": "VALIDATION_TOOLING_DEFECT_SOURCE_DUPLICATE",
+    "core_defect": false,
+    "core_identity_contract": {
+      "auto_identity_fields": [
+        "scanner_source",
+        "product",
+        "product_version",
+        "asset_id",
+        "asset_name",
+        "environment",
+        "cve_id",
+        "component",
+        "component_version"
+      ],
+      "duplicate_scanner_records_are_review_condition": true,
+      "scanner_result_id_in_auto_identity": false
+    },
+    "corrected_case_status": "SEMANTIC_REVIEW_REQUIRED",
+    "csv_delimiter": ",",
+    "csv_encoding": "utf-8-sig",
+    "csv_records": 27,
+    "cve_set_preserved": true,
+    "differing_fields": [
+      "Result ID"
+    ],
+    "duplicate_cves": [
+      "CVE-2003-1567",
+      "CVE-2004-2320",
+      "CVE-2004-2763",
+      "CVE-2005-3398",
+      "CVE-2006-4683",
+      "CVE-2007-3008",
+      "CVE-2008-7253",
+      "CVE-2009-2823",
+      "CVE-2010-0386",
+      "CVE-2012-2223",
+      "CVE-2014-7883"
+    ],
+    "endpoint_values_preserved": true,
+    "fix1_failure_provenance": "VALIDATION_TOOLING_DEFECT_MULTILINE_CSV_READER",
+    "official_core_sha256": "96cfb8282f9fb60ffc0ec6c26b2625526370be89367b6fb32c9f96e7a98e4030",
+    "prior_duplicate_errors": 11,
+    "reason": "The two target Greenbone CSV records differ only in scanner Result ID. Released 72.0.102 canonical finding identity intentionally excludes scanner Result ID, so the 11 duplicate-finding-id preview errors are source-duplicate provenance, not a Core defect.",
+    "release_bump_authorized": false,
+    "result_ids": [
+      "d766a82b-8765-4a23-8a1-89846bf6cbd4",
+      "a8b81531-f2b7-4dd5-ad11-245141e96676"
+    ],
+    "source_sha256": "808e198ae15e12b27dfc8a730b9ad0294ecfb23d2bf9511171d0e8beaa3b219d",
+    "target_source_record_count": 2
+  },
+  "official_core_sha256": "96cfb8282f9fb60ffc0ec6c26b2625526370be89367b6fb32c9f96e7a98e4030",
+  "packet_version": "1",
+  "prior_state": {
+    "automatic_semantic_flags": 11,
+    "case_slots_with_files": 12,
+    "core_defect_proven": false,
+    "core_version": "72.0.102",
+    "failed": 0,
+    "fix1_failure_provenance": "VALIDATION_TOOLING_DEFECT_MULTILINE_CSV_READER",
+    "gbcsv_001_failure_provenance": "VALIDATION_TOOLING_DEFECT_SOURCE_DUPLICATE",
+    "next_stage": "HUMAN_SEMANTIC_REVIEW_12_CASES",
+    "p0_public_corpus_technical_gate": "PASS",
+    "real_corpus_gate": "SEMANTIC_REVIEW_REQUIRED",
+    "release_bump_authorized": false,
+    "semantic_review_remaining": 12,
+    "target_case_slots": 12,
+    "technical_pass": 1
+  },
+  "purpose": "Human semantic review of 12 real/public scanner corpus cases after technical gate closure. No parser/apply tests are rerun by this packet builder.",
+  "review_contract": {
+    "human_review_required_for_all_12": true,
+    "review_questions": [
+      "Does detected scanner format/adapter match the source artifact?",
+      "Are CVE-bearing findings preserved without unsupported semantic loss?",
+      "Are endpoint/path/OCI/affected-software identity values preserved when present?",
+      "Are parser warnings explainable and non-corrupting?",
+      "Are explicit CVE-less exclusions expected under the current CVE-centric import contract?",
+      "Is same-file reimport identity stable?",
+      "For GBCSV_001, is the duplicate condition fully explained by source records differing only in scanner Result ID?"
+    ]
+  }
+}
