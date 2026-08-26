@@ -61,7 +61,7 @@ def upsert_findings(db_path: str | Path, rows: Iterable[dict[str, Any]], *, acto
             conn.execute(sql, [row.get(field) for field in FIELDS])
             _sync_asset_row(conn, row)
             source = str(row.get("scanner_source") or "manual").split(",")[0].strip() or "manual"
-            source_id = str(row.get("finding_id") or "")
+            source_id = str(row.get("source_finding_id") or row.get("finding_id") or "")
             source_record_id = source_record_id_for(source, source_id)
             now = utc_now()
             requested_batch = str(row.get("import_batch_id") or "").strip()
@@ -420,7 +420,7 @@ def apply_import_batch(
 
     batch_id = f"IMP-{uuid.uuid4().hex[:16].upper()}"
     now = utc_now()
-    source_native_ids = [str(row.get("finding_id") or "").strip() for row in prepared]
+    source_native_ids = [str(row.get("source_finding_id") or row.get("finding_id") or "") for row in prepared]
     if any(not item for item in source_native_ids):
         raise ValueError("finding_id가 없는 항목이 있습니다.")
     source_native_keys = [source_finding_id_key(item) for item in source_native_ids]

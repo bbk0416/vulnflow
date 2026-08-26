@@ -10,7 +10,8 @@ from typing import Any
 SUPPORTED_IMPORT_FORMATS = {"auto", "csv", "xlsx", "nessus", "openvas"}
 CANONICAL_IMPORT_FIELDS: tuple[dict[str, Any], ...] = (
     {"name": "product", "label": "제품·취약점명", "required": True, "group": "essential"},
-    {"name": "cve_id", "label": "CVE", "required": True, "group": "essential"},
+    {"name": "cve_id", "label": "CVE", "required": False, "group": "essential"},
+    {"name": "source_finding_id", "label": "스캐너 원본 결과 ID", "required": False, "group": "advanced"},
     {"name": "asset_name", "label": "자산·호스트명", "required": False, "group": "essential"},
     {"name": "ip_address", "label": "IP 주소", "required": False, "group": "essential"},
     {"name": "cvss", "label": "CVSS", "required": False, "group": "essential"},
