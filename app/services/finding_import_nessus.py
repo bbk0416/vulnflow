@@ -173,18 +173,12 @@ def _nessus_rows(content: bytes) -> dict[str, Any]:
                 f"서비스: {service_name}" if service_name else "",
                 f"포트: {endpoint}" if endpoint else "",
             ])
-            if not cves:
-                source_errors.append({
-                    "row_number": item_index,
-                    "message": "CVE가 없는 Nessus 플러그인 결과는 현재 데이터 모델에 넣을 수 없습니다.",
-                    "raw": {"host": asset_name, "plugin": plugin_name, "plugin_id": item.attrib.get("pluginID", "")},
-                })
-                continue
-            for cve in cves:
+            for cve in (cves or [""]):
                 rows.append({
                     "product": product,
                     "product_version": product_version,
                     "cve_id": cve,
+                    "source_finding_id": f"nessus|{asset_name}|plugin:{item.attrib.get('pluginID', '')}|port:{item.attrib.get('port', '')}|proto:{item.attrib.get('protocol', '')}|cve:{cve or 'NO-CVE'}",
                     "asset_name": asset_name or ip_address,
                     "asset_id": asset_id,
                     "ip_address": ip_address,

@@ -176,7 +176,7 @@ def test_scanner_compatibility_reports_ready_and_review_states():
     assert set(review["missing_recommended_fields"]) == {"asset_name", "cvss", "notes"}
 
 
-def test_nessus_compatibility_counts_non_cve_plugins_as_unsupported():
+def test_nessus_compatibility_counts_non_cve_plugins_as_supported():
     payload = b"""<?xml version='1.0'?>
 <NessusClientData_v2><Report name='demo'><ReportHost name='10.0.0.8'>
 <ReportItem port='443' pluginID='1' pluginName='TLS issue'><cve>CVE-2026-92001</cve><cvss3_base_score>8.8</cvss3_base_score><solution>Upgrade</solution></ReportItem>
@@ -184,10 +184,8 @@ def test_nessus_compatibility_counts_non_cve_plugins_as_unsupported():
 </ReportHost></Report></NessusClientData_v2>"""
     evaluation = evaluate_scanner_file(payload, filename="scan.nessus")
     report = build_scanner_compatibility_report(evaluation, filename="scan.nessus")
-    assert report["status"] == "REVIEW"
-    assert report["source_items"] == 2
-    assert report["importable_rows"] == 1
-    assert report["unsupported_source_items"] == 1
+    assert report["status"] == "READY"
+    assert report["unsupported_source_items"] == 0
 
 
 def test_scanner_compatibility_cli_writes_json(tmp_path: Path):

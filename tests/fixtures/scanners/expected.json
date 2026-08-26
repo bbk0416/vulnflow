@@ -14,8 +14,8 @@
   "nessus-basic.nessus": {
     "detected_format": "nessus",
     "importable_rows": 1,
-    "status": "REVIEW",
-    "unsupported_source_items": 1
+    "status": "READY",
+    "unsupported_source_items": 0
   },
   "nessus-cpe22.nessus": {
     "detected_format": "nessus",
@@ -32,8 +32,8 @@
   "openvas-greenbone.csv": {
     "detected_format": "openvas_csv",
     "importable_rows": 1,
-    "status": "REVIEW",
-    "unsupported_source_items": 1
+    "status": "READY",
+    "unsupported_source_items": 0
   },
   "openvas-refs.xml": {
     "detected_format": "openvas_xml",

@@ -57,7 +57,7 @@ def asset_ref_id_for(row: dict[str, Any]) -> str:
     return "AST-" + hashlib.sha256(identity.encode("utf-8")).hexdigest()[:16].upper()
 
 
-def canonical_key_for(row: dict[str, Any]) -> str:
+def _canonical_key_for_cve_legacy(row: dict[str, Any]) -> str:
     """Build a scanner-independent identity for one vulnerability instance.
 
     The key intentionally excludes scanner source and scanner-native IDs. Component
@@ -71,6 +71,30 @@ def canonical_key_for(row: dict[str, Any]) -> str:
     ).casefold()
     identity = "|".join([asset_ref.casefold(), cve_id.casefold(), component])
     return "CK-" + hashlib.sha256(identity.encode("utf-8")).hexdigest().upper()
+
+def canonical_key_for(item):
+    # Historical CVE rows remain byte-for-byte on the old key path.
+    cve_id = str(item.get("cve_id") or "").strip().upper()
+    if cve_id:
+        return _canonical_key_for_cve_legacy(item)
+
+    semantic_parts = [
+        str(item.get("product") or "").strip().casefold(),
+        str(item.get("product_version") or "").strip().casefold(),
+        str(item.get("component") or "").strip().casefold(),
+        str(item.get("component_version") or "").strip().casefold(),
+    ]
+    endpoint_notes = []
+    for raw_line in str(item.get("notes") or "").splitlines():
+        normalized = raw_line.strip().casefold()
+        if normalized.startswith(("포트:", "서비스:", "port:", "service:")):
+            endpoint_notes.append(normalized)
+    semantic_parts.extend(sorted(set(endpoint_notes)))
+    semantic = "\x1f".join(semantic_parts)
+    surrogate = "NO-CVE-" + hashlib.sha256(
+        semantic.encode("utf-8")
+    ).hexdigest().upper()
+    return _canonical_key_for_cve_legacy({**item, "cve_id": surrogate})
 
 
 def scanner_source_key(value: Any) -> str:

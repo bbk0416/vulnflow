@@ -55,13 +55,13 @@ def normalize_finding_row(
     score_callback: Callable[[dict[str, Any]], dict[str, Any]],
 ) -> dict[str, Any]:
     row = {str(k).strip(): v for k, v in row.items() if k is not None}
-    missing = [name for name in ["product", "cve_id"] if not str(row.get(name, "")).strip()]
+    missing = [name for name in ["product", "cve_id"] if name != "cve_id" and (not str(row.get(name, "")).strip())]
     if missing:
         raise ValueError(f"{index + 2}행 필수값 누락: {', '.join(missing)}")
-
     row["product"] = bounded_text(row.get("product"), "product")
     row["cve_id"] = bounded_text(row.get("cve_id"), "cve_id", 40).upper()
-    if not cve_pattern.fullmatch(row["cve_id"]):
+    row["source_finding_id"] = bounded_text(row.get("source_finding_id"), "source_finding_id", 240)
+    if row["cve_id"] and not cve_pattern.fullmatch(row["cve_id"]):
         raise ValueError(f"{index + 2}행 CVE 형식 오류: {row['cve_id']}")
     supplied_finding_id = str(row.get("finding_id", "")).strip()
 

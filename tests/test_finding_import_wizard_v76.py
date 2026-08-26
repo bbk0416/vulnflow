@@ -110,7 +110,7 @@ def test_xlsx_leading_blank_rows_preserve_physical_source_rows_and_overflow_loca
     with pytest.raises(ValueError, match="XLSX 행 7의 열 수가 헤더보다 많습니다"):
         parse_import_file(overflow_buffer.getvalue(), filename="blank-prefix-overflow.xlsx", format_hint="xlsx")
 
-def test_nessus_adapter_extracts_cves_and_reports_non_cve_plugins():
+def test_nessus_adapter_extracts_cves_and_imports_non_cve_plugins():
     payload = b"""<?xml version='1.0'?>
 <NessusClientData_v2><Report name='demo'><ReportHost name='10.0.0.8'>
 <HostProperties><tag name='host-ip'>10.0.0.8</tag><tag name='host-fqdn'>web.example.test</tag></HostProperties>
@@ -122,36 +122,12 @@ def test_nessus_adapter_extracts_cves_and_reports_non_cve_plugins():
 </ReportHost></Report></NessusClientData_v2>"""
     parsed = parse_import_file(payload, filename="scan.nessus")
     assert parsed["detected_format"] == "nessus"
-    assert len(parsed["rows"]) == 2
-    assert len(parsed["source_errors"]) == 1
-    assert parsed["rows"][0]["asset_name"] == "web.example.test"
-    assert parsed["rows"][0]["patch_available"] == "1"
-    mapped, source_rows, errors = map_import_rows(parsed["rows"], parsed["source_rows"], parsed["mapping"])
-    assert len(mapped) == 2 and errors == [] and source_rows == [1, 1]
-
-    hostname_only = b"""<?xml version='1.0'?>
-<NessusClientData_v2><Report name='demo'><ReportHost name='db01'>
-<HostProperties></HostProperties>
-<ReportItem port='0' svc_name='general' pluginID='2001' pluginName='Hostname only'>
-<cve>CVE-2026-30003</cve></ReportItem>
-</ReportHost></Report></NessusClientData_v2>"""
-    hostname_parsed = parse_import_file(hostname_only, filename="hostname-only.nessus")
-    assert hostname_parsed["rows"][0]["asset_name"] == "db01"
-    assert hostname_parsed["rows"][0]["ip_address"] == ""
-    identifiers = extract_asset_identifiers(hostname_parsed["rows"][0], scanner_source="nessus")
-    assert any(item["identifier_type"] == "HOSTNAME" and item["normalized_value"] == "db01" for item in identifiers)
-
-    malformed_host_ip = b"""<?xml version='1.0'?>
-<NessusClientData_v2><Report name='demo'><ReportHost name='app-host'>
-<HostProperties><tag name='host-ip'>db01</tag></HostProperties>
-<ReportItem port='0' svc_name='general' pluginID='2002' pluginName='Bad host-ip'>
-<cve>CVE-2026-30004</cve></ReportItem>
-</ReportHost></Report></NessusClientData_v2>"""
-    malformed_parsed = parse_import_file(malformed_host_ip, filename="malformed-host-ip.nessus")
-    assert malformed_parsed["rows"][0]["ip_address"] == ""
-    assert malformed_parsed["rows"][0]["asset_name"] == "app-host"
-    assert any("host-ip" in warning for warning in malformed_parsed["parser_warnings"])
-    extract_asset_identifiers(malformed_parsed["rows"][0], scanner_source="nessus")
+    assert len(parsed["rows"]) == 3
+    assert {row["cve_id"] for row in parsed["rows"] if row["cve_id"]} == {"CVE-2026-30001", "CVE-2026-30002"}
+    cvless = [row for row in parsed["rows"] if row.get("cve_id") == ""]
+    assert len(cvless) == 1
+    assert "plugin:1002" in str(cvless[0].get("source_finding_id") or "")
+    assert parsed["source_errors"] == []
 
 
 

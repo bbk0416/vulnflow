@@ -35,7 +35,7 @@ def evaluate_scanner_file(
                 "raw": row,
             })
             continue
-        if not CVE_RE.fullmatch(cve_id):
+        if cve_id and not CVE_RE.fullmatch(cve_id):
             validation_errors.append({
                 "row_number": row_number,
                 "message": "유효한 CVE 식별자가 없습니다.",

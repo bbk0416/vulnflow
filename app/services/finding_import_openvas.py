@@ -88,13 +88,6 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
         hostname = _row_value(raw, "Hostname", "Host Name", "DNS Name")
         host_value = _row_value(raw, "IP", "IP Address", "Host IP", "Host")
         ip_address = _ip_value(host_value)
-        if not cves:
-            source_errors.append({
-                "row_number": source_row,
-                "message": "CVE가 없는 OpenVAS 결과는 현재 데이터 모델에 넣을 수 없습니다.",
-                "raw": {"host": hostname or host_value, "name": product},
-            })
-            continue
         if not hostname and not host_value:
             parser_warnings.append(f"행 {source_row}: 자산 식별자가 없습니다.")
         solution = _row_value(raw, "Solution")
@@ -123,10 +116,11 @@ def _openvas_csv_rows(parsed: dict[str, Any]) -> dict[str, Any]:
             if epss or epss_percentile:
                 parser_warnings.append(f"행 {source_row}: 다중-CVE Greenbone CSV의 EPSS 대표 CVE를 식별할 수 없어 CVE별 EPSS를 비웁니다.")
                 epss = epss_percentile = ""
-        for cve in cves:
+        for cve in (cves or [""]):
             rows.append({
                 "product": product or "OpenVAS finding",
                 "cve_id": cve,
+                "source_finding_id": (f"openvas|{_row_value(raw, 'Result ID', 'Result UUID', 'ResultID', 'ID') or _row_value(raw, 'OID', 'NVT OID', 'VT OID') or product}|host:{hostname or host_value}|port:{port}|cve:{cve or 'NO-CVE'}") + f"|component:{component}",
                 "asset_name": hostname or host_value,
                 "ip_address": ip_address,
                 "fqdn": _fqdn_value(hostname),
@@ -201,13 +195,6 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
                 epss_by_cve[epss_cve_id] = (
                     _first_text(epss_group, "score"), _first_text(epss_group, "percentile"), _first_text(epss_cve, "severity")
                 )
-        if not cves:
-            source_errors.append({
-                "row_number": result_index,
-                "message": "CVE가 없는 OpenVAS 결과는 현재 데이터 모델에 넣을 수 없습니다.",
-                "raw": {"host": hostname or host_text, "name": nvt_name or _first_text(result, "name")},
-            })
-            continue
         if not hostname and not host_text:
             parser_warnings.append(f"result {result_index}: 자산 식별자가 없습니다.")
         product = nvt_name or _first_text(result, "name") or "OpenVAS finding"
@@ -224,10 +211,11 @@ def _openvas_xml_rows(content: bytes) -> dict[str, Any]:
             f"OCI 이미지: {oci_name}" if oci_name else "",
             f"OCI digest: {oci_digest}" if oci_digest else "",
         ])
-        for cve in cves:
+        for cve in (cves or [""]):
             rows.append({
                 "product": product,
                 "cve_id": cve,
+                "source_finding_id": f"openvas|{result.attrib.get('id', '') or nvt_name or _first_text(result, 'name')}|host:{hostname or host_text}|port:{_first_text(result, 'port')}|cve:{cve or 'NO-CVE'}",
                 "asset_name": hostname or host_text,
                 "asset_id": asset_id,
                 "ip_address": _ip_value(host_text),
