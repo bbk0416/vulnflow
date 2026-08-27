@@ -90,7 +90,7 @@
         <label>담당자<input name="owner" maxlength="500" value="{{ finding.owner or '' }}" placeholder="예: 홍길동, 인프라팀"></label>
         <label>목표 완료일<input type="date" name="due_date" value="{{ finding.due_date or '' }}"><small>비워두면 정책 기준일 {{ finding.target_date or '없음' }}을 사용합니다.</small></label>
       </div>
-      <label>조치 내용과 근거
+      <label class="workflow-notes-field">조치 내용과 근거
         <textarea name="notes" maxlength="4000" rows="7" placeholder="예: OpenSSL 3.0.15로 업데이트하고 서비스를 재기동했습니다. 변경 티켓 SEC-1234 확인.">{{ finding.notes or '' }}</textarea>
         <small>확인 요청 단계에는 실제로 수행한 조치 내용을 반드시 적어야 합니다.</small>
       </label>
@@ -103,7 +103,7 @@
         </div>
       </details>
       <input type="hidden" name="risk_acceptance_approver" value="">
-      <button class="primary large-action">저장하고 반영</button>
+      <button class="primary large-action workflow-save-button">저장하고 반영</button>
     </form>
     <p class="meta">‘완료’는 조치 검증이 승인되면 자동으로 전환됩니다.</p>
     {% endif %}

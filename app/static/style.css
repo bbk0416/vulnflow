@@ -164,3 +164,31 @@
 .nav-advanced-links{display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:0 2px 4px}
 .compatibility-support>summary{color:#475467}
 @media(max-width:700px){.admin-menu{min-width:0}.nav-advanced-links{grid-template-columns:1fr}}
+
+/* P0-06: keep the primary remediation action in the first desktop viewport. */
+@media (min-width: 721px) {
+  form.easy-workflow-form {
+    grid-template-columns: minmax(0, 1fr) minmax(170px, 0.42fr);
+  }
+
+  form.easy-workflow-form > * {
+    grid-column: 1 / -1;
+  }
+
+  form.easy-workflow-form > .workflow-notes-field {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  form.easy-workflow-form > .workflow-save-button {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: start;
+    width: 100%;
+  }
+
+  form.easy-workflow-form > details.exception-fields {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+}

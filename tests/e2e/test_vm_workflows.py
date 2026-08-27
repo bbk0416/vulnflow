@@ -394,3 +394,168 @@ def test_full_operator_remediation_verification_closes_finding(
             operator_context.close()
         if admin_context is not None:
             admin_context.close()
+
+def test_p0_06_primary_workflow_external_css_fix3(
+    browser: Browser, live_server: str
+) -> None:
+    import json as _json
+    import os as _os
+    import tempfile as _tempfile
+    from pathlib import Path as _Path
+
+    out_dir = _Path(_os.environ.get("P0_06_PRIMARY_FIX3_REPORT_DIR") or _tempfile.mkdtemp(prefix="vulnflow-p0-06-fix3-"))
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    page, context = _page(browser, live_server, OPERATOR)
+    try:
+        csv_content = (
+            "finding_id,product,cve_id,asset_name,cvss,status,notes\n"
+            "P0-06-FIX3,P0-06 FIX3 Target,CVE-2099-6614,FIX3 Target Asset,9.8,OPEN,"
+            "primary placement fix3\n"
+        )
+
+        page.get_by_role("link", name="새 결과 가져오기").click()
+        upload_form = page.locator("form").filter(
+            has=page.get_by_role("button", name="파일 분석하고 미리보기")
+        ).first
+        upload_form.locator("input[name='scanner_source']").fill("p0-06-fix3")
+        upload_form.locator("select[name='import_mode']").select_option("incremental")
+        upload_form.locator("input[type='file']").set_input_files(
+            {
+                "name": "p0-06-fix3.csv",
+                "mimeType": "text/csv",
+                "buffer": csv_content.encode("utf-8"),
+            }
+        )
+        upload_form.get_by_role("button", name="파일 분석하고 미리보기").click()
+        page.get_by_role("button", name="1건 목록에 반영").click()
+
+        search = page.locator("input[type='search'][name='query']").first
+        search.fill("CVE-2099-6614")
+        search.press("Enter")
+        row = page.locator("#findings tr").filter(has_text="CVE-2099-6614").first
+        row.get_by_role("link", name="P0-06 FIX3 Target").click()
+
+        page.set_viewport_size({"width": 1366, "height": 768})
+        page.evaluate("window.scrollTo(0,0)")
+        page.wait_for_timeout(200)
+
+        response = page.request.get(page.url)
+        csp = response.headers.get("content-security-policy", "")
+
+        status = page.locator("select[name='status']").first
+        notes = page.locator("textarea[name='notes']").first
+        notes_label = page.locator("label.workflow-notes-field").first
+        save = page.get_by_role("button", name="저장하고 반영")
+        exception_details = page.locator("details.exception-fields").first
+        form = page.locator("form.easy-workflow-form").first
+
+        expect(status).to_be_visible()
+        expect(notes).to_be_visible()
+        expect(notes_label).to_have_count(1)
+        expect(save).to_have_count(1)
+        expect(save).to_be_visible()
+        expect(exception_details).to_be_visible()
+        expect(form).to_be_visible()
+
+        metrics = page.evaluate(
+            """() => {
+                const geom = (el) => {
+                    if (!el) return null;
+                    const r = el.getBoundingClientRect();
+                    return {
+                        top: Math.round(r.top + window.scrollY),
+                        bottom: Math.round(r.bottom + window.scrollY),
+                        viewport_top: Math.round(r.top),
+                        viewport_bottom: Math.round(r.bottom),
+                        fully_in_first_viewport:
+                            r.top >= 0 && r.bottom <= window.innerHeight,
+                        intersects_first_viewport:
+                            r.top < window.innerHeight && r.bottom > 0,
+                        width: Math.round(r.width),
+                        height: Math.round(r.height),
+                    };
+                };
+                const form = document.querySelector("form.easy-workflow-form");
+                const notes = document.querySelector("textarea[name='notes']");
+                const label = document.querySelector("label.workflow-notes-field");
+                const save = document.querySelector("button.workflow-save-button");
+                const details = document.querySelector("details.exception-fields");
+                const fs = form ? getComputedStyle(form) : null;
+                const ls = label ? getComputedStyle(label) : null;
+                const bs = save ? getComputedStyle(save) : null;
+                const ds = details ? getComputedStyle(details) : null;
+
+                const sheets = Array.from(document.styleSheets).map(sheet => {
+                    let count = null;
+                    try { count = sheet.cssRules.length; } catch (e) {}
+                    return {
+                        href: sheet.href,
+                        disabled: !!sheet.disabled,
+                        rule_count: count,
+                    };
+                });
+
+                return {
+                    viewport_width: window.innerWidth,
+                    viewport_height: window.innerHeight,
+                    document_height: Math.max(
+                        document.body.scrollHeight,
+                        document.documentElement.scrollHeight
+                    ),
+                    inline_style_count: document.querySelectorAll("style").length,
+                    form: geom(form),
+                    notes: geom(notes),
+                    notes_label: geom(label),
+                    save: geom(save),
+                    exception_details: geom(details),
+                    form_display: fs ? fs.display : null,
+                    form_grid_template_columns: fs ? fs.gridTemplateColumns : null,
+                    notes_grid_column: ls ? ls.gridColumn : null,
+                    notes_grid_row: ls ? ls.gridRow : null,
+                    save_grid_column: bs ? bs.gridColumn : null,
+                    save_grid_row: bs ? bs.gridRow : null,
+                    exception_grid_row: ds ? ds.gridRow : null,
+                    save_button_count:
+                        document.querySelectorAll("button.workflow-save-button").length,
+                    stylesheet_inventory: sheets,
+                };
+            }"""
+        )
+        metrics["content_security_policy"] = csp
+
+        (out_dir / "primary-workflow-fix3.json").write_text(
+            _json.dumps(metrics, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+
+        page.screenshot(
+            path=out_dir / "fix3-open-1366x768.png",
+            full_page=False,
+        )
+        page.screenshot(
+            path=out_dir / "fix3-open-full-page.png",
+            full_page=True,
+        )
+
+        assert metrics["save_button_count"] == 1, metrics
+        assert metrics["inline_style_count"] == 0, metrics
+        assert metrics["form_grid_template_columns"] not in ("none", "", None), metrics
+        assert metrics["notes_grid_column"].startswith("1"), metrics
+        assert metrics["save_grid_column"].startswith("2"), metrics
+        assert metrics["notes_grid_row"].startswith("3"), metrics
+        assert metrics["save_grid_row"].startswith("3"), metrics
+        assert metrics["save"]["fully_in_first_viewport"] is True, metrics
+        assert metrics["notes"]["intersects_first_viewport"] is True, metrics
+        assert abs(metrics["save"]["top"] - metrics["notes_label"]["top"]) <= 12, metrics
+        assert metrics["exception_details"]["top"] > metrics["notes_label"]["top"], metrics
+
+        exception_details.locator("summary").click()
+        expect(page.locator("input[name='exception_expiry']").first).to_be_visible()
+        expect(page.locator("textarea[name='risk_acceptance_reason']").first).to_be_visible()
+        page.screenshot(
+            path=out_dir / "fix3-exception-details-open.png",
+            full_page=False,
+        )
+    finally:
+        context.close()
