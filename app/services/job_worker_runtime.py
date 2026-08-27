@@ -33,9 +33,32 @@ def _worker_project_selections(context: ApplicationContext) -> list[ProjectSelec
 
 
 @context_transaction_scope
+def _lease_heartbeat_interval(lease_seconds: int) -> float:
+    return max(1.0, min(30.0, max(5, int(lease_seconds)) / 3.0))
+
+
+async def _execute_with_lease_heartbeat(
+    context: ApplicationContext, job: dict[str, Any], *, worker_id: str, lease_seconds: int
+) -> dict[str, Any]:
+    execution = asyncio.create_task(asyncio.to_thread(_execute_for_context, context, job, worker_id=worker_id))
+    try:
+        while True:
+            done, _ = await asyncio.wait({execution}, timeout=_lease_heartbeat_interval(lease_seconds))
+            if execution in done:
+                return execution.result()
+            await asyncio.to_thread(
+                _service(context, "heartbeat_background_job"), _setting(context, "DB_PATH"),
+                job_id=str(job["job_id"]), worker_id=worker_id, lease_seconds=lease_seconds,
+            )
+    finally:
+        if not execution.done():
+            execution.cancel()
+
+
 async def job_worker_loop(context: ApplicationContext, *, stop_event: asyncio.Event | None = None) -> None:
     worker_id = f"worker-{os.getpid()}-{uuid.uuid4().hex[:8]}"
     interval = int(_setting(context, "JOB_WORKER_INTERVAL_SECONDS"))
+    lease_seconds = max(5, int(_setting(context, "JOB_LEASE_SECONDS")))
     project_cursor = 0
 
     async def wait_interval() -> bool:
@@ -74,7 +97,7 @@ async def job_worker_loop(context: ApplicationContext, *, stop_event: asyncio.Ev
                         _service(context, "claim_background_job"),
                         _setting(context, "DB_PATH"),
                         worker_id=worker_id,
-                        lease_seconds=int(_setting(context, "JOB_LEASE_SECONDS")),
+                        lease_seconds=lease_seconds,
                     )
                 if job:
                     selected = candidate
@@ -86,7 +109,9 @@ async def job_worker_loop(context: ApplicationContext, *, stop_event: asyncio.Ev
             scope = project_scope(selected) if selected is not None else nullcontext()
             with scope:
                 try:
-                    result = await asyncio.to_thread(_execute_for_context, context, job, worker_id=worker_id)
+                    result = await _execute_with_lease_heartbeat(
+                        context, job, worker_id=worker_id, lease_seconds=lease_seconds
+                    )
                     await asyncio.to_thread(
                         _service(context, "complete_background_job"),
                         _setting(context, "DB_PATH"),
