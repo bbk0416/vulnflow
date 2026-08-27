@@ -259,3 +259,138 @@ def test_operator_risk_acceptance_requires_approver(browser: Browser, live_serve
         ).to_be_visible()
     finally:
         admin_context.close()
+def test_full_operator_remediation_verification_closes_finding(
+    browser: Browser, live_server: str
+) -> None:
+    operator_page, operator_context = _page(browser, live_server, OPERATOR)
+    admin_context = None
+
+    def import_snapshot(page: Page, csv_content: str, *, expected_count: int) -> None:
+        page.goto("/upload")
+        upload_form = page.locator("form[action='/upload/findings/preview']")
+        upload_form.locator("input[name='scanner_source']").fill("browser-e2e-lifecycle")
+        upload_form.locator("select[name='import_mode']").select_option("snapshot")
+        upload_form.locator("input[type='file']").set_input_files(
+            {
+                "name": "browser-e2e-lifecycle.csv",
+                "mimeType": "text/csv",
+                "buffer": csv_content.encode("utf-8"),
+            }
+        )
+        upload_form.get_by_role("button", name="파일 분석하고 미리보기").click()
+        expect(page.get_by_role("heading", name="반영 전에 결과를 확인하세요.")).to_be_visible()
+        page.get_by_role("button", name=f"{expected_count}건 목록에 반영").click()
+        expect(page.get_by_text("취약점 결과를 반영했습니다.")).to_be_visible()
+
+    try:
+        initial_snapshot = (
+            "finding_id,product,cve_id,asset_name,cvss,status,notes\n"
+            "E2E-FULL-1,Browser Full Journey,CVE-2099-8888,E2E Lifecycle Target,9.4,OPEN,"
+            "full browser lifecycle\n"
+            "E2E-FULL-KEEP,Browser Sentinel,CVE-2099-8887,E2E Lifecycle Sentinel,3.1,OPEN,"
+            "snapshot sentinel\n"
+        )
+        absent_snapshot = (
+            "finding_id,product,cve_id,asset_name,cvss,status,notes\n"
+            "E2E-FULL-KEEP,Browser Sentinel,CVE-2099-8887,E2E Lifecycle Sentinel,3.1,OPEN,"
+            "snapshot sentinel\n"
+        )
+
+        # Operator: import -> triage -> assign -> remediate.
+        import_snapshot(operator_page, initial_snapshot, expected_count=2)
+        operator_page.goto("/?query=CVE-2099-8888")
+        result_row = operator_page.locator("#findings tr").filter(
+            has_text="CVE-2099-8888"
+        ).first
+        expect(result_row).to_be_visible()
+        finding_link = result_row.locator("a.finding-link").first
+        href = finding_link.get_attribute("href")
+        assert href and href.startswith("/finding/")
+        finding_id = href.rsplit("/", 1)[-1]
+        finding_link.click()
+        expect(operator_page).to_have_url(
+            re.compile(rf"/finding/{re.escape(finding_id)}$")
+        )
+
+        workflow = operator_page.locator("form").filter(
+            has=operator_page.locator("select[name='status']")
+        ).first
+        workflow.locator("select[name='status']").select_option("IN_PROGRESS")
+        workflow.locator("input[name='owner']").fill("browser-remediation-owner")
+        workflow.locator("textarea[name='notes']").fill(
+            "Browser E2E remediation started"
+        )
+        workflow.get_by_role("button", name="저장하고 반영").click()
+        expect(workflow.locator("select[name='status']")).to_have_value(
+            "IN_PROGRESS"
+        )
+        expect(workflow.locator("input[name='owner']")).to_have_value(
+            "browser-remediation-owner"
+        )
+
+        workflow.locator("select[name='status']").select_option("MITIGATED")
+        workflow.locator("textarea[name='notes']").fill(
+            "Browser E2E remediation completed"
+        )
+        workflow.get_by_role("button", name="저장하고 반영").click()
+        expect(workflow.locator("select[name='status']")).to_have_value(
+            "MITIGATED"
+        )
+
+        # Operator: two complete snapshots prove scanner absence.
+        import_snapshot(operator_page, absent_snapshot, expected_count=1)
+        import_snapshot(operator_page, absent_snapshot, expected_count=1)
+
+        # Operator: request remediation verification.
+        operator_page.goto(f"/finding/{finding_id}")
+        verification_form = operator_page.locator(
+            f"form[action='/finding/{finding_id}/verification-requests']"
+        )
+        expect(verification_form).to_be_visible()
+        verification_form.locator("select[name='method']").select_option(
+            "SCAN_ABSENCE"
+        )
+        verification_form.locator("textarea[name='evidence_note']").fill(
+            "Two browser-driven clean scanner snapshots"
+        )
+        verification_form.get_by_role("button", name="조치 검증 요청").click()
+
+        # Approval separation: leave the operator session before review.
+        operator_context.close()
+        operator_context = None
+
+        # Admin/approver: review the pending request in the actual UI queue.
+        admin_page, admin_context = _page(browser, live_server, ADMIN)
+        admin_page.goto("/verifications?status=PENDING")
+        finding_anchor = admin_page.locator(
+            f"a[href='/finding/{finding_id}']"
+        ).first
+        expect(finding_anchor).to_be_visible()
+        request_scope = finding_anchor.locator(
+            "xpath=ancestor::*[.//form[contains(@action, '/verifications/')]][1]"
+        )
+        expect(request_scope).to_be_visible()
+        decision_form = request_scope.locator(
+            "form[action^='/verifications/'][action$='/decision']"
+        ).first
+        expect(decision_form).to_be_visible()
+
+        decision_form.locator("select[name='decision']").select_option("APPROVE")
+        decision_form.locator("input[name='decision_note']").fill(
+            "Browser E2E confirmed scanner absence"
+        )
+        decision_form.get_by_role("button", name="판정 저장").click()
+
+        # Controlled close must be visible in the browser after approval.
+        admin_page.goto(f"/finding/{finding_id}")
+        closed_workflow = admin_page.locator("form").filter(
+            has=admin_page.locator("select[name='status']")
+        ).first
+        expect(closed_workflow.locator("select[name='status']")).to_have_value(
+            "CLOSED"
+        )
+    finally:
+        if operator_context is not None:
+            operator_context.close()
+        if admin_context is not None:
+            admin_context.close()

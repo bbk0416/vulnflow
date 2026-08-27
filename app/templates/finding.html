@@ -82,7 +82,8 @@
       <label>진행 상태
         <select name="status">
           {% for s in ['OPEN','IN_PROGRESS','MITIGATED','RISK_ACCEPTED'] %}<option value="{{ s }}" {% if finding.status==s %}selected{% endif %}>{{ status_map.get(s, s) }}</option>{% endfor %}
-        </select>
+        
+        {% if finding.status == 'CLOSED' %}<option value="CLOSED" selected>CLOSED · 검증 완료</option>{% endif %}</select>
         <small>조치를 끝냈다면 ‘확인 요청’을 선택하세요.</small>
       </label>
       <div class="form-row-two">
