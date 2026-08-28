@@ -263,3 +263,7 @@ MIT License. 자세한 내용은 [LICENSE](LICENSE)를 확인하세요.
 ## Version identifier
 
 `72.0.102` is an internal iteration identifier retained from the development process. It does not represent 72 public major releases. Public changes after this initial publication are tracked through normal issues, branches, pull requests, and commits.
+
+## Documentation map
+
+현재 운영 문서, 기술 참조, 검증·증거 기록을 구분해서 보려면 [`docs/README.md`](docs/README.md)를 먼저 확인하세요.

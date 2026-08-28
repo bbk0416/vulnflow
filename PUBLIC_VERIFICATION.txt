@@ -7,7 +7,7 @@ Release scope:
 - Runtime/development dependency package pins remain unchanged
 
 Locally reproducible public checks required before release:
-- public manifest: 709/709 PASS
+- public manifest: 710/710 PASS
 - documentation consistency: PASS
 - version consistency: 12/12 PASS
 - public submission readiness: 31/31 PASS
