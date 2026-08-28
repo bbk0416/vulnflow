@@ -64,7 +64,7 @@ def test_public_ci_requires_clean_wheelhouse_reinstall():
     assert "dependency-wheelhouse" in workflow
     assert "scripts/dependency_wheelhouse_rehearsal.py" in workflow
     assert "--json-output reports/dependency_wheelhouse_rehearsal.json" in workflow
-    assert "actions/upload-artifact@v4" in workflow
+    assert "actions/upload-artifact@v6" in workflow
     assert "name: dependency-wheelhouse-report" in workflow
     assert "path: reports/dependency_wheelhouse_rehearsal.json" in workflow
     assert "--allow-index-unavailable" not in workflow
