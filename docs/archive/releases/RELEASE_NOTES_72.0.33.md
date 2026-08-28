@@ -28,4 +28,4 @@ managed policy before reaching VulnFlow, and the configured package index did
 not contain the exact locked FastAPI release. Those two unavailable checks are
 reported as limitations, not passes.
 
-See [Dependency install and runtime image boundary](docs/58_DEPENDENCY_INSTALL_AND_RUNTIME_IMAGE_BOUNDARY.md).
+See [Dependency install and runtime image boundary](../../58_DEPENDENCY_INSTALL_AND_RUNTIME_IMAGE_BOUNDARY.md).
