@@ -1,27 +1,27 @@
 {% extends "base.en.html" %}
-{% block title %}{{ finding.product }} · {{ finding.cve_id }} · VulnFlow{% endblock %}
+{% block title %}{{ (finding.product)|ui_message }} · {{ (finding.cve_id)|ui_message }} · VulnFlow{% endblock %}
 {% block content %}
 {% set status_map = {'OPEN':'Open','IN_PROGRESS':'In progress','MITIGATED':'Ready for verification','RISK_ACCEPTED':'Risk Acceptance','CLOSED':'Closed'} %}
-<nav class="breadcrumb" aria-label="Breadcrumb"><a href="/#findings">Findings</a><span>›</span><span>{{ finding.finding_id }}</span></nav>
+<nav class="breadcrumb" aria-label="Breadcrumb"><a href="/#findings">Findings</a><span>›</span><span>{{ (finding.finding_id)|ui_message }}</span></nav>
 
 <section class="hero compact finding-hero">
   <div>
     <div class="finding-title-row">
-      <span class="status-pill status-{{ finding.status|lower|replace('_','-') }}">{{ status_map.get(finding.status, finding.status) }}</span>
-      <span class="priority-badge priority-{{ finding.decision }}">{{ finding.decision_label|ui_message }}</span>
+      <span class="status-pill status-{{ (finding.status|lower|replace('_','-'))|ui_message }}">{{ (status_map.get(finding.status, finding.status))|ui_message }}</span>
+      <span class="priority-badge priority-{{ (finding.decision)|ui_message }}">{{ finding.decision_label|ui_message }}</span>
     </div>
-    <p class="eyebrow">{{ finding.finding_id }} · {{ finding.asset_name }}</p>
-    <h1>{{ finding.product }} · {{ finding.cve_id }}</h1>
-    <p>{{ finding.component }} {{ finding.component_version }} · {{ finding.environment }} · Owner {{ finding.owner or 'Unassigned' }}</p>
+    <p class="eyebrow">{{ (finding.finding_id)|ui_message }} · {{ (finding.asset_name)|ui_message }}</p>
+    <h1>{{ (finding.product)|ui_message }} · {{ (finding.cve_id)|ui_message }}</h1>
+    <p>{{ (finding.component)|ui_message }} {{ (finding.component_version)|ui_message }} · {{ (finding.environment)|ui_message }} · Owner {{ (finding.owner or 'Unassigned')|ui_message }}</p>
   </div>
-  <div class="finding-score"><small>Remediation priority</small><span class="score big score-{{ finding.decision }}">{{ finding.score }}</span></div>
+  <div class="finding-score"><small>Remediation priority</small><span class="score big score-{{ (finding.decision)|ui_message }}">{{ (finding.score)|ui_message }}</span></div>
 </section>
 
 {% if jira_link or jira_enabled %}
 <section class="panel jira-link-panel">
   <div class="section-heading">
     <div><p class="eyebrow">JIRA</p><h2>External remediation ticket</h2></div>
-    {% if jira_link %}<a class="button-link primary" href="{{ jira_link.external_url }}" target="_blank" rel="noopener">{{ jira_link.external_key }} Open</a>{% elif request.state.role != 'viewer' %}<form method="post" action="/finding/{{ finding.finding_id }}/jira"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button class="primary">Queue Jira ticket creation</button></form>{% endif %}
+    {% if jira_link %}<a class="button-link primary" href="{{ (jira_link.external_url)|ui_message }}" target="_blank" rel="noopener">{{ (jira_link.external_key)|ui_message }} Open</a>{% elif request.state.role != 'viewer' %}<form method="post" action="/finding/{{ (finding.finding_id)|ui_message }}/jira"><input type="hidden" name="csrf_token" value="{{ (request.state.csrf_token)|ui_message }}"><button class="primary">Queue Jira ticket creation</button></form>{% endif %}
   </div>
   {% if jira_link %}<p>Status and verification changes for this finding are synchronized to the linked Jira ticket as comments.</p>{% else %}<p>After creating a ticket, subsequent VulnFlow changes are automatically posted as Jira comments.</p>{% endif %}
 </section>
@@ -56,16 +56,16 @@
     {% elif finding.status == 'RISK_ACCEPTED' %}
       <h2>This finding has approved risk acceptance.</h2>
       <p>Review this before its expiry date. To resume remediation, move the finding back to <strong>In progress</strong>.</p>
-      <dl class="easy-summary"><dt>Exception expiry</dt><dd>{{ finding.exception_expiry or 'Unassigned' }}</dd><dt>Approver</dt><dd>{{ finding.risk_acceptance_approver or 'Unassigned' }}</dd></dl>
+      <dl class="easy-summary"><dt>Exception expiry</dt><dd>{{ (finding.exception_expiry or 'Unassigned')|ui_message }}</dd><dt>Approver</dt><dd>{{ (finding.risk_acceptance_approver or 'Unassigned')|ui_message }}</dd></dl>
     {% else %}
       <h2>Remediation is complete.</h2>
       <p>Verification results and change history are available below.</p>
-      {% if finding.verified_at %}<dl class="easy-summary"><dt>Closed at</dt><dd>{{ finding.verified_at }}</dd><dt>Verified by</dt><dd>{{ finding.verified_by }}</dd></dl>{% endif %}
+      {% if finding.verified_at %}<dl class="easy-summary"><dt>Closed at</dt><dd>{{ (finding.verified_at)|ui_message }}</dd><dt>Verified by</dt><dd>{{ (finding.verified_by)|ui_message }}</dd></dl>{% endif %}
     {% endif %}
     <div class="quick-facts">
-      <div><span>Owner</span><strong>{{ finding.owner or 'Unassigned' }}</strong></div>
-      <div><span>Due date</span><strong>{{ finding.due_date or finding.target_date or 'Unassigned' }}</strong></div>
-      <div><span>Asset</span><strong><a href="/asset/{{ finding.asset_ref_id }}">{{ finding.asset_name }}</a></strong></div>
+      <div><span>Owner</span><strong>{{ (finding.owner or 'Unassigned')|ui_message }}</strong></div>
+      <div><span>Due date</span><strong>{{ (finding.due_date or finding.target_date or 'Unassigned')|ui_message }}</strong></div>
+      <div><span>Asset</span><strong><a href="/asset/{{ (finding.asset_ref_id)|ui_message }}">{{ (finding.asset_name)|ui_message }}</a></strong></div>
     </div>
   </section>
 
@@ -74,32 +74,32 @@
     <h2>Owner, status & remediation</h2>
     {% if request.state.role=='viewer' %}
       <p>You are signed in with view-only access. Remediation details cannot be changed.</p>
-      <dl class="easy-summary"><dt>Status</dt><dd>{{ status_map.get(finding.status, finding.status) }}</dd><dt>Owner</dt><dd>{{ finding.owner or 'Unassigned' }}</dd><dt>Remediation notes</dt><dd>{{ finding.notes or 'No record' }}</dd></dl>
+      <dl class="easy-summary"><dt>Status</dt><dd>{{ (status_map.get(finding.status, finding.status))|ui_message }}</dd><dt>Owner</dt><dd>{{ (finding.owner or 'Unassigned')|ui_message }}</dd><dt>Remediation notes</dt><dd>{{ (finding.notes or 'No record')|ui_message }}</dd></dl>
     {% else %}
     <form class="form easy-workflow-form" method="post">
-      <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-      <input type="hidden" name="row_version" value="{{ finding.row_version or 1 }}">
+      <input type="hidden" name="csrf_token" value="{{ (request.state.csrf_token)|ui_message }}">
+      <input type="hidden" name="row_version" value="{{ (finding.row_version or 1)|ui_message }}">
       <label>Status
         <select name="status">
-          {% for s in ['OPEN','IN_PROGRESS','MITIGATED','RISK_ACCEPTED'] %}<option value="{{ s }}" {% if finding.status==s %}selected{% endif %}>{{ status_map.get(s, s) }}</option>{% endfor %}
+          {% for s in ['OPEN','IN_PROGRESS','MITIGATED','RISK_ACCEPTED'] %}<option value="{{ (s)|ui_message }}" {% if finding.status==s %}selected{% endif %}>{{ (status_map.get(s, s))|ui_message }}</option>{% endfor %}
 
         {% if finding.status == 'CLOSED' %}<option value="CLOSED" selected>CLOSED · Verified</option>{% endif %}</select>
         <small>When remediation is complete, select Ready for verification.</small>
       </label>
       <div class="form-row-two">
-        <label>Owner<input name="owner" maxlength="500" value="{{ finding.owner or '' }}" placeholder="e.g. Alex Kim, Infrastructure"></label>
-        <label>Due date<input type="date" name="due_date" value="{{ finding.due_date or '' }}"><small>Leave blank to use policy target date {{ finding.target_date or 'None' }}</small></label>
+        <label>Owner<input name="owner" maxlength="500" value="{{ (finding.owner or '')|ui_message }}" placeholder="e.g. Alex Kim, Infrastructure"></label>
+        <label>Due date<input type="date" name="due_date" value="{{ (finding.due_date or '')|ui_message }}"><small>Leave blank to use policy target date {{ (finding.target_date or 'None')|ui_message }}</small></label>
       </div>
       <label class="workflow-notes-field">Remediation details and evidence
-        <textarea name="notes" maxlength="4000" rows="7" placeholder="e.g. Updated to OpenSSL 3.0.15 and restarted the service. Change ticket SEC-1234.">{{ finding.notes or '' }}</textarea>
+        <textarea name="notes" maxlength="4000" rows="7" placeholder="e.g. Updated to OpenSSL 3.0.15 and restarted the service. Change ticket SEC-1234.">{{ (finding.notes or '')|ui_message }}</textarea>
         <small>At the Ready for verification stage, record the remediation that was actually performed.</small>
       </label>
       <details class="exception-fields" {% if finding.status=='RISK_ACCEPTED' %}open{% endif %}>
         <summary>Request risk acceptance instead of remediating now</summary>
         <div class="exception-fields-body">
-          <label>Exception expiry<input type="date" name="exception_expiry" value="{{ finding.exception_expiry or '' }}"></label>
-          <label>Exception reason<textarea name="risk_acceptance_reason" maxlength="1500" rows="3" placeholder="Explain why immediate remediation is not feasible and describe compensating controls.">{{ finding.risk_acceptance_reason or '' }}</textarea></label>
-          <label>Approver<input value="{{ finding.risk_acceptance_approver or 'Recorded automatically on approval' }}" disabled></label>
+          <label>Exception expiry<input type="date" name="exception_expiry" value="{{ (finding.exception_expiry or '')|ui_message }}"></label>
+          <label>Exception reason<textarea name="risk_acceptance_reason" maxlength="1500" rows="3" placeholder="Explain why immediate remediation is not feasible and describe compensating controls.">{{ (finding.risk_acceptance_reason or '')|ui_message }}</textarea></label>
+          <label>Approver<input value="{{ (finding.risk_acceptance_approver or 'Recorded automatically on approval')|ui_message }}" disabled></label>
         </div>
       </details>
       <input type="hidden" name="risk_acceptance_approver" value="">
@@ -113,27 +113,27 @@
 <section class="panel verification-panel" id="verification">
   <div class="page-heading">
     <div><p class="eyebrow">Step 3</p><h2>Awaiting verification</h2><p>Attach evidence to remediated findings and request verification.</p></div>
-    <span class="status-pill status-{{ finding.status|lower|replace('_','-') }}">{{ status_map.get(finding.status, finding.status) }}</span>
+    <span class="status-pill status-{{ (finding.status|lower|replace('_','-'))|ui_message }}">{{ (status_map.get(finding.status, finding.status))|ui_message }}</span>
   </div>
   <div class="verification-summary">
     <div><span>Verification status</span><strong>{% if finding.resolution_state=='VERIFIED' %}Verified{% elif finding.resolution_state=='PENDING' %}Verification pending{% elif finding.resolution_state=='READY_FOR_VERIFICATION' %}Ready for verification{% elif finding.resolution_state=='REOPENED' %}Remediation required again{% else %}Not yet verified{% endif %}</strong></div>
-    <div><span>Consecutive absent scans</span><strong>{{ finding.consecutive_absent_scans or 0 }} times</strong></div>
-    <div><span>Reopen count</span><strong>{{ finding.reopen_count or 0 }} times</strong></div>
+    <div><span>Consecutive absent scans</span><strong>{{ (finding.consecutive_absent_scans or 0)|ui_message }} times</strong></div>
+    <div><span>Reopen count</span><strong>{{ (finding.reopen_count or 0)|ui_message }} times</strong></div>
   </div>
-  {% if finding.verified_at %}<p class="notice success">{{ finding.verified_at }} at {{ finding.verified_by }} completed verification.</p>{% endif %}
-  {% if finding.last_reopened_at %}<p class="notice warning">Last reopened: {{ finding.last_reopened_at }}</p>{% endif %}
+  {% if finding.verified_at %}<p class="notice success">{{ (finding.verified_at)|ui_message }} at {{ (finding.verified_by)|ui_message }} completed verification.</p>{% endif %}
+  {% if finding.last_reopened_at %}<p class="notice warning">Last reopened: {{ (finding.last_reopened_at)|ui_message }}</p>{% endif %}
 
   {% if finding.status == 'MITIGATED' and request.state.role != 'viewer' %}
-  <form class="form verification-request-form" method="post" action="/finding/{{ finding.finding_id }}/verification-requests">
-    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
-    <input type="hidden" name="row_version" value="{{ finding.row_version or 1 }}">
+  <form class="form verification-request-form" method="post" action="/finding/{{ (finding.finding_id)|ui_message }}/verification-requests">
+    <input type="hidden" name="csrf_token" value="{{ (request.state.csrf_token)|ui_message }}">
+    <input type="hidden" name="row_version" value="{{ (finding.row_version or 1)|ui_message }}">
     <label>How should this be verified?
       <select name="method"><option value="SCAN_ABSENCE">Confirm it is absent from the next scan</option><option value="RETEST">Manual retest</option><option value="MANUAL_EVIDENCE">Review evidence such as patch version or ticket</option></select>
     </label>
     <label>Verification evidence<textarea name="evidence_note" maxlength="4000" rows="4" placeholder="e.g. Not detected after rescan; change ticket SEC-1234; installed version 3.0.15"></textarea></label>
     <button class="primary large-action">Request remediation verification</button>
   </form>
-  <p class="meta">Scan-absence verification requires at least {{ verification_absence_scans }} consecutive absent scans.</p>
+  <p class="meta">Scan-absence verification requires at least {{ (verification_absence_scans)|ui_message }} consecutive absent scans.</p>
   {% elif finding.status not in ['MITIGATED','CLOSED'] %}
   <div class="empty-guidance">Save the remediation details and move the status to <strong>Ready for verification</strong>; then  before creating a verification request.</div>
   {% endif %}
@@ -142,27 +142,27 @@
     {% for item in verification_requests %}
     <article class="verification-item">
       <div class="verification-item-heading">
-        <div><strong>{% if item.status=='PENDING' %}Verification pending{% elif item.status=='APPROVED' %}Verification approved{% elif item.status=='REJECTED' %}Changes requested{% else %}{{ item.status }}{% endif %}</strong><small>{{ item.verification_id }} · requested by {{ item.requested_at }} · {{ item.requested_by }}</small></div>
+        <div><strong>{% if item.status=='PENDING' %}Verification pending{% elif item.status=='APPROVED' %}Verification approved{% elif item.status=='REJECTED' %}Changes requested{% else %}{{ (item.status)|ui_message }}{% endif %}</strong><small>{{ (item.verification_id)|ui_message }} · requested by {{ (item.requested_at)|ui_message }} · {{ (item.requested_by)|ui_message }}</small></div>
         <span class="tag">{% if item.method=='SCAN_ABSENCE' %}Scan absence{% elif item.method=='RETEST' %}Retest{% else %}Manual evidence{% endif %}</span>
       </div>
-      <p>{{ item.evidence_note }}{% if item.observed_absence_count %} · absent {{ item.observed_absence_count }} times{% endif %}</p>
-      {% if item.decision_note %}<p class="notice {% if item.status=='APPROVED' %}success{% else %}warning{% endif %}">{{ item.decision_note }}</p>{% endif %}
+      <p>{{ (item.evidence_note)|ui_message }}{% if item.observed_absence_count %} · absent {{ (item.observed_absence_count)|ui_message }} times{% endif %}</p>
+      {% if item.decision_note %}<p class="notice {% if item.status=='APPROVED' %}success{% else %}warning{% endif %}">{{ (item.decision_note)|ui_message }}</p>{% endif %}
 
       {% set related = evidence_artifacts | selectattr('verification_id', 'equalto', item.verification_id) | list %}
       {% if related %}
       <div class="evidence-list">
         {% for evidence in related %}
         <article class="evidence-card">
-          <div><strong>{{ evidence.original_filename }}</strong><small>{{ evidence.content_type }} · {{ evidence.size_bytes }} bytes · {{ evidence.uploaded_at }}</small><small>Scan: {{ evidence.scan_status or 'Pending' }} · Custodian {{ evidence.current_custodian or evidence.uploaded_by }}</small></div>
+          <div><strong>{{ (evidence.original_filename)|ui_message }}</strong><small>{{ (evidence.content_type)|ui_message }} · {{ (evidence.size_bytes)|ui_message }} bytes · {{ (evidence.uploaded_at)|ui_message }}</small><small>Scan: {{ (evidence.scan_status or 'Pending')|ui_message }} · Custodian {{ (evidence.current_custodian or evidence.uploaded_by)|ui_message }}</small></div>
           <div class="evidence-actions">
-            {% if request.state.role != 'viewer' and evidence.scan_status in ['CLEAN','WAIVED'] %}<a class="button-link" href="/evidence/{{ evidence.evidence_id }}/download">Download</a>{% endif %}
+            {% if request.state.role != 'viewer' and evidence.scan_status in ['CLEAN','WAIVED'] %}<a class="button-link" href="/evidence/{{ (evidence.evidence_id)|ui_message }}/download">Download</a>{% endif %}
             <details><summary>Evidence management</summary>
-              <code>{{ evidence.sha256 }}</code>
-              <p class="meta">Source {{ evidence.source_type }}{% if evidence.source_reference %} · {{ evidence.source_reference }}{% endif %} · Chain of custody {% if evidence.custody_integrity.valid %}Valid{% else %}Error{% endif %}</p>
-              {% if request.state.role != 'viewer' and evidence.status=='ACTIVE' %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/custody-transfer" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input name="to_custodian" maxlength="200" placeholder="New custodian" required><input name="purpose" maxlength="1500" placeholder="Transfer purpose" required><button>Record transfer</button></form>{% endif %}
-              {% if request.state.role=='admin' and evidence.status=='ACTIVE' %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/scan" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>Rescan</button></form>{% if evidence.scan_status in ['PENDING','ERROR','NOT_SCANNED','BASELINE_ONLY'] %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/scan-waiver" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input name="reason" maxlength="1500" placeholder="Scan waiver reason" required><button>Admin waiver</button></form>{% endif %}{% endif %}
-              {% if evidence.status=='ACTIVE' and item.status=='PENDING' and request.state.role != 'viewer' %}<form method="post" action="/evidence/{{ evidence.evidence_id }}/retire" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input name="reason" maxlength="1500" placeholder="Retirement reason" required><button>Retire</button></form>{% endif %}
-              <details><summary>View chain of custody</summary><div class="timeline">{% for custody in evidence.custody_events %}<article><strong>#{{ custody.event_seq }} {{ custody.event_type }}</strong><span>{{ custody.created_at }} · {{ custody.actor }}</span><p>{{ custody.from_custodian }} → {{ custody.to_custodian }}{% if custody.purpose %} · {{ custody.purpose }}{% endif %}</p></article>{% else %}<p>No chain-of-custody records.</p>{% endfor %}</div></details>
+              <code>{{ (evidence.sha256)|ui_message }}</code>
+              <p class="meta">Source {{ (evidence.source_type)|ui_message }}{% if evidence.source_reference %} · {{ (evidence.source_reference)|ui_message }}{% endif %} · Chain of custody {% if evidence.custody_integrity.valid %}Valid{% else %}Error{% endif %}</p>
+              {% if request.state.role != 'viewer' and evidence.status=='ACTIVE' %}<form method="post" action="/evidence/{{ (evidence.evidence_id)|ui_message }}/custody-transfer" class="form inline"><input type="hidden" name="csrf_token" value="{{ (request.state.csrf_token)|ui_message }}"><input name="to_custodian" maxlength="200" placeholder="New custodian" required><input name="purpose" maxlength="1500" placeholder="Transfer purpose" required><button>Record transfer</button></form>{% endif %}
+              {% if request.state.role=='admin' and evidence.status=='ACTIVE' %}<form method="post" action="/evidence/{{ (evidence.evidence_id)|ui_message }}/scan" class="form inline"><input type="hidden" name="csrf_token" value="{{ (request.state.csrf_token)|ui_message }}"><button>Rescan</button></form>{% if evidence.scan_status in ['PENDING','ERROR','NOT_SCANNED','BASELINE_ONLY'] %}<form method="post" action="/evidence/{{ (evidence.evidence_id)|ui_message }}/scan-waiver" class="form inline"><input type="hidden" name="csrf_token" value="{{ (request.state.csrf_token)|ui_message }}"><input name="reason" maxlength="1500" placeholder="Scan waiver reason" required><button>Admin waiver</button></form>{% endif %}{% endif %}
+              {% if evidence.status=='ACTIVE' and item.status=='PENDING' and request.state.role != 'viewer' %}<form method="post" action="/evidence/{{ (evidence.evidence_id)|ui_message }}/retire" class="form inline"><input type="hidden" name="csrf_token" value="{{ (request.state.csrf_token)|ui_message }}"><input name="reason" maxlength="1500" placeholder="Retirement reason" required><button>Retire</button></form>{% endif %}
+              <details><summary>View chain of custody</summary><div class="timeline">{% for custody in evidence.custody_events %}<article><strong>#{{ (custody.event_seq)|ui_message }} {{ (custody.event_type)|ui_message }}</strong><span>{{ (custody.created_at)|ui_message }} · {{ (custody.actor)|ui_message }}</span><p>{{ (custody.from_custodian)|ui_message }} → {{ (custody.to_custodian)|ui_message }}{% if custody.purpose %} · {{ (custody.purpose)|ui_message }}{% endif %}</p></article>{% else %}<p>No chain-of-custody records.</p>{% endfor %}</div></details>
             </details>
           </div>
         </article>
@@ -172,8 +172,8 @@
 
       {% if item.status=='PENDING' and request.state.role != 'viewer' %}
       <details class="evidence-upload"><summary>Attach evidence file</summary>
-        <form method="post" action="/verifications/{{ item.verification_id }}/evidence" enctype="multipart/form-data" class="form">
-          <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+        <form method="post" action="/verifications/{{ (item.verification_id)|ui_message }}/evidence" enctype="multipart/form-data" class="form">
+          <input type="hidden" name="csrf_token" value="{{ (request.state.csrf_token)|ui_message }}">
           <label>Evidence file<input type="file" name="file" accept=".txt,.log,.csv,.json,.pdf,.png,.jpg,.jpeg" required></label>
           <label>Source type<select name="source_type"><option value="USER_UPLOAD">User upload</option><option value="SCANNER_EXPORT">Scanner export</option><option value="TICKET_ATTACHMENT">Change/incident ticket</option><option value="SYSTEM_LOG">System log</option><option value="MANUAL_CAPTURE">Manual capture</option></select></label>
           <label>Source reference<input name="source_reference" maxlength="1000" placeholder="Ticket number, scanner job ID, or log path"></label>
@@ -196,38 +196,38 @@
   <details class="advanced-section">
     <summary>Priority rationale</summary>
     <div class="advanced-section-body grid2">
-      <div><h3>{{ finding.decision_label|ui_message }} · Recommended {{ finding.sla_days }} days</h3><p>{{ finding.reasons }}</p><dl><dt>KEV</dt><dd>{{ 'Yes' if finding.kev else 'No' }}</dd><dt>EPSS</dt><dd>{{ finding.epss }}</dd><dt>CVSS</dt><dd>{{ finding.cvss }}</dd><dt>Internet exposed</dt><dd>{{ 'Yes' if finding.internet_exposed else 'No' }}</dd><dt>Patch</dt><dd>{{ 'Available' if finding.patch_available else 'None' }}</dd></dl></div>
-      <div><dl><dt>Threat signal</dt><dd>{{ finding.threat_score }}</dd><dt>Asset context</dt><dd>{{ finding.asset_context_score }}</dd><dt>Remediation urgency</dt><dd>{{ finding.remediation_urgency_score }}</dd><dt>First scored</dt><dd>{{ finding.first_scored_at }}</dd><dt>Last scored</dt><dd>{{ finding.last_scored_at }}</dd><dt>Policy</dt><dd>{{ finding.policy_version }}</dd></dl></div>
+      <div><h3>{{ finding.decision_label|ui_message }} · Recommended {{ (finding.sla_days)|ui_message }} days</h3><p>{{ (finding.reasons)|ui_message }}</p><dl><dt>KEV</dt><dd>{{ ('Yes' if finding.kev else 'No')|ui_message }}</dd><dt>EPSS</dt><dd>{{ (finding.epss)|ui_message }}</dd><dt>CVSS</dt><dd>{{ (finding.cvss)|ui_message }}</dd><dt>Internet exposed</dt><dd>{{ ('Yes' if finding.internet_exposed else 'No')|ui_message }}</dd><dt>Patch</dt><dd>{{ ('Available' if finding.patch_available else 'None')|ui_message }}</dd></dl></div>
+      <div><dl><dt>Threat signal</dt><dd>{{ (finding.threat_score)|ui_message }}</dd><dt>Asset context</dt><dd>{{ (finding.asset_context_score)|ui_message }}</dd><dt>Remediation urgency</dt><dd>{{ (finding.remediation_urgency_score)|ui_message }}</dd><dt>First scored</dt><dd>{{ (finding.first_scored_at)|ui_message }}</dd><dt>Last scored</dt><dd>{{ (finding.last_scored_at)|ui_message }}</dd><dt>Policy</dt><dd>{{ (finding.policy_version)|ui_message }}</dd></dl></div>
     </div>
   </details>
 
   <details class="advanced-section">
     <summary>Scanner sources and value conflicts</summary>
     <div class="advanced-section-body">
-      <p>Canonical key: <code>{{ finding.canonical_key }}</code> · sources {{ finding.source_count or 0 }} · unresolved conflicts {{ finding.source_conflict_count or 0 }}</p>
-      <div class="table-wrap"><table><thead><tr><th>Scanner / source ID</th><th>Observed state</th><th>Key values</th><th>Last seen</th></tr></thead><tbody>{% for source in source_reconciliation.records %}<tr><td><strong>{{ source.scanner_source }}</strong><br><small>{{ source.source_finding_id }}<br>{{ source.source_record_id }}</small></td><td>{{ source.observed_state }}{% if source.consecutive_absent_scans %}<br><small>consecutive absences {{ source.consecutive_absent_scans }} times</small>{% endif %}</td><td>CVSS {{ source.snapshot.cvss }} · version {{ source.snapshot.component_version or source.snapshot.product_version }} · Patch {{ source.snapshot.patch_available }}</td><td>{{ source.last_seen_at }}</td></tr>{% else %}<tr><td colspan="4">No source observations.</td></tr>{% endfor %}</tbody></table></div>
-      {% if source_reconciliation.conflicts %}<h3>Resolve value conflicts</h3>{% for conflict in source_reconciliation.conflicts %}<article class="notice {% if conflict.resolved %}success{% else %}warning{% endif %}"><strong>{{ conflict.field_name }}</strong> · {{ conflict.values|join(' / ') }}{% if conflict.resolved %}<p>The current reconciliation decision is applied.</p>{% endif %}{% if request.state.role != 'viewer' %}<form method="post" action="/finding/{{ finding.finding_id }}/source-resolution" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="hidden" name="field_name" value="{{ conflict.field_name }}"><select name="chosen_source_record_id" required>{% for option in conflict.options %}<option value="{{ option.source_record_id }}">{{ option.scanner_source }} · {{ option.value }}</option>{% endfor %}</select><input name="reason" maxlength="1500" placeholder="Reason for choosing this value" required><button>Use this value</button></form>{% if conflict.resolved %}<form method="post" action="/finding/{{ finding.finding_id }}/source-resolution/{{ conflict.field_name }}/retire" class="form inline"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>Clear resolution</button></form>{% endif %}{% endif %}</article>{% endfor %}{% endif %}
+      <p>Canonical key: <code>{{ (finding.canonical_key)|ui_message }}</code> · sources {{ (finding.source_count or 0)|ui_message }} · unresolved conflicts {{ (finding.source_conflict_count or 0)|ui_message }}</p>
+      <div class="table-wrap"><table><thead><tr><th>Scanner / source ID</th><th>Observed state</th><th>Key values</th><th>Last seen</th></tr></thead><tbody>{% for source in source_reconciliation.records %}<tr><td><strong>{{ (source.scanner_source)|ui_message }}</strong><br><small>{{ (source.source_finding_id)|ui_message }}<br>{{ (source.source_record_id)|ui_message }}</small></td><td>{{ (source.observed_state)|ui_message }}{% if source.consecutive_absent_scans %}<br><small>consecutive absences {{ (source.consecutive_absent_scans)|ui_message }} times</small>{% endif %}</td><td>CVSS {{ (source.snapshot.cvss)|ui_message }} · version {{ (source.snapshot.component_version or source.snapshot.product_version)|ui_message }} · Patch {{ (source.snapshot.patch_available)|ui_message }}</td><td>{{ (source.last_seen_at)|ui_message }}</td></tr>{% else %}<tr><td colspan="4">No source observations.</td></tr>{% endfor %}</tbody></table></div>
+      {% if source_reconciliation.conflicts %}<h3>Resolve value conflicts</h3>{% for conflict in source_reconciliation.conflicts %}<article class="notice {% if conflict.resolved %}success{% else %}warning{% endif %}"><strong>{{ (conflict.field_name)|ui_message }}</strong> · {{ (conflict.values|join(' / '))|ui_message }}{% if conflict.resolved %}<p>The current reconciliation decision is applied.</p>{% endif %}{% if request.state.role != 'viewer' %}<form method="post" action="/finding/{{ (finding.finding_id)|ui_message }}/source-resolution" class="form inline"><input type="hidden" name="csrf_token" value="{{ (request.state.csrf_token)|ui_message }}"><input type="hidden" name="field_name" value="{{ (conflict.field_name)|ui_message }}"><select name="chosen_source_record_id" required>{% for option in conflict.options %}<option value="{{ (option.source_record_id)|ui_message }}">{{ (option.scanner_source)|ui_message }} · {{ (option.value)|ui_message }}</option>{% endfor %}</select><input name="reason" maxlength="1500" placeholder="Reason for choosing this value" required><button>Use this value</button></form>{% if conflict.resolved %}<form method="post" action="/finding/{{ (finding.finding_id)|ui_message }}/source-resolution/{{ (conflict.field_name)|ui_message }}/retire" class="form inline"><input type="hidden" name="csrf_token" value="{{ (request.state.csrf_token)|ui_message }}"><button>Clear resolution</button></form>{% endif %}{% endif %}</article>{% endfor %}{% endif %}
     </div>
   </details>
 
   <details class="advanced-section">
     <summary>Scan observation history</summary>
-    <div class="advanced-section-body timeline">{% for item in observations %}<article><strong>{{ item.observation }} · {{ item.scanner_source }}</strong><span>{{ item.observed_at }} · batch {{ item.batch_id }}</span>{% if item.details %}<pre>{{ item.details | tojson(indent=2) }}</pre>{% endif %}</article>{% else %}<p>No observation history.</p>{% endfor %}</div>
+    <div class="advanced-section-body timeline">{% for item in observations %}<article><strong>{{ (item.observation)|ui_message }} · {{ (item.scanner_source)|ui_message }}</strong><span>{{ (item.observed_at)|ui_message }} · batch {{ (item.batch_id)|ui_message }}</span>{% if item.details %}<pre>{{ (item.details | tojson(indent=2))|ui_message }}</pre>{% endif %}</article>{% else %}<p>No observation history.</p>{% endfor %}</div>
   </details>
 
   <details class="advanced-section">
     <summary>Risk acceptance history</summary>
-    <div class="advanced-section-body timeline">{% for item in approval_requests %}<article><strong>{{ item.status }} · {{ item.request_id }}</strong><span>{{ item.requested_at }} · requested by {{ item.requested_by }}{% if item.decided_by %} · decided by {{ item.decided_by }}{% endif %}</span><p>{{ item.reason }} · expires {{ item.exception_expiry }}</p>{% if item.decision_note %}<p>{{ item.decision_note }}</p>{% endif %}</article>{% else %}<p>No risk acceptance requests.</p>{% endfor %}</div>
+    <div class="advanced-section-body timeline">{% for item in approval_requests %}<article><strong>{{ (item.status)|ui_message }} · {{ (item.request_id)|ui_message }}</strong><span>{{ (item.requested_at)|ui_message }} · requested by {{ (item.requested_by)|ui_message }}{% if item.decided_by %} · decided by {{ (item.decided_by)|ui_message }}{% endif %}</span><p>{{ (item.reason)|ui_message }} · expires {{ (item.exception_expiry)|ui_message }}</p>{% if item.decision_note %}<p>{{ (item.decision_note)|ui_message }}</p>{% endif %}</article>{% else %}<p>No risk acceptance requests.</p>{% endfor %}</div>
   </details>
 
   <details class="advanced-section">
     <summary>Data lifecycle</summary>
-    <div class="advanced-section-body"><p>sources: <strong>{{ finding.scanner_source or 'manual' }}</strong> · Last seen: {{ finding.source_last_seen_at or 'No record' }} · Data state: <strong>{{ finding.record_state or 'ACTIVE' }}</strong></p>{% if finding.stale_since %}<p class="meta">Recently absent since: {{ finding.stale_since }}</p>{% endif %}{% if finding.archived_at %}<p class="meta">Archived at: {{ finding.archived_at }}</p>{% endif %}{% if request.state.role != 'viewer' %}<form class="form inline" method="post" action="/finding/{{ finding.finding_id }}/record-state"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="hidden" name="row_version" value="{{ finding.row_version or 1 }}"><select name="record_state"><option value="ACTIVE" {% if finding.record_state=='ACTIVE' %}selected{% endif %}>Active</option><option value="STALE" {% if finding.record_state=='STALE' %}selected{% endif %}>Recently absent</option><option value="ARCHIVED" {% if finding.record_state=='ARCHIVED' %}selected{% endif %}>Archived</option></select><button>Change data state</button></form>{% endif %}</div>
+    <div class="advanced-section-body"><p>sources: <strong>{{ (finding.scanner_source or 'manual')|ui_message }}</strong> · Last seen: {{ (finding.source_last_seen_at or 'No record')|ui_message }} · Data state: <strong>{{ (finding.record_state or 'ACTIVE')|ui_message }}</strong></p>{% if finding.stale_since %}<p class="meta">Recently absent since: {{ (finding.stale_since)|ui_message }}</p>{% endif %}{% if finding.archived_at %}<p class="meta">Archived at: {{ (finding.archived_at)|ui_message }}</p>{% endif %}{% if request.state.role != 'viewer' %}<form class="form inline" method="post" action="/finding/{{ (finding.finding_id)|ui_message }}/record-state"><input type="hidden" name="csrf_token" value="{{ (request.state.csrf_token)|ui_message }}"><input type="hidden" name="row_version" value="{{ (finding.row_version or 1)|ui_message }}"><select name="record_state"><option value="ACTIVE" {% if finding.record_state=='ACTIVE' %}selected{% endif %}>Active</option><option value="STALE" {% if finding.record_state=='STALE' %}selected{% endif %}>Recently absent</option><option value="ARCHIVED" {% if finding.record_state=='ARCHIVED' %}selected{% endif %}>Archived</option></select><button>Change data state</button></form>{% endif %}</div>
   </details>
 
   <details class="advanced-section">
     <summary>Full change history</summary>
-    <div class="advanced-section-body timeline">{% for event in audit_events %}<article><strong>{{ event.summary }}</strong><span>{{ event.created_at }} · {{ event.actor }} · {{ event.event_type }}</span>{% if event.details %}<pre>{{ event.details | tojson(indent=2) }}</pre>{% endif %}</article>{% else %}<p>No recorded change history.</p>{% endfor %}</div>
+    <div class="advanced-section-body timeline">{% for event in audit_events %}<article><strong>{{ (event.summary)|ui_message }}</strong><span>{{ (event.created_at)|ui_message }} · {{ (event.actor)|ui_message }} · {{ (event.event_type)|ui_message }}</span>{% if event.details %}<pre>{{ (event.details | tojson(indent=2))|ui_message }}</pre>{% endif %}</article>{% else %}<p>No recorded change history.</p>{% endfor %}</div>
   </details>
 </section>
 {% endblock %}

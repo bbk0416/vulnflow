@@ -55,6 +55,16 @@ _DYNAMIC_EN = {
     '설명·조치 메모': 'Description / remediation notes',
 
 }
+_DYNAMIC_PARTIAL_EN = (
+    ('즉시 실행 가능성 반영', 'Immediate exploitability considered'),
+    ('패치 사용 가능', 'Patch available'),
+    ('데이터 민감도', 'Data sensitivity'),
+    ('보완통제 없음', 'No compensating controls'),
+    ('서비스 포트', 'Service port'),
+    ('자산 중요도', 'Asset criticality'),
+    ('해결 방법', 'Remediation'),
+)
+
 
 def format_items(value) -> str:
     try:
@@ -91,4 +101,16 @@ def translate_message(value):
     if value is None:
         return ""
     text = str(value)
-    return _DYNAMIC_EN.get(text, text)
+    text = _DYNAMIC_EN.get(text, text)
+    for ko, en in _DYNAMIC_PARTIAL_EN:
+        text = text.replace(ko, en)
+    # Translate the paired app-generated service/port shape only.
+    # Standalone Korean words remain untouched.
+    service_at = text.find("서비스")
+    port_at = text.find("포트", service_at + 1) if service_at >= 0 else -1
+    if service_at >= 0 and port_at >= 0 and port_at - service_at <= 64:
+        text = text[:service_at] + "Service" + text[service_at + len("서비스"):]
+        port_at = text.find("포트", service_at + len("Service"))
+        if port_at >= 0:
+            text = text[:port_at] + "port" + text[port_at + len("포트"):]
+    return text
