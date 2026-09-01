@@ -11,7 +11,7 @@ body:
     id: version
     attributes:
       label: VulnFlow version
-      placeholder: 72.0.74
+      placeholder: 72.0.102
     validations:
       required: true
   - type: dropdown
@@ -25,6 +25,30 @@ body:
         - Security engineering
         - Student / evaluation only
         - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: discovery_source
+    attributes:
+      label: How did you first find VulnFlow?
+      options:
+        - GitHub search / topic page
+        - Web search
+        - Security community / social post
+        - Link from another website or article
+        - Colleague / friend
+        - Directly invited by the VulnFlow maintainer
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: direct_invite
+    attributes:
+      label: Were you directly asked by the VulnFlow maintainer to try it?
+      description: This helps distinguish organic discovery from recruited testing.
+      options:
+        - "No"
+        - "Yes"
     validations:
       required: true
   - type: checkboxes
