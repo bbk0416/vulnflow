@@ -94,7 +94,7 @@
     </div>
   </div>
 
-  <nav class="language-switcher" aria-label="Language"><a href="/login?ui_language=ko&amp;next={{ request.url.path|urlencode }}">KO</a><span aria-hidden="true"> · </span><a href="/login?ui_language=en&amp;next={{ request.url.path|urlencode }}">EN</a></nav>
+  <nav class="language-switcher" aria-label="Language"><a href="/login?ui_language=ko&amp;next={{ current_path|urlencode }}">KO</a><span aria-hidden="true"> · </span><a href="/login?ui_language=en&amp;next={{ current_path|urlencode }}">EN</a></nav>
 </header>
 {% if request.state.recovery_mode is defined and request.state.recovery_mode.active %}
 <div class="recovery-mode-banner" role="alert">
