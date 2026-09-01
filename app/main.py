@@ -1,5 +1,5 @@
 from __future__ import annotations
-from app.ui_i18n import format_items, translate_message
+from app.services.view_models import format_items, translate_message
 
 import asyncio
 import csv
