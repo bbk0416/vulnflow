@@ -7,6 +7,12 @@
 >
 > **A local-first vulnerability-remediation closeout workspace** for teams that already have scanners and need a controlled path from scan findings to verified closure.
 
+### Start here
+
+**[5-minute Quick Start →](docs/QUICKSTART_5_MIN.md)**
+
+Python 3.12–3.13 · Windows/Linux/macOS · local/self-hosted
+
 ![VulnFlow architecture](assets/architecture.png)
 
 ## 프로젝트 목적
