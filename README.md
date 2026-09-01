@@ -13,6 +13,9 @@
 
 Python 3.12–3.13 · Windows/Linux/macOS · local/self-hosted
 
+Tried VulnFlow? **[Share Free Public Beta feedback →](https://github.com/bbk0416/vulnflow/issues/new?template=beta_feedback.yml)**<br>
+Please do not include real vulnerability data, internal asset identifiers, credentials, or personal information.
+
 ![VulnFlow architecture](assets/architecture.png)
 
 ## 프로젝트 목적
