@@ -227,6 +227,15 @@ def test_readme_presents_four_step_flow_with_five_screenshots() -> None:
 
 
 def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
+    # local launchers must provide the global coordination DB default
+    repo_root = __import__("pathlib").Path(__file__).resolve().parents[1]
+    windows_launcher = (repo_root / "run_windows.ps1").read_text(encoding="utf-8")
+    linux_launcher = (repo_root / "run_linux.sh").read_text(encoding="utf-8")
+    assert "VULNFLOW_COORDINATION_DB" in windows_launcher
+    assert "data\\vulnflow-coordination.db" in windows_launcher
+    assert "VULNFLOW_COORDINATION_DB" in linux_launcher
+    assert "data/vulnflow-coordination.db" in linux_launcher
+
     workflow = (ROOT / ".github/workflows/public-ci.yml").read_text(encoding="utf-8")
     requirements = (ROOT / "requirements-quality.txt").read_text(encoding="utf-8")
     runner = (ROOT / "scripts/run_quality_gates.py").read_text(encoding="utf-8")

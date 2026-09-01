@@ -5,6 +5,10 @@ param(
 
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
+if (-not $env:VULNFLOW_COORDINATION_DB) {
+    $env:VULNFLOW_COORDINATION_DB = Join-Path $PSScriptRoot "data\vulnflow-coordination.db"
+}
+
 
 function Resolve-SupportedPython {
     $candidates = @(

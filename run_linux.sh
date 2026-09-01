@@ -1,6 +1,9 @@
 #!/usr/bin/env sh
 set -eu
 cd "$(dirname "$0")"
+: "${VULNFLOW_COORDINATION_DB:=$PWD/data/vulnflow-coordination.db}"
+export VULNFLOW_COORDINATION_DB
+
 
 command -v python3 >/dev/null 2>&1 || {
   echo "Python 3.12 or 3.13 is required." >&2
