@@ -1,5 +1,6 @@
 """Read-model composition helpers with explicit repository dependencies."""
 from __future__ import annotations
+from app.ui_i18n import format_items, translate_message
 
 from typing import Any, Callable
 

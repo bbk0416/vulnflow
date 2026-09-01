@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.ui_i18n import localized_template
 
 """Scanner-aware finding import preview and mapping routes."""
 
@@ -143,7 +144,7 @@ async def upload_findings_preview(
     metadata = {"filename": Path(filename).name, "format_hint": format_hint}
     return templates.TemplateResponse(
         request=request,
-        name="import_preview.html",
+        name=localized_template(request, "import_preview.html"),
         context=_preview_context(
             request, token=token, metadata=metadata, evaluation=evaluation,
             scanner_source=source, import_mode=mode,
@@ -172,7 +173,7 @@ async def upload_findings_recheck(request: Request):
         raise HTTPException(400, str(exc)) from exc
     return templates.TemplateResponse(
         request=request,
-        name="import_preview.html",
+        name=localized_template(request, "import_preview.html"),
         context=_preview_context(
             request, token=token, metadata=metadata, evaluation=evaluation,
             scanner_source=scanner_source, import_mode=import_mode,
@@ -294,7 +295,7 @@ async def upload_findings_apply(request: Request):
         if evaluation["errors"] and not skip_invalid:
             return templates.TemplateResponse(
                 request=request,
-                name="import_preview.html",
+                name=localized_template(request, "import_preview.html"),
                 status_code=400,
                 context=_preview_context(
                     request, token=token, metadata=metadata, evaluation=evaluation,
@@ -305,7 +306,7 @@ async def upload_findings_apply(request: Request):
         if evaluation["errors"] and import_mode == "snapshot":
             return templates.TemplateResponse(
                 request=request,
-                name="import_preview.html",
+                name=localized_template(request, "import_preview.html"),
                 status_code=400,
                 context=_preview_context(
                     request, token=token, metadata=metadata, evaluation=evaluation,

@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.services.view_models import format_items, translate_message
 
 import asyncio
 import csv
@@ -289,6 +290,8 @@ async def _job_worker_loop(context: "ApplicationContext") -> None:
 
 
 templates = Jinja2Templates(directory=APP_DIR / "templates")
+templates.env.filters["ui_message"] = translate_message
+templates.env.filters["ui_items"] = format_items
 templates.env.globals["app_version"] = CURRENT_APP_VERSION
 
 

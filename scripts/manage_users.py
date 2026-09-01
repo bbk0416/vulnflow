@@ -1,4 +1,6 @@
 from __future__ import annotations
+import os
+import locale
 
 """Create and manage database-backed VulnFlow browser users."""
 
@@ -21,17 +23,28 @@ from app.services.accounts import (
     unlock_user,
 )
 
+def _ui_language() -> str:
+    explicit = os.environ.get("VULNFLOW_UI_LANG", "").strip().lower()
+    if explicit:
+        return "ko" if explicit.startswith("ko") else "en"
+    detected = (locale.getlocale()[0] or "").strip().lower()
+    return "ko" if detected.startswith(("ko", "korean")) else "en"
+
+def _ui_text(ko: str, en: str) -> str:
+    return ko if _ui_language() == "ko" else en
+
+
 
 def _password(args: argparse.Namespace) -> str:
     if getattr(args, "password_stdin", False):
         value = sys.stdin.readline().rstrip("\r\n")
         if not value:
-            raise ValueError("표준 입력에서 비밀번호를 읽지 못했습니다.")
+            raise ValueError(_ui_text("표준 입력에서 비밀번호를 읽지 못했습니다.", "Could not read the password from standard input."))
         return value
-    first = getpass("새 비밀번호: ")
-    second = getpass("새 비밀번호 확인: ")
+    first = getpass(_ui_text("새 비밀번호: ", "New password: "))
+    second = getpass(_ui_text("새 비밀번호 확인: ", "Confirm new password: "))
     if first != second:
-        raise ValueError("비밀번호 확인이 일치하지 않습니다.")
+        raise ValueError(_ui_text("비밀번호 확인이 일치하지 않습니다.", "Password confirmation does not match."))
     return first
 
 
@@ -53,23 +66,23 @@ def _audit(db_path: Path, event_type: str, summary: str, details: dict) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="VulnFlow DB 사용자 계정을 관리합니다. 비밀번호 원문은 저장하지 않습니다."
+        description=_ui_text("VulnFlow DB 사용자 계정을 관리합니다. 비밀번호 원문은 저장하지 않습니다.", "Manage VulnFlow DB user accounts. Plaintext passwords are never stored.")
     )
-    parser.add_argument("--db", type=Path, default=CONTROL_DB_PATH, help="SQLite DB 경로")
+    parser.add_argument("--db", type=Path, default=CONTROL_DB_PATH, help=_ui_text("SQLite DB 경로", "SQLite DB path"))
     sub = parser.add_subparsers(dest="command", required=True)
 
-    create = sub.add_parser("create", help="새 사용자 생성")
+    create = sub.add_parser("create", help=_ui_text("새 사용자 생성", "Create a new user"))
     create.add_argument("--username", required=True)
     create.add_argument("--role", choices=("viewer", "operator", "approver", "admin"), default="viewer")
-    create.add_argument("--password-stdin", action="store_true", help="첫 번째 표준 입력 줄에서 비밀번호 읽기")
+    create.add_argument("--password-stdin", action="store_true", help=_ui_text("첫 번째 표준 입력 줄에서 비밀번호 읽기", "Read the password from the first line of standard input"))
 
-    sub.add_parser("list", help="사용자 목록")
+    sub.add_parser("list", help=_ui_text("사용자 목록", "List users"))
 
-    for name, help_text in (("enable", "사용자 활성화"), ("disable", "사용자 비활성화"), ("unlock", "로그인 실패 제한 기록 초기화"), ("revoke-sessions", "활성 세션 종료")):
+    for name, help_text in (("enable", _ui_text("사용자 활성화", "Enable user")), ("disable", _ui_text("사용자 비활성화", "Disable user")), ("unlock", _ui_text("로그인 실패 제한 기록 초기화", "Clear login failure lockout")), ("revoke-sessions", _ui_text("활성 세션 종료", "Revoke active sessions"))):
         command = sub.add_parser(name, help=help_text)
         command.add_argument("--username", required=True)
 
-    password = sub.add_parser("set-password", help="비밀번호 변경 및 기존 세션 종료")
+    password = sub.add_parser("set-password", help=_ui_text("비밀번호 변경 및 기존 세션 종료", "Change password and revoke existing sessions"))
     password.add_argument("--username", required=True)
     password.add_argument("--password-stdin", action="store_true")
     return parser
@@ -125,9 +138,9 @@ def main(argv: list[str] | None = None) -> int:
             _audit(db_path, "USER_SESSIONS_REVOKED", f"사용자 세션 종료: {username}", {"username": username, "session_count": count})
             print(json.dumps({"username": username, "revoked_sessions": count}, ensure_ascii=False))
         else:
-            parser.error("지원하지 않는 명령입니다.")
+            parser.error(_ui_text("지원하지 않는 명령입니다.", "Unsupported command."))
     except (ValueError, KeyError) as exc:
-        print(f"오류: {exc}", file=sys.stderr)
+        print(f"{_ui_text('오류', 'Error')}: {exc}", file=sys.stderr)
         return 2
     return 0
 
