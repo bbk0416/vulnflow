@@ -1,0 +1,156 @@
+{% extends "base.en.html" %}
+{% block title %}Vulnerability Remediation · VulnFlow{% endblock %}
+{% block content %}
+{% set status_map = {'OPEN':'Open','IN_PROGRESS':'In progress','MITIGATED':'Ready for verification','RISK_ACCEPTED':'Risk Acceptance','CLOSED':'Closed'} %}
+{% if notice_message %}<div class="notice success">{{ notice_message|ui_message }}</div>{% endif %}
+
+<section class="hero dashboard-hero easy-hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Vulnerability Remediation</p>
+    <h1>Work through the next actions in order.</h1>
+    <p>Upload scanner results, assign owners, record remediation evidence, then verify and close.</p>
+    <ol class="onboarding-steps" aria-label="Vulnerability remediation workflow">
+      <li><span>1</span>Upload results</li>
+      <li><span>2</span>Assign owner</li>
+      <li><span>3</span>Record remediation & evidence</li>
+      <li><span>4</span>Verify & close</li>
+    </ol>
+  </div>
+  {% if request.state.role in ['operator','approver','admin'] %}
+  <div class="hero-actions">
+    <a class="button-link primary large-action" href="/upload">Import new results</a>
+    <a class="button-link" href="/?status=OPEN#findings">View open findings</a>
+    <details class="maintenance-actions">
+      <summary>Refresh data</summary>
+      <form method="post" action="/refresh-intel"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>Refresh KEV & EPSS</button></form>
+      <form method="post" action="/rescore"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><button>Recalculate priority</button></form>
+    </details>
+  </div>
+  {% endif %}
+</section>
+
+<section class="workflow-board" aria-label="Remediation stages">
+  <a class="workflow-card status-open {% if status=='OPEN' %}selected{% endif %}" href="/?status=OPEN#findings">
+    <span class="workflow-number">1</span>
+    <div><small>Unassigned</small><strong>Open</strong><p>{{ kpis.open|ui_items }}</p></div>
+  </a>
+  <a class="workflow-card status-in-progress {% if status=='IN_PROGRESS' %}selected{% endif %}" href="/?status=IN_PROGRESS#findings">
+    <span class="workflow-number">2</span>
+    <div><small>In progress</small><strong>In progress</strong><p>{{ kpis.in_progress|ui_items }}</p></div>
+  </a>
+  <a class="workflow-card status-mitigated {% if status=='MITIGATED' %}selected{% endif %}" href="/?status=MITIGATED#findings">
+    <span class="workflow-number">3</span>
+    <div><small>Awaiting verification</small><strong>Ready for verification</strong><p>{{ kpis.mitigated|ui_items }}</p></div>
+  </a>
+  <a class="workflow-card status-closed {% if status=='CLOSED' %}selected{% endif %}" href="/?status=CLOSED#findings">
+    <span class="workflow-number">4</span>
+    <div><small>Verified</small><strong>Closed</strong><p>{{ kpis.closed_only|ui_items }}</p></div>
+  </a>
+</section>
+
+<section class="attention-strip" aria-label="Items needing attention">
+  <div class="attention-heading"><strong>Needs attention</strong><span>Highest-priority items are shown first.</span></div>
+  <a class="attention-item danger" href="/?decision=immediate#findings"><span>Immediate action</span><strong>{{ kpis.immediate }}</strong></a>
+  <a class="attention-item warning" href="/?overdue=true#findings"><span>Overdue</span><strong>{{ kpis.overdue }}</strong></a>
+  <a class="attention-item" href="/verifications?status=PENDING"><span>Verification pending</span><strong>{{ kpis.verification_pending + kpis.verification_ready }}</strong></a>
+  <a class="attention-item" href="/?status=RISK_ACCEPTED#findings"><span>Risk Acceptance</span><strong>{{ kpis.risk_accepted }}</strong></a>
+</section>
+
+<section class="panel findings-panel" id="findings">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">Findings</p>
+      <h2>{% if status %}{{ status_map.get(status, status) }}  findings{% else %}All findings{% endif %}</h2>
+      <p>Open a finding to see the next action for its current stage.</p>
+    </div>
+    <div class="heading-actions">
+      {% if status or decision or query or overdue or exception or record_state != 'CURRENT' or scanner_source %}<a class="button-link" href="/#findings">Reset filters</a>{% endif %}
+      <a class="button-link" href="/exports">Reports & exports</a>
+    </div>
+  </div>
+
+  <form class="filters dashboard-filters easy-filters" method="get">
+    <input type="search" name="query" value="{{ query }}" placeholder="Search product, asset, CVE, or owner">
+    <select name="status" aria-label="Status">
+      <option value="">All statuses</option>
+      {% for s in ['OPEN','IN_PROGRESS','MITIGATED','RISK_ACCEPTED','CLOSED'] %}
+      <option value="{{ s }}" {% if status==s %}selected{% endif %}>{{ status_map.get(s, s) }}</option>
+      {% endfor %}
+    </select>
+    <select name="decision" aria-label="Priority">
+      <option value="">All priorities</option>
+      <option value="immediate" {% if decision=='immediate' %}selected{% endif %}>Immediate action</option>
+      <option value="urgent_review" {% if decision=='urgent_review' %}selected{% endif %}>Urgent review</option>
+      <option value="scheduled" {% if decision=='scheduled' %}selected{% endif %}>Scheduled</option>
+      <option value="monitor" {% if decision=='monitor' %}selected{% endif %}>Monitor</option>
+    </select>
+    <label class="check"><input type="checkbox" name="overdue" value="true" {% if overdue %}checked{% endif %}>Overdue only</label>
+    <button class="primary">Search</button>
+    <details class="advanced-filters" {% if record_state != 'CURRENT' or scanner_source or exception or page_size != 50 %}open{% endif %}>
+      <summary>Advanced filters</summary>
+      <div class="advanced-filter-fields">
+        <label>Data state<select name="record_state"><option value="CURRENT" {% if record_state=='CURRENT' %}selected{% endif %}>Current</option><option value="ACTIVE" {% if record_state=='ACTIVE' %}selected{% endif %}>Active</option><option value="STALE" {% if record_state=='STALE' %}selected{% endif %}>Recently absent</option><option value="ARCHIVED" {% if record_state=='ARCHIVED' %}selected{% endif %}>Archived</option><option value="ALL" {% if record_state=='ALL' %}selected{% endif %}>Include all</option></select></label>
+        <label>Import source<select name="scanner_source"><option value="">All</option>{% for src in scanner_sources %}<option value="{{ src }}" {% if scanner_source==src %}selected{% endif %}>{{ src }}</option>{% endfor %}</select></label>
+        <label>Exception status<select name="exception"><option value="">All</option><option value="active" {% if exception=='active' %}selected{% endif %}>Active exception</option><option value="expiring" {% if exception=='expiring' %}selected{% endif %}>Expires within 14 days</option><option value="expired" {% if exception=='expired' %}selected{% endif %}>Expired</option></select></label>
+        <label>Per page<select name="page_size"><option value="25" {% if page_size==25 %}selected{% endif %}>25</option><option value="50" {% if page_size==50 %}selected{% endif %}>50</option><option value="100" {% if page_size==100 %}selected{% endif %}>100</option><option value="200" {% if page_size==200 %}selected{% endif %}>200</option></select></label>
+      </div>
+    </details>
+  </form>
+  <p class="meta result-count">Search results {{ total_filtered|ui_items }} · {{ page }}/{{ total_pages }}page</p>
+
+  {% if request.state.role in ['operator','approver','admin'] %}
+  <form method="post" action="/bulk-update" id="bulk-form">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+    <details class="bulk-actions">
+      <summary>Bulk update selected findings</summary>
+      <div class="bulk-toolbar">
+        <select name="bulk_status"><option value="">Keep status</option><option value="OPEN">Open</option><option value="IN_PROGRESS">In progress</option><option value="MITIGATED">Ready for verification</option></select>
+        <select name="owner_mode"><option value="keep">Keep owner</option><option value="set">Assign owner</option><option value="clear">Clear owner</option></select>
+        <input name="bulk_owner" maxlength="500" placeholder="Owner name">
+        <select name="due_date_mode"><option value="keep">Keep due date</option><option value="set">Set due date</option><option value="clear">Clear due date</option></select>
+        <input type="date" name="bulk_due_date">
+        <input class="bulk-note" name="bulk_notes" maxlength="1000" placeholder="Reason for change or remediation note">
+        <button class="primary">Save selected findings</button>
+      </div>
+      <p class="meta">Risk acceptance is handled on each finding. Final closure is applied automatically after verification approval.</p>
+    </details>
+
+    <div class="table-wrap easy-table"><table>
+      <thead><tr><th class="select-col">Select</th><th>Priority</th><th>Vulnerability</th><th>Asset</th><th>Status</th><th>Owner & due date</th><th>Next action</th></tr></thead>
+      <tbody>
+      {% for row in findings %}
+      <tr class="{% if row.record_state=='ARCHIVED' %}archived-row{% elif row.status in ['RISK_ACCEPTED','CLOSED'] %}resolved-row{% endif %}">
+        <td class="select-col"><input type="checkbox" name="finding_ids" value="{{ row.finding_id }}" aria-label="{{ row.finding_id }} Select"></td>
+        <td><span class="priority-badge priority-{{ row.decision }}">{{ row.decision_label|ui_message }}</span><br><small>Score {{ row.score }}</small></td>
+        <td><a class="finding-link" href="/finding/{{ row.finding_id }}"><strong>{{ row.product }}</strong></a><br><code>{{ row.cve_id }}</code><br><small>{{ row.component }} {{ row.component_version }}</small></td>
+        <td><strong>{{ row.asset_name }}</strong><br><small>{{ row.environment }} · {{ row.finding_id }}</small></td>
+        <td><span class="status-pill status-{{ row.status|lower|replace('_','-') }}">{{ status_map.get(row.status, row.status) }}</span>{% if row.record_state=='ARCHIVED' %}<br><small>Archived</small>{% elif row.record_state=='STALE' %}<br><small>Recently absent from scan</small>{% endif %}</td>
+        <td><strong>{{ row.owner or 'Unassigned' }}</strong><br><small>Due {{ row.due_date or row.target_date or 'Unassigned' }}</small></td>
+        <td><a class="button-link row-action" href="/finding/{{ row.finding_id }}">{% if row.status=='OPEN' %}Assign owner{% elif row.status=='IN_PROGRESS' %}Enter remediation{% elif row.status=='MITIGATED' %}Verification Requests{% elif row.status=='RISK_ACCEPTED' %}View exception{% else %}View closure{% endif %}</a></td>
+      </tr>
+      {% else %}<tr><td colspan="7" class="empty-state">No findings match these filters.</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </form>
+  {% else %}
+  <div class="table-wrap easy-table"><table>
+    <thead><tr><th>Priority</th><th>Vulnerability</th><th>Asset</th><th>Status</th><th>Owner & due date</th><th>View</th></tr></thead>
+    <tbody>{% for row in findings %}<tr><td><span class="priority-badge priority-{{ row.decision }}">{{ row.decision_label|ui_message }}</span></td><td><strong>{{ row.product }}</strong><br><code>{{ row.cve_id }}</code></td><td>{{ row.asset_name }}</td><td><span class="status-pill status-{{ row.status|lower|replace('_','-') }}">{{ status_map.get(row.status, row.status) }}</span></td><td>{{ row.owner or 'Unassigned' }}<br><small>{{ row.due_date or row.target_date or 'Unassigned' }}</small></td><td><a class="button-link" href="/finding/{{ row.finding_id }}">View details</a></td></tr>{% else %}<tr><td colspan="6" class="empty-state">No findings match these filters.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+
+  <div class="pagination">{% if page > 1 %}<a class="button-link" href="?query={{ query|urlencode }}&decision={{ decision }}&status={{ status }}&exception={{ exception }}&record_state={{ record_state }}&scanner_source={{ scanner_source|urlencode }}&overdue={{ 'true' if overdue else 'false' }}&page_size={{ page_size }}&page={{ page-1 }}#findings">Previous</a>{% endif %}<span>{{ page }} / {{ total_pages }}</span>{% if page < total_pages %}<a class="button-link" href="?query={{ query|urlencode }}&decision={{ decision }}&status={{ status }}&exception={{ exception }}&record_state={{ record_state }}&scanner_source={{ scanner_source|urlencode }}&overdue={{ 'true' if overdue else 'false' }}&page_size={{ page_size }}&page={{ page+1 }}#findings">Next</a>{% endif %}</div>
+</section>
+
+<details class="secondary-metrics product-admin-details">
+  <summary>Operational and technical metrics</summary>
+  <section class="kpis secondary-kpis">
+    <div class="card"><span>Total findings</span><strong>{{ kpis.total }}</strong></div>
+    <div class="card"><span>Active findings</span><strong>{{ kpis.active }}</strong></div>
+    <div class="card"><span>Assets</span><strong>{{ kpis.assets }}</strong></div>
+    <div class="card danger"><span>Reopened</span><strong>{{ kpis.reopened }}</strong></div>
+    <div class="card warning"><span>Exceptions expired / expiring</span><strong>{{ kpis.exception_expired }} / {{ kpis.exception_expiring }}</strong></div>
+    <div class="card"><span>Recently absent / archived</span><strong>{{ kpis.stale }} / {{ kpis.archived }}</strong></div>
+  </section>
+</details>
+{% endblock %}

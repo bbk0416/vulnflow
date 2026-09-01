@@ -1,4 +1,22 @@
 #!/usr/bin/env sh
+
+# First-run UI language: explicit override wins; otherwise follow the host locale.
+if [ -z "${VULNFLOW_UI_LANG:-}" ]; then
+  case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in
+    ko*|KO*|Korean*|korean*) VULNFLOW_UI_LANG=ko ;;
+    *) VULNFLOW_UI_LANG=en ;;
+  esac
+fi
+export VULNFLOW_UI_LANG
+
+vulnflow_ui_text() {
+  if [ "${VULNFLOW_UI_LANG}" = "ko" ]; then
+    printf '%s' "$1"
+  else
+    printf '%s' "$2"
+  fi
+}
+
 set -eu
 cd "$(dirname "$0")"
 : "${VULNFLOW_COORDINATION_DB:=$PWD/data/vulnflow-coordination.db}"
@@ -54,7 +72,7 @@ fi
 if [ "$VULNFLOW_DEMO_MODE" != "1" ] && [ -z "${VULNFLOW_API_TOKENS_JSON:-}" ]; then
   active_users="$("$VENV_PYTHON" -c 'from app.core.database_schema import init_db; from app.services.accounts import count_active_users; from pathlib import Path; import os; p=Path(os.environ["VULNFLOW_CONTROL_DB"]); init_db(p); print(count_active_users(p))')"
   if [ "$active_users" -eq 0 ]; then
-    printf '\n%s\n' '최초 관리자 계정을 만듭니다.'
+    printf '\n%s\n' "$(vulnflow_ui_text '최초 관리자 계정을 만듭니다.' 'Creating the first administrator account.')"
     "$VENV_PYTHON" -m scripts.manage_users --db "$VULNFLOW_CONTROL_DB" create --username admin --role admin
   fi
 fi

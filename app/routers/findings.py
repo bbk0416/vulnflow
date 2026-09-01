@@ -1,4 +1,5 @@
 from __future__ import annotations
+from app.ui_i18n import localized_template
 
 """Domain routes extracted from :mod:`app.main`.
 
@@ -84,7 +85,7 @@ def dashboard(
     }
     return templates.TemplateResponse(
         request=request,
-        name="dashboard.html",
+        name=localized_template(request, "dashboard.html"),
         context={
             "findings": paged,
             "kpis": kpis,
@@ -111,7 +112,7 @@ def dashboard(
 def upload_page(request: Request):
     _require_role(request, "operator")
     return templates.TemplateResponse(
-        request=request, name="upload.html", context={
+        request=request, name=localized_template(request, "upload.html"), context={
             "demo_mode": bool(DEMO_MODE),
             "import_max_mb": MAX_IMPORT_UPLOAD_BYTES // (1024 * 1024),
         }
@@ -235,7 +236,7 @@ def finding_detail(request: Request, finding_id: str, notice: str = ""):
         raise HTTPException(404, "해당 항목을 찾을 수 없습니다.")
     return templates.TemplateResponse(
         request=request,
-        name="finding.html",
+        name=localized_template(request, "finding.html"),
         context={
             "finding": finding,
             "audit_events": list_audit_events(DB_PATH, finding_id, limit=50),

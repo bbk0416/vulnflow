@@ -1,0 +1,116 @@
+{% extends "base.en.html" %}
+{% block title %}Import Preview · VulnFlow{% endblock %}
+{% block content %}
+<nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span>›</span><a href="/upload">Import Results</a><span>›</span><span>Preview</span></nav>
+
+<section class="hero compact import-preview-hero">
+  <div>
+    <p class="eyebrow">Step 2</p>
+    <h1>Review results before import.</h1>
+    <p>Review column mappings and invalid rows, then import only valid findings.</p>
+  </div>
+  <a class="button-link secondary" href="/upload">Choose another file</a>
+</section>
+
+{% if notice_message %}<div class="notice import-notice">{{ notice_message|ui_message }}</div>{% endif %}
+
+<section class="import-summary-grid" aria-label="Import summary">
+  <article><span>File</span><strong>{{ filename }}</strong></article>
+  <article><span>Auto-detect</span><strong>{{ format_label }}</strong></article>
+  <article><span>Source items</span><strong>{{ source_row_count|ui_items }}</strong></article>
+  <article class="success"><span>Importable</span><strong>{{ valid_count|ui_items }}</strong></article>
+  <article class="{% if error_count %}danger{% endif %}"><span>Needs review</span><strong>{{ error_count|ui_items }}</strong></article>
+</section>
+
+<section class="panel compatibility-panel">
+  <div class="page-heading"><div><p class="eyebrow">COMPATIBILITY</p><h2>Scanner file compatibility: {{ compatibility.status }}</h2><p>{{ compatibility.conclusion|ui_message }}</p></div><button class="button-link secondary" type="submit" form="compatibility-download-form">Download JSON report</button></div>
+  <div class="import-summary-grid compact">
+    <article><span>Source items</span><strong>{{ compatibility.source_items|ui_items }}</strong></article>
+    <article class="success"><span>Importable</span><strong>{{ compatibility.importable_rows|ui_items }}</strong></article>
+    <article class="{% if compatibility.unsupported_source_items %}danger{% endif %}"><span>No CVE / unsupported</span><strong>{{ compatibility.unsupported_source_items|ui_items }}</strong></article>
+    <article><span>Unique assets</span><strong>{{ compatibility.unique_assets }}</strong></article>
+    <article class="{% if compatibility.warning_count %}danger{% endif %}"><span>Parser warnings</span><strong>{{ compatibility.warning_count|ui_items }}</strong></article>
+  </div>
+  {% if compatibility.warnings %}<div class="import-errors">{% for warning in compatibility.warnings %}<article><strong>Review recommended</strong><p>{{ warning|ui_message }}</p></article>{% endfor %}</div>{% endif %}
+  {% if compatibility.missing_recommended_fields %}<p class="warning-callout">Recommended fields missing: {{ compatibility.missing_recommended_fields|join(', ') }}. Import is still possible, but less information will be available for priority and owner decisions.</p>{% endif %}
+</section>
+<form id="compatibility-download-form" method="post" action="/upload/findings/compatibility">
+  <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="hidden" name="token" value="{{ token }}"><input type="hidden" name="scanner_source" value="{{ scanner_source }}"><input type="hidden" name="import_mode" value="{{ import_mode }}">
+  {% for field in mapping_fields %}<input type="hidden" name="map__{{ field.name }}" value="{{ mapping[field.name] }}">{% endfor %}
+</form>
+
+{% if metadata.sheet_name or metadata.encoding %}
+<p class="meta import-file-meta">
+  {% if metadata.sheet_name %}Sheet: <strong>{{ metadata.sheet_name }}</strong>{% endif %}
+  {% if metadata.encoding %}{% if metadata.sheet_name %} · {% endif %}Encoding: <strong>{{ metadata.encoding }}</strong>{% endif %}
+</p>
+{% endif %}
+
+<form class="form import-mapping-form" method="post" action="/upload/findings/apply">
+  <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+  <input type="hidden" name="token" value="{{ token }}">
+
+  <section class="panel import-options-panel">
+    <div class="page-heading"><div><h2>Import settings</h2><p>Confirm the automatically populated values.</p></div><span class="step-badge">{{ adapter|upper }}</span></div>
+    <div class="form-row-two">
+      <label>Source<input name="scanner_source" maxlength="120" value="{{ scanner_source }}" required><small>e.g.: nessus-dmz, openvas-monthly, consulting-2026</small></label>
+      <label>Import mode<select name="import_mode"><option value="incremental" {% if import_mode=='incremental' %}selected{% endif %}>Add/update existing findings</option><option value="snapshot" {% if import_mode=='snapshot' %}selected{% endif %}>Treat this file as a full snapshot</option></select><small>Snapshot mode marks existing findings missing from the file as absent.</small></label>
+    </div>
+  </section>
+
+  <section class="panel import-map-panel">
+    <div class="page-heading"><div><h2>Column mapping</h2><p>Choose the source-file column that corresponds to each VulnFlow field.</p></div><button class="button-link secondary" type="submit" formaction="/upload/findings/recheck">Recheck mapping</button></div>
+    <div class="mapping-grid">
+      {% for field in mapping_fields if field.group == 'essential' %}
+      <label class="mapping-field {% if field.required %}required{% endif %}">
+        <span>{{ field.label|ui_message }}{% if field.required %}<em>Required</em>{% endif %}</span>
+        <select name="map__{{ field.name }}">
+          <option value="">Do not use</option>
+          {% for header in headers %}<option value="{{ header }}" {% if mapping[field.name]==header %}selected{% endif %}>{{ header }}</option>{% endfor %}
+        </select>
+      </label>
+      {% endfor %}
+    </div>
+    <details class="advanced-section mapping-advanced">
+      <summary>Additional column mapping</summary>
+      <div class="advanced-section-body mapping-grid">
+        {% for field in mapping_fields if field.group == 'advanced' %}
+        <label class="mapping-field"><span>{{ field.label|ui_message }}</span><select name="map__{{ field.name }}"><option value="">Do not use</option>{% for header in headers %}<option value="{{ header }}" {% if mapping[field.name]==header %}selected{% endif %}>{{ header }}</option>{% endfor %}</select></label>
+        {% endfor %}
+      </div>
+    </details>
+  </section>
+
+  <section class="panel import-result-panel">
+    <div class="page-heading"><div><h2>Findings to import</h2><p>Up to 10 findings are shown here. {{ valid_count }} findings will actually be imported.</p></div><span class="step-badge success">{{ valid_count|ui_items }}</span></div>
+    {% if preview_rows %}
+    <div class="table-wrap"><table class="import-preview-table"><thead><tr><th>Product / vulnerability</th><th>CVE</th><th>Assets</th><th>CVSS</th><th>Priority</th></tr></thead><tbody>
+      {% for row in preview_rows %}<tr><td>{{ row.product }}</td><td><code>{{ row.cve_id }}</code></td><td>{{ row.asset_name or '-' }}</td><td>{{ row.cvss }}</td><td>{{ row.decision }}</td></tr>{% endfor %}
+    </tbody></table></div>
+    {% else %}<div class="empty-state"><strong>No importable findings.</strong><p>Check required column mappings and the errors below.</p></div>{% endif %}
+  </section>
+
+  {% if error_count %}
+  <section class="panel import-error-panel">
+    <div class="page-heading"><div><h2>Items requiring review</h2><p>{{ error_count }} rows cannot be imported with the current mapping.</p></div><button class="button-link secondary" type="submit" formaction="/upload/findings/errors">Download error CSV</button></div>
+    <div class="import-errors">
+      {% for error in errors %}<article><strong>{% if error.row_number %}Source {{ error.row_number }} row{% else %}Source items{% endif %}</strong><p>{{ error.message|ui_message }}</p></article>{% endfor %}
+      {% if error_count > errors|length %}<p class="meta">Only the first {{ errors|length }} errors are shown here. Download the error CSV for the full list.</p>{% endif %}
+    </div>
+    {% if import_mode == 'incremental' and valid_count %}
+    <label class="checkbox-card warning"><input type="checkbox" name="skip_invalid" value="1"><span><strong>Error {{ error_count }}invalid rows and import only the {{ valid_count }}valid rows</strong><small>Skipped rows are not recovered automatically. Keep the error CSV.</small></span></label>
+    {% elif import_mode == 'snapshot' %}
+    <p class="warning-callout">Snapshot mode does not allow skipping invalid rows. This prevents incomplete files from incorrectly marking existing findings as absent.</p>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <div class="sticky-import-actions">
+    <a class="button-link secondary" href="/upload">Cancel</a>
+    <button type="submit" formaction="/upload/findings/recheck">Recheck mapping</button>
+    <button class="primary large-action" {% if not valid_count %}disabled{% endif %}>Import {{ valid_count|ui_items }}</button>
+  </div>
+</form>
+
+<p class="meta safety-note">Preview files expire after 30 minutes by default. Nessus/OpenVAS plugin results without a CVE are not imported into the current finding model.</p>
+{% endblock %}

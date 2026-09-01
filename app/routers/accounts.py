@@ -1,4 +1,6 @@
 from __future__ import annotations
+from fastapi.responses import RedirectResponse as _UiLanguageRedirectResponse
+from app.ui_i18n import UI_LANGUAGE_COOKIE, localized_template, safe_next_path
 
 """Browser login, logout, and administrator-managed database users."""
 
@@ -62,6 +64,22 @@ def _audit(event_type: str, summary: str, *, actor: str, details: dict[str, Any]
 
 @router.get("/login", response_class=HTMLResponse)
 def login_page(request: Request, next: str = "", notice: str = ""):
+    _ui_language = request.query_params.get("ui_language")
+    if _ui_language in {"ko", "en"}:
+        response = _UiLanguageRedirectResponse(
+            url=safe_next_path(request.query_params.get("next") or "/login"),
+            status_code=303,
+        )
+        response.set_cookie(
+            key=UI_LANGUAGE_COOKIE,
+            value=_ui_language,
+            max_age=31536000,
+            httponly=True,
+            samesite="lax",
+            path="/",
+        )
+        return response
+
     if getattr(request.state, "auth_method", "anonymous") not in {"anonymous", "health"}:
         return RedirectResponse(url=_safe_next(next), status_code=303)
     messages = {
@@ -71,7 +89,7 @@ def login_page(request: Request, next: str = "", notice: str = ""):
     }
     return templates.TemplateResponse(
         request=request,
-        name="login.html",
+        name=localized_template(request, "login.html"),
         context={
             "next_path": _safe_next(next),
             "notice_message": messages.get(notice, ""),
@@ -109,7 +127,7 @@ def login_submit(
             headers["Retry-After"] = str(result.retry_after_seconds)
         return templates.TemplateResponse(
             request=request,
-            name="login.html",
+            name=localized_template(request, "login.html"),
             context={
                 "next_path": _safe_next(next),
                 "notice_message": "",

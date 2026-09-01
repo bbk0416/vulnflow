@@ -1,0 +1,78 @@
+{% extends "base.en.html" %}
+{% block title %}Import new results · VulnFlow{% endblock %}
+{% block content %}
+<nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Home</a><span>›</span><span>Import Results</span></nav>
+
+<section class="hero compact upload-hero">
+  <div><p class="eyebrow">Step 1</p><h1>Import vulnerability results.</h1><p>Upload Nessus, OpenVAS, CSV, or Excel files to auto-map columns and review errors before import.</p></div>
+  <a class="button-link" href="/static/sample_findings.csv" download>Download sample CSV</a>
+</section>
+
+<section class="panel primary-upload-panel">
+  <div class="page-heading"><div><h2>Select scanner or spreadsheet results</h2><p>Review column mapping and errors before anything is imported.</p></div><span class="step-badge">Up to {{ import_max_mb }}MB</span></div>
+  <form class="form easy-upload-form" method="post" action="/upload/findings/preview" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+    <label class="file-drop">Choose result file<input type="file" name="file" accept=".csv,.xlsx,.nessus,.xml,.omp" required><small>Nessus .nessus · OpenVAS CSV/XML · Generic CSV · Excel XLSX</small></label>
+    <div class="form-row-two">
+      <label>File type<select name="format_hint"><option value="auto">Auto-detect</option><option value="nessus">Nessus</option><option value="openvas">OpenVAS·Greenbone</option><option value="csv">Generic CSV</option><option value="xlsx">Excel XLSX</option></select><small>Auto-detect works for most files.</small></label>
+      <label>Source<input name="scanner_source" maxlength="120" value="" placeholder="Auto or e.g. nessus-dmz"><small>Leave blank to fill automatically from the detected file type.</small></label>
+    </div>
+    <label>Import mode<select name="import_mode"><option value="incremental">Add/update existing findings</option><option value="snapshot">Treat this file as a full snapshot</option></select><small>Use incremental import first. Snapshot mode also changes the state of findings missing from the file.</small></label>
+    <button class="primary large-action">Analyze file and preview</button>
+  </form>
+</section>
+
+<section class="upload-guide">
+  <article><span>1</span><div><strong>Choose file</strong><p>Choose Nessus, OpenVAS, CSV, or Excel results.</p></div></article>
+  <article><span>2</span><div><strong>Preview & map columns</strong><p>Review required columns and invalid rows before import.</p></div></article>
+  <article><span>3</span><div><strong>Apply to findings</strong><p>Import only validated findings, then assign owners.</p></div></article>
+</section>
+
+<details class="advanced-section upload-advanced compatibility-support">
+  <summary>Anonymization tool for import issue reports</summary>
+  <div class="advanced-section-body">
+    <p>Use this only when normal import fails or when reporting scanner compatibility issues. It creates a shareable ZIP that preserves file structure while removing hosts, IPs, accounts, and free-text identifiers.</p>
+    <form class="form easy-upload-form" method="post" action="/upload/findings/anonymize" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}">
+      <label class="file-drop">Choose original scanner file<input type="file" name="file" accept=".csv,.xlsx,.nessus,.xml,.omp" required><small>Processing occurs in memory. The ZIP does not include the original filename or replacement map.</small></label>
+      <div class="form-row-two">
+        <label>File type<select name="format_hint"><option value="auto">Auto-detect</option><option value="nessus">Nessus</option><option value="openvas">OpenVAS·Greenbone</option><option value="csv">Generic CSV</option><option value="xlsx">Excel XLSX</option></select></label>
+        <label>Anonymization level<select name="profile"><option value="compatibility">Compatibility-first</option><option value="strict">Strict anonymization</option></select><small>Strict mode also pseudonymizes product, plugin, and version values.</small></label>
+      </div>
+      <button>Create anonymized diagnostic ZIP</button>
+    </form>
+    <p class="meta">Automatic anonymization focuses on structured identifiers. Review the generated sample and anonymization report before sharing.</p>
+  </div>
+</details>
+
+<details class="advanced-section upload-advanced">
+  <summary>Process large files in the job queue</summary>
+  <div class="advanced-section-body">
+    <p>Use this in environments where large imports should run outside the browser request.</p>
+    <form class="upload" method="post" action="/jobs/imports/csv" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><label>Source<input name="scanner_source" maxlength="120" value="manual" required></label><label>Import mode<select name="import_mode"><option value="incremental">Add/update</option><option value="snapshot">Full snapshot</option></select></label><input type="file" name="file" accept=".csv" required><button>Queue job</button></form>
+  </div>
+</details>
+
+<details class="advanced-section upload-advanced">
+  <summary>SBOM & product release features</summary>
+  <div class="advanced-section-body">
+    <div class="grid2">
+      <section><h3>Register CycloneDX product release</h3><p>Store product components and link them to existing findings.</p><form class="upload" method="post" action="/upload/sbom" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="file" name="file" accept=".json,.cdx.json" required><input name="notes" maxlength="1500" placeholder="Release/source notes"><button class="primary">Register product release</button></form><a href="/static/sample_sbom.cdx.json" download>Previous sample</a> · <a href="/static/sample_sbom_v2.cdx.json" download>Updated sample</a></section>
+      <section><h3>Compare two SBOMs</h3><p>Compare added, removed, and changed component versions between two SBOMs.</p><form class="upload compare" method="post" action="/upload/sbom-compare" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><label>Previous SBOM<input type="file" name="before_file" accept=".json,.cdx.json" required></label><label>Updated SBOM<input type="file" name="after_file" accept=".json,.cdx.json" required></label><button>Compare differences</button></form></section>
+    </div>
+  </div>
+</details>
+
+<details class="advanced-section upload-advanced">
+  <summary>Backup & restore{% if demo_mode %}·Reset demo{% endif %}</summary>
+  <div class="advanced-section-body">
+    <div class="grid2">
+      <section><h3>Exports</h3><p><a class="button-link" href="/export/findings.csv">Findings CSV</a> <a class="button-link" href="/export/audit.csv">Audit CSV</a> <a class="button-link" href="/export/report.html">HTML report</a>{% if request.state.role=='admin' %} <a class="button-link" href="/export/backup.sqlite3">SQLite backup</a>{% endif %}</p></section>
+      {% if request.state.role=='admin' %}<section class="warning-zone"><h3>Restore SQLite backup</h3><form class="form" method="post" action="/restore-backup" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input type="file" name="file" accept=".sqlite3,.sqlite,.db" required><input name="confirmation" placeholder="Enter RESTORE" required><button class="danger-button">Validate & restore</button></form></section>{% endif %}
+    </div>
+    {% if request.state.role=='admin' and demo_mode %}<section class="danger-zone reset-zone"><h3>Reset demo data</h3><p>Delete the current finding data and restore 10 synthetic sample findings.</p><form class="form inline" method="post" action="/reset-demo"><input type="hidden" name="csrf_token" value="{{ request.state.csrf_token }}"><input name="confirmation" placeholder="Enter RESET" required><button class="danger-button">Reset</button></form></section>{% endif %}
+  </div>
+</details>
+
+<p class="meta safety-note">Use the anonymization tool above when reporting scanner compatibility issues that may contain sensitive data. Priority scores help order review and do not replace your organization's final risk decision.</p>
+{% endblock %}
