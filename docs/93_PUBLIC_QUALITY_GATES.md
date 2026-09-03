@@ -56,8 +56,8 @@ architecture boundary.
 
 ## Audited dependency baseline
 
-The production runtime baseline pins FastAPI 0.140.9, Starlette 1.3.1,
-python-multipart 0.0.31, and cryptography 50.0.0. Requests 2.33.0 is retained only
+The production runtime baseline pins FastAPI 0.141.1, Starlette 1.6.0,
+python-multipart 0.0.32, and cryptography 50.0.1. Requests 2.34.2 is retained only
 in the development lock for deployment and rehearsal tooling; application code
 uses the reviewed pinned transports and the production image does not install
 Requests or its dedicated transitive packages. The complete CI quality job remains

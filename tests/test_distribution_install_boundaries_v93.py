@@ -19,8 +19,8 @@ def test_runtime_dependency_surface_excludes_rehearsal_only_requests():
     assert "requests==" not in runtime.lower()
     assert "requests==" not in runtime_lock.lower()
     assert '"requests==' not in pyproject.lower()
-    assert "requests==2.33.0" in development
-    assert "requests==2.33.0" in development_lock
+    assert "requests==2.34.2" in development
+    assert "requests==2.34.2" in development_lock
 
 
 def test_production_image_copies_only_reviewed_runtime_administration_scripts():
