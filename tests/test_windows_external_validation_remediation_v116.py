@@ -103,12 +103,12 @@ def test_compose_rehearsal_failure_still_writes_a_machine_readable_report(
 
 
 def test_runtime_lock_contains_the_windows_dependency_closure_pin() -> None:
-    assert "idna==3.17" in (ROOT / "requirements.lock").read_text(encoding="utf-8")
+    assert "idna==3.19" in (ROOT / "requirements.lock").read_text(encoding="utf-8")
     manifest = json.loads(
         (ROOT / "app/resources/runtime_dependency_lock.json").read_text(encoding="utf-8")
     )
     assert any(
-        item["name"] == "idna" and item["version"] == "3.17"
+        item["name"] == "idna" and item["version"] == "3.19"
         for item in manifest["packages"]
     )
 
