@@ -267,6 +267,9 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "httpcore2==2.13.1" in development_lock
     assert "truststore==0.10.4" in development_lock
     assert "FAIL_UNDER = 75.0" in coverage_runner
+    assert 'output = runtime_root / f"coverage_pytest_group_{index}.txt"' in coverage_runner
+    assert "def _archive_group_output" in coverage_runner
+    assert "REPORTS.mkdir(parents=True, exist_ok=True)" in coverage_runner
     for package in ("ruff==", "bandit==", "pip-audit=="):
         assert package in requirements
     for marker in ("ruff-fatal", "bandit-high", "pip-audit"):
