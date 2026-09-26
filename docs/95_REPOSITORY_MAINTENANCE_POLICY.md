@@ -19,7 +19,7 @@ A repository maintenance change must pass:
 
 - release metadata consistency;
 - public SHA-256 manifest verification;
-- the 727-test public regression suite;
+- the 730-test public regression suite;
 - architecture review;
 - public submission readiness;
 - Chromium workflow E2E through GitHub Actions;
