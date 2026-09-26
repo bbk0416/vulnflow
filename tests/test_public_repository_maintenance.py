@@ -238,6 +238,9 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
 
     workflow = (ROOT / ".github/workflows/public-ci.yml").read_text(encoding="utf-8")
     requirements = (ROOT / "requirements-quality.txt").read_text(encoding="utf-8")
+    development_requirements = (ROOT / "requirements-dev.txt").read_text(encoding="utf-8")
+    development_lock = (ROOT / "requirements-dev.lock").read_text(encoding="utf-8")
+    coverage_runner = (ROOT / "scripts/coverage_verification.py").read_text(encoding="utf-8")
     runner = (ROOT / "scripts/run_quality_gates.py").read_text(encoding="utf-8")
     dependency_lock = (ROOT / "scripts/dependency_lock.py").read_text(encoding="utf-8")
     dependency_smoke = (ROOT / "scripts/dependency_lock_smoke.py").read_text(encoding="utf-8")
@@ -245,6 +248,9 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "python scripts/run_quality_gates.py" in workflow
     assert "pip install -r requirements-dev.lock" in workflow
     assert "python scripts/dependency_lock_smoke.py" in workflow
+    assert "coverage-gate:" in workflow
+    assert "name: coverage / Python 3.13" in workflow
+    assert "python scripts/coverage_verification.py" in workflow
     assert "python scripts/release_metadata.py --check --public" in workflow
     assert 'VULNFLOW_PUBLIC_TEST_GROUP_TIMEOUT_SECONDS: "360"' in workflow
     public_runner = (ROOT / "scripts/run_public_tests.py").read_text(encoding="utf-8")
@@ -256,6 +262,11 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert ".github/workflows/public-ci.yml" in dependency_lock
     assert "tests.yml" not in dependency_lock
     assert "tests.yml" not in dependency_smoke
+    assert "httpx2==2.13.1" in development_requirements
+    assert "httpx2==2.13.1" in development_lock
+    assert "httpcore2==2.13.1" in development_lock
+    assert "truststore==0.10.4" in development_lock
+    assert "FAIL_UNDER = 75.0" in coverage_runner
     for package in ("ruff==", "bandit==", "pip-audit=="):
         assert package in requirements
     for marker in ("ruff-fatal", "bandit-high", "pip-audit"):
