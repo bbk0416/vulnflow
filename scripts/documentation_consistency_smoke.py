@@ -107,6 +107,8 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
 
     checks = [
         ("readme_version", _contains(readme, f"Core {version}")),
+        ("readme_release_identity_version", _contains(readme, f"Latest immutable release: [`v{version}`](")),
+        ("readme_release_identity_asset_version", _contains(readme, f"not included in the `v{version}` release asset")),
         ("readme_public_test_count", _contains(readme, f"**{public_total}개**")),
         ("readme_browser_e2e_count", _contains(readme, f"Chromium 브라우저 E2E {browser_e2e_count}개")),
         ("public_scope_test_count", _contains(scope, f"{public_total}개 수집형 핵심 회귀시험")),
@@ -129,6 +131,8 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
             ),
         ),
         ("public_verification_version", _contains(verification, f"VulnFlow {version} public verification summary")),
+        ("public_verification_published_tag", _contains(verification, f"annotated tag `v{version}`")),
+        ("public_verification_windows_asset", _contains(verification, f"VulnFlow_Free_Public_Beta_Windows_Core_{version}.zip")),
         ("current_release_notes_exists", release_notes.is_file()),
         ("readme_current_release_notes", _contains(readme, f"RELEASE_NOTES_{version}.md")),
         ("public_scope_current_version", _contains(scope, f"## {version} ")),
