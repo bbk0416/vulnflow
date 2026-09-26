@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.102 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.103 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -206,3 +206,8 @@
 ## 72.0.100 Greenbone OCI image result identity
 
 72.0.100은 Greenbone GMP XML result의 `oci_image` digest를 component identity에 포함해 동일한 host/NVT/CVE/port/path에서 서로 다른 컨테이너 이미지 결과가 하나의 finding으로 충돌하지 않게 합니다. digest가 없을 때만 full image name을 fallback으로 사용하며 image name/digest를 notes에 보존합니다. 72.0.99 Nessus multi-CVE CVSS fail-safe, 72.0.98 Greenbone multi-CVE CVSS 귀속, 72.0.97 result-path identity, schema 46과 dependency package pins는 변경하지 않습니다.
+
+
+## 72.0.103 Starlette dependency maintenance
+
+72.0.103은 기능 동결 정책을 유지하면서 Starlette runtime pin을 1.6.0에서 1.7.0으로 갱신합니다. AnyIO 4.15에서 deprecated된 anyio.abc.BlockingPortal alias를 Starlette TestClient가 사용하던 upstream 경고를 제거하기 위한 유지보수 변경이며, FastAPI 0.141.1, SQLite schema 46, scanner normalization, remediation 상태 모델과 제품 기능 범위는 유지됩니다. 기존 v72.0.102 tag와 release asset은 수정하지 않습니다.

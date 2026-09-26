@@ -279,7 +279,7 @@
       "version": "6.0.3"
     },
     {
-      "bom-ref": "pkg:pypi/starlette@1.6.0",
+      "bom-ref": "pkg:pypi/starlette@1.7.0",
       "name": "starlette",
       "properties": [
         {
@@ -287,9 +287,9 @@
           "value": "requirements.lock"
         }
       ],
-      "purl": "pkg:pypi/starlette@1.6.0",
+      "purl": "pkg:pypi/starlette@1.7.0",
       "type": "library",
-      "version": "1.6.0"
+      "version": "1.7.0"
     },
     {
       "bom-ref": "pkg:pypi/typing-inspection@0.4.4",
@@ -398,7 +398,7 @@
         "pkg:pypi/python-dotenv@1.2.3",
         "pkg:pypi/python-multipart@0.0.32",
         "pkg:pypi/pyyaml@6.0.3",
-        "pkg:pypi/starlette@1.6.0",
+        "pkg:pypi/starlette@1.7.0",
         "pkg:pypi/typing-extensions@4.16.0",
         "pkg:pypi/typing-inspection@0.4.4",
         "pkg:pypi/uvicorn@0.48.0",
@@ -406,7 +406,7 @@
         "pkg:pypi/watchfiles@1.2.0",
         "pkg:pypi/websockets@17.1"
       ],
-      "ref": "pkg:generic/vulnflow@72.0.102"
+      "ref": "pkg:generic/vulnflow@72.0.103"
     },
     {
       "dependsOn": [],
@@ -496,7 +496,7 @@
     },
     {
       "dependsOn": [],
-      "ref": "pkg:pypi/starlette@1.6.0"
+      "ref": "pkg:pypi/starlette@1.7.0"
     },
     {
       "dependsOn": [],
@@ -525,11 +525,11 @@
   ],
   "metadata": {
     "component": {
-      "bom-ref": "pkg:generic/vulnflow@72.0.102",
+      "bom-ref": "pkg:generic/vulnflow@72.0.103",
       "description": "Local vulnerability operations with append-only public integrity-proof transparency logs, signed revocation checkpoints, independent witness quorum, multi-scanner reconciliation, governed VEX, evidence-backed remediation verification, policy governance, RBAC approvals, durable automation, audit integrity, backup and restore",
       "name": "VulnFlow",
       "type": "application",
-      "version": "72.0.102"
+      "version": "72.0.103"
     },
     "timestamp": "2026-08-03T00:00:00Z"
   },

@@ -211,9 +211,9 @@ def test_readme_presents_four_step_flow_with_five_screenshots() -> None:
     assert "TemporaryDirectory" in capture
 
     root_release_notes = sorted(path.name for path in ROOT.glob("RELEASE_NOTES_*.md"))
-    assert root_release_notes == ["RELEASE_NOTES_72.0.102.md"]
+    assert root_release_notes == ["RELEASE_NOTES_72.0.103.md"]
     archived_release_notes = sorted((ROOT / "docs/archive/releases").glob("RELEASE_NOTES_*.md"))
-    assert len(archived_release_notes) == 91
+    assert len(archived_release_notes) == 92
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.11.md").is_file()
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.71.md").is_file()
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.75.md").is_file()
@@ -267,6 +267,11 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "httpcore2==2.13.1" in development_lock
     assert "truststore==0.10.4" in development_lock
     assert "FAIL_UNDER = 75.0" in coverage_runner
+    release_verifier = (ROOT / "scripts/verify_release.py").read_text(encoding="utf-8")
+    release_bundle = (ROOT / "scripts/release_distribution_bundle.py").read_text(encoding="utf-8")
+    assert 'version != "72.0.54"' not in release_verifier
+    assert "20260726" not in release_bundle
+    assert 'kit_name = f"BBK_VULNFLOW_RELEASE_KIT_V{vtag}.zip"' in release_bundle
     assert 'output = runtime_root / f"coverage_pytest_group_{index}.txt"' in coverage_runner
     assert "def _archive_group_output" in coverage_runner
     assert "REPORTS.mkdir(parents=True, exist_ok=True)" in coverage_runner

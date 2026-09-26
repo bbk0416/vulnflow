@@ -1,4 +1,4 @@
-# VulnFlow Free — Public Beta (Core 72.0.102)
+# VulnFlow Free — Public Beta (Core 72.0.103)
 
 [![public-ci](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml/badge.svg)](https://github.com/bbk0416/vulnflow/actions/workflows/public-ci.yml)
 
@@ -36,10 +36,10 @@ Please do not include real vulnerability data, internal asset identifiers, crede
 
 ### 현재 상태 — Free Public Beta
 
-VulnFlow는 현재 **무료 공개 베타(Free Public Beta)** 로 제공합니다. 코어 버전은 `72.0.102`이며, 신규 기능을 선제적으로 늘리기보다 실제 스캐너 호환성, 사용 흐름의 막힘, 보안·신뢰성 결함에서 확인된 문제만 수정합니다.
+VulnFlow는 현재 **무료 공개 베타(Free Public Beta)** 로 제공합니다. 코어 버전은 `72.0.103`이며, 신규 기능을 선제적으로 늘리기보다 실제 스캐너 호환성, 사용 흐름의 막힘, 보안·신뢰성 결함에서 확인된 문제만 수정합니다.
 
 - 현재 결제, 유료 구독, 상용 SLA 또는 유료 지원 상품은 제공하지 않습니다.
-- 현재 공개된 `72.0.102` 소스는 MIT License이며 해당 버전에 부여된 권리는 그대로 유지됩니다.
+- 현재 공개된 `72.0.103` 소스는 MIT License이며 해당 버전에 부여된 권리는 그대로 유지됩니다.
 - 기본 제품은 사용자가 직접 운영하는 로컬/self-hosted 방식입니다. 이메일·Jira·OSV 등 외부 연동을 직접 설정하면 해당 기능에 필요한 외부 통신이 발생할 수 있습니다.
 - 향후 사업 운영 기반이 마련되면 **구독형 유료 에디션(working name: VulnFlow Pro)** 을 별도로 도입할 수 있습니다. 기능·가격·라이선스는 아직 확정하지 않았으며, 현재 MIT 릴리스의 권리를 소급해 제한하지 않습니다.
 
@@ -47,7 +47,7 @@ VulnFlow는 현재 **무료 공개 베타(Free Public Beta)** 로 제공합니�
 
 ### 업그레이드
 
-72.0.24 이하에서 업그레이드하는 경우 서비스를 중지하고 `data/` 전체를 별도 복사한 뒤 처음 실행하세요. 세부 버전별 변경과 마이그레이션 경계는 [CHANGELOG.md](CHANGELOG.md)와 현재 [릴리스 노트](RELEASE_NOTES_72.0.102.md)를 확인하세요.
+72.0.24 이하에서 업그레이드하는 경우 서비스를 중지하고 `data/` 전체를 별도 복사한 뒤 처음 실행하세요. 세부 버전별 변경과 마이그레이션 경계는 [CHANGELOG.md](CHANGELOG.md)와 현재 [릴리스 노트](RELEASE_NOTES_72.0.103.md)를 확인하세요.
 
 ## 핵심 흐름
 
@@ -207,7 +207,7 @@ python scripts/run_quality_gates.py
 
 핵심 회귀는 인증, 스캐너 수집, 우선순위, 조치·검증·승인, 자산, 증거, SBOM/OSV, 백업·복구와 동일 호스트 coordination을 포함합니다. 브라우저 E2E는 대시보드→조치 상태 변경, 파일 가져오기→검색, 위험수용 요청→승인 흐름을 실제 Chromium으로 확인합니다.
 
-현재 공개 CI는 Windows와 Ubuntu의 Python 3.12·3.13에서 잠금 런타임과 공개 회귀를 검증하고, Ubuntu Python 3.13에서 애플리케이션 line coverage 75% 하한을 별도 gate로 강제합니다. 72.0.102 코어는 실제 NessusClientData_v2 export에서 재현된 single-label `host-fqdn` 호환성 결함을 수정합니다. `kali`처럼 점이 없는 scanner host label은 `asset_name`으로 유지하되 canonical FQDN에는 넣지 않아, 유효한 IP-backed CVE finding이 FQDN validation으로 탈락하지 않게 합니다. 유효한 dotted FQDN은 기존대로 보존하며 72.0.101 Greenbone affected-software identity, 72.0.100 OCI image identity, 72.0.99 Nessus multi-CVE CVSS fail-safe와 기존 scanner/generic import 동작도 유지합니다. schema 46과 dependency package pins, 지원 scanner connector 범위도 변경하지 않습니다. Docker engine 또는 추가 실제 고객 스캐너 corpus가 없는 환경은 `unavailable`/`not-provided`로 구분하며 제품 PASS로 꾸미지 않습니다.
+현재 공개 CI는 Windows와 Ubuntu의 Python 3.12·3.13에서 잠금 런타임과 공개 회귀를 검증하고, Ubuntu Python 3.13에서 애플리케이션 line coverage 75% 하한을 별도 gate로 강제합니다. 72.0.103 코어는 Starlette runtime pin을 1.6.0에서 1.7.0으로 갱신한 dependency-maintenance patch입니다. 72.0.102에서 수정한 NessusClientData_v2 single-label `host-fqdn` 호환성 동작은 그대로 유지됩니다. `kali`처럼 점이 없는 scanner host label은 `asset_name`으로 유지하되 canonical FQDN에는 넣지 않아, 유효한 IP-backed CVE finding이 FQDN validation으로 탈락하지 않게 합니다. 유효한 dotted FQDN과 기존 scanner/generic import 동작도 유지합니다. SQLite schema 46과 지원 scanner connector 범위는 변경하지 않습니다. Docker engine 또는 추가 실제 고객 스캐너 corpus가 없는 환경은 `unavailable`/`not-provided`로 구분하며 제품 PASS로 꾸미지 않습니다.
 
 ## 기술 구성
 
@@ -258,7 +258,7 @@ python scripts/run_quality_gates.py
 - Free/향후 유료 에디션 정책: [PRODUCT_EDITION_POLICY.md](PRODUCT_EDITION_POLICY.md)
 - 제품화 로드맵: [ROADMAP.md](ROADMAP.md)
 - 전체 변경 이력: [CHANGELOG.md](CHANGELOG.md)
-- 현재 릴리스 노트: [RELEASE_NOTES_72.0.102.md](RELEASE_NOTES_72.0.102.md)
+- 현재 릴리스 노트: [RELEASE_NOTES_72.0.103.md](RELEASE_NOTES_72.0.103.md)
 - 과거 세부 릴리스 노트: [`docs/archive/releases/`](docs/archive/releases/)
 
 ## 확인된 한계
@@ -284,7 +284,7 @@ MIT License. 자세한 내용은 [LICENSE](LICENSE)를 확인하세요.
 
 ## Version identifier
 
-`72.0.102` is an internal iteration identifier retained from the development process. It does not represent 72 public major releases. Public changes after this initial publication are tracked through normal issues, branches, pull requests, and commits.
+`72.0.103` is an internal iteration identifier retained from the development process. It does not represent 72 public major releases. Public changes after this initial publication are tracked through normal issues, branches, pull requests, and commits.
 
 ## Documentation map
 

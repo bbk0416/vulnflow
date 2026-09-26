@@ -277,11 +277,18 @@ def test_admin_can_recheck_and_queue_project_backup(tmp_path: Path):
         assert queued.status_code == 303
         assert "notice=backup_queued" in queued.headers["location"]
 
+        backup_jobs = [
+            job for job in list_background_jobs(child) if job.get("job_type") == "RECOVERY_BACKUP"
+        ]
+        assert len(backup_jobs) == 1
+        backup_job_id = str(backup_jobs[0]["job_id"])
         deadline = time.time() + 10
         bundles: list[Path] = []
+        current_backup: dict[str, object] = {}
         while time.time() < deadline:
             bundles = list(selection.recovery.glob("vulnflow_recovery_*.zip"))
-            if bundles:
+            current_backup = get_background_job(child, backup_job_id) or {}
+            if bundles and current_backup.get("status") == "SUCCEEDED":
                 break
             time.sleep(0.1)
         page = client.get(f"/projects?selected={project['project_id']}")
@@ -290,7 +297,7 @@ def test_admin_can_recheck_and_queue_project_backup(tmp_path: Path):
         assert "최근 복구 번들" in page.text
     assert len(bundles) == 1
     assert bundles[0].stat().st_size > 0
-    assert get_background_job(child, list_background_jobs(child)[0]["job_id"])["status"] == "SUCCEEDED"
+    assert current_backup.get("status") == "SUCCEEDED"
 
 
 def test_integrity_recheck_restarts_lifecycle_after_all_projects_were_read_only(tmp_path: Path):
