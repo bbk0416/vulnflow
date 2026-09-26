@@ -23,6 +23,9 @@ def _copy_contract_tree(tmp_path: Path) -> Path:
         "SHA256SUMS.txt",
         "docs/12_RBAC_APPROVALS.md",
         "docs/05_OPERATIONS_GUIDE.md",
+        "docs/01_PROBLEM_AND_SCOPE.md",
+        "docs/95_REPOSITORY_MAINTENANCE_POLICY.md",
+        "tests/e2e/test_vm_workflows.py",
         ".github/workflows/public-ci.yml",
         f"RELEASE_NOTES_{(ROOT / 'VERSION').read_text(encoding='utf-8').strip()}.md",
     ]
@@ -87,6 +90,61 @@ def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
     )
     assert "public_verification_release_notes" in consistency_issues(release_root)
 
+
+
+def test_stale_browser_e2e_count_fails_closed(tmp_path: Path) -> None:
+    root = _copy_contract_tree(tmp_path)
+    readme = root / "README.md"
+    readme_text = readme.read_text(encoding="utf-8")
+    match = re.search(r"Chromium 브라우저 E2E (\d+)개", readme_text)
+    assert match is not None
+    current = int(match.group(1))
+    readme.write_text(
+        readme_text[: match.start(1)] + str(max(0, current - 1)) + readme_text[match.end(1) :],
+        encoding="utf-8",
+    )
+    assert "readme_browser_e2e_count" in consistency_issues(root)
+
+    scope_root = _copy_contract_tree(tmp_path / "scope")
+    scope = scope_root / "PUBLIC_SCOPE.md"
+    scope_text = scope.read_text(encoding="utf-8")
+    match = re.search(r"Chromium 브라우저 E2E (\d+)개", scope_text)
+    assert match is not None
+    current = int(match.group(1))
+    scope.write_text(
+        scope_text[: match.start(1)] + str(max(0, current - 1)) + scope_text[match.end(1) :],
+        encoding="utf-8",
+    )
+    assert "public_scope_browser_e2e_count" in consistency_issues(scope_root)
+
+
+def test_stale_maintenance_public_test_count_fails_closed(tmp_path: Path) -> None:
+    root = _copy_contract_tree(tmp_path)
+    path = root / "docs/95_REPOSITORY_MAINTENANCE_POLICY.md"
+    policy_text = path.read_text(encoding="utf-8")
+    match = re.search(r"the (\d+)-test public regression suite;", policy_text)
+    assert match is not None
+    current = int(match.group(1))
+    path.write_text(
+        policy_text[: match.start(1)] + str(max(0, current - 1)) + policy_text[match.end(1) :],
+        encoding="utf-8",
+    )
+    assert "maintenance_public_test_count" in consistency_issues(root)
+
+
+def test_stale_jira_exclusion_fails_closed(tmp_path: Path) -> None:
+    root = _copy_contract_tree(tmp_path)
+    path = root / "docs/01_PROBLEM_AND_SCOPE.md"
+    path.write_text(
+        path.read_text(encoding="utf-8").replace(
+            "ServiceNow·GitHub·SIEM 등 현재 구현되지 않은 외부 시스템의 정식 adapter",
+            "Jira·ServiceNow·GitHub·SIEM 등 외부 시스템의 정식 adapter",
+        ),
+        encoding="utf-8",
+    )
+    issues = consistency_issues(root)
+    assert "problem_scope_external_adapters" in issues
+    assert "problem_scope_stale_jira_exclusion_absent" in issues
 
 def test_stale_account_lockout_language_fails_closed(tmp_path: Path) -> None:
     root = _copy_contract_tree(tmp_path)
