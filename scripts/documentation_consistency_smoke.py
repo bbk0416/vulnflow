@@ -154,6 +154,8 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
         ("env_auth_username_client", _contains(env_example, f"VULNFLOW_AUTH_RATE_USERNAME_CLIENT_ATTEMPTS={auth_user_client}")),
         ("env_auth_client", _contains(env_example, f"VULNFLOW_AUTH_RATE_CLIENT_ATTEMPTS={auth_client}")),
         ("ci_documentation_gate", _contains(workflow, "python scripts/documentation_consistency_smoke.py")),
+        ("ci_coverage_gate", _contains(workflow, "python scripts/coverage_verification.py")),
+        ("ci_coverage_job_name", _contains(workflow, "name: coverage / Python 3.13")),
     ]
     return [name for name, passed in checks if not passed]
 

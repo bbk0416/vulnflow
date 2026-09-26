@@ -17,6 +17,20 @@ REPORTS = ROOT / "reports"
 FAIL_UNDER = 75.0
 GROUP_COUNT = 6
 GROUP_TIMEOUT_SECONDS = 900
+SMOKE_TIMEOUT_SECONDS = 180
+COVERAGE_SMOKE_SCRIPTS = (
+    "scripts/checkpoint_witness_smoke.py",
+    "scripts/integrity_proof_smoke.py",
+    "scripts/mirror_consistency_smoke.py",
+    "scripts/proof_key_revocation_smoke.py",
+    "scripts/proof_key_rotation_smoke.py",
+    "scripts/proof_trust_boundary_smoke.py",
+    "scripts/public_integrity_proof_smoke.py",
+    "scripts/revocation_checkpoint_smoke.py",
+    "scripts/signing_rotation_smoke.py",
+    "scripts/transparency_log_smoke.py",
+    "scripts/transparency_mirror_smoke.py",
+)
 
 
 def _env(runtime_root: Path) -> dict[str, str]:
@@ -55,8 +69,15 @@ def _stop_group(process: subprocess.Popen[str]) -> None:
         process.wait(timeout=5)
 
 
+def _archive_group_output(index: int, captured: str) -> None:
+    REPORTS.mkdir(parents=True, exist_ok=True)
+    (REPORTS / f"coverage_pytest_group_{index}.txt").write_text(captured, encoding="utf-8")
+
+
 def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, object]:
-    output = REPORTS / f"coverage_pytest_group_{index}.txt"
+    # Keep the live capture outside reports/: repository tests are allowed to
+    # recreate that directory while this outer coverage harness is running.
+    output = runtime_root / f"coverage_pytest_group_{index}.txt"
     command = [
         sys.executable, "-m", "coverage", "run", "--parallel-mode",
         "--save-signal=USR1", "--source=app", "-m", "pytest", "-q",
@@ -78,6 +99,7 @@ def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, ob
             if process.poll() is None:
                 if os.name == "nt":
                     _stop_group(process)
+                    _archive_group_output(index, captured)
                     raise RuntimeError("pytest completed but coverage process did not exit on Windows")
                 os.kill(process.pid, signal.SIGUSR1)
                 time.sleep(1.0)
@@ -87,13 +109,44 @@ def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, ob
         code = process.poll()
         if code is not None:
             if code != 0:
+                _archive_group_output(index, captured)
                 raise RuntimeError(f"coverage group {index} failed ({code})\n{captured[-6000:]}")
+            _archive_group_output(index, captured)
             raise RuntimeError(f"coverage group {index} exited without a pytest pass summary\n{captured[-4000:]}")
     else:
         _stop_group(process)
+        _archive_group_output(index, captured)
         raise RuntimeError(f"coverage group {index} timed out\n{captured[-4000:]}")
+    _archive_group_output(index, captured)
     lines = [line for line in captured.splitlines() if line.strip()]
     return {"group": index, "files": len(files), "summary": lines[-1] if lines else "", "forced_cleanup": forced}
+
+
+def _run_coverage_smoke(script: str) -> dict[str, str]:
+    command = [
+        sys.executable,
+        "-m",
+        "coverage",
+        "run",
+        "--parallel-mode",
+        "--source=app",
+        script,
+    ]
+    result = subprocess.run(
+        command,
+        cwd=ROOT,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=SMOKE_TIMEOUT_SECONDS,
+    )
+    REPORTS.mkdir(parents=True, exist_ok=True)
+    output = REPORTS / f"coverage_smoke_{Path(script).stem}.txt"
+    output.write_text(result.stdout, encoding="utf-8")
+    if result.returncode != 0:
+        raise RuntimeError(f"coverage smoke failed: {script}\n{result.stdout[-6000:]}")
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    return {"script": script, "summary": lines[-1] if lines else "PASS"}
 
 
 def _capture(command: list[str]) -> str:
@@ -117,6 +170,12 @@ def main() -> None:
             result=_run_group(group,index,runtime)
             results.append(result)
             print(f"coverage group {index}/{GROUP_COUNT}: {result['summary']}", flush=True)
+    smoke_results = []
+    for script in COVERAGE_SMOKE_SCRIPTS:
+        result = _run_coverage_smoke(script)
+        smoke_results.append(result)
+        print(f"coverage smoke: {script}: {result['summary']}", flush=True)
+    REPORTS.mkdir(parents=True, exist_ok=True)
     _capture([sys.executable,"-m","coverage","combine"])
     report=_capture([sys.executable,"-m","coverage","report","--show-missing",f"--fail-under={FAIL_UNDER}"])
     (REPORTS/"coverage_verification.txt").write_text(report,encoding="utf-8")
@@ -127,7 +186,7 @@ def main() -> None:
     summary={
         "format":"vulnflow-coverage-verification/1",
         "version":(ROOT/"VERSION").read_text().strip(),
-        "test_files":len(files), "groups":results,
+        "test_files":len(files), "groups":results, "smokes":smoke_results,
         "statements":int(totals["num_statements"]),
         "covered_lines":int(totals["covered_lines"]),
         "missing_lines":int(totals["missing_lines"]),

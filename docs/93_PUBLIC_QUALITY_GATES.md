@@ -14,6 +14,7 @@ The command performs:
 3. Ruff fatal-error rules (`E9`, `F63`, `F7`, `F82`).
 4. Bandit high-severity and high-confidence findings for application and script code.
 5. `pip-audit` against the pinned runtime requirements.
+6. A separate Ubuntu/Python 3.13 application line-coverage gate with a 75% minimum, using `scripts/coverage_verification.py` and the exact development lock.
 
 `pip-audit` depends on an external advisory service. In a deliberately offline environment, run the remaining local checks with:
 
@@ -84,6 +85,19 @@ The JSON result is retained as a GitHub Actions artifact, including on failure.
 The recorded SHA-256 values describe the artifacts fetched in that CI run. They
 are not a committed cross-platform `--require-hashes` lock. `--allow-index-unavailable`
 is a local diagnostic exit and is forbidden in the public CI gate.
+
+## Application line coverage
+
+Public CI runs the existing bounded coverage verifier as a required job:
+
+```bash
+pip install -r requirements-dev.lock
+python scripts/coverage_verification.py
+```
+
+The gate measures application line coverage for `app/` and fails below 75%. It combines the full top-level pytest suite with the repository's existing integrity-proof, witness, revocation, transparency, and mirror smoke verifications so advanced public code is measured through its established executable checks rather than excluded from the denominator. It retains text, JSON, XML, per-group pytest logs, and per-smoke logs as the `coverage-report` workflow artifact. Coverage is a regression-safety signal, not proof that every security or business path is correct.
+
+The development test stack also pins `httpx2` so Starlette's `TestClient` uses its current supported client path instead of the deprecated `httpx` fallback. The legacy `httpx` development pin remains for compatibility with direct development tooling; neither client is part of the production runtime lock.
 
 The screenshot set can be recreated from synthetic data with:
 

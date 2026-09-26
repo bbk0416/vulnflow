@@ -197,6 +197,7 @@ python scripts/production_validation.py --docker auto --json-output reports/prod
 
 ```bash
 python scripts/run_public_tests.py
+python scripts/coverage_verification.py
 pip install -r requirements-e2e.txt
 python -m playwright install chromium
 python scripts/run_browser_e2e.py
@@ -206,7 +207,7 @@ python scripts/run_quality_gates.py
 
 핵심 회귀는 인증, 스캐너 수집, 우선순위, 조치·검증·승인, 자산, 증거, SBOM/OSV, 백업·복구와 동일 호스트 coordination을 포함합니다. 브라우저 E2E는 대시보드→조치 상태 변경, 파일 가져오기→검색, 위험수용 요청→승인 흐름을 실제 Chromium으로 확인합니다.
 
-현재 공개 CI는 Windows와 Ubuntu의 Python 3.12·3.13에서 잠금 런타임과 공개 회귀를 검증합니다. 72.0.102 코어는 실제 NessusClientData_v2 export에서 재현된 single-label `host-fqdn` 호환성 결함을 수정합니다. `kali`처럼 점이 없는 scanner host label은 `asset_name`으로 유지하되 canonical FQDN에는 넣지 않아, 유효한 IP-backed CVE finding이 FQDN validation으로 탈락하지 않게 합니다. 유효한 dotted FQDN은 기존대로 보존하며 72.0.101 Greenbone affected-software identity, 72.0.100 OCI image identity, 72.0.99 Nessus multi-CVE CVSS fail-safe와 기존 scanner/generic import 동작도 유지합니다. schema 46과 dependency package pins, 지원 scanner connector 범위도 변경하지 않습니다. Docker engine 또는 추가 실제 고객 스캐너 corpus가 없는 환경은 `unavailable`/`not-provided`로 구분하며 제품 PASS로 꾸미지 않습니다.
+현재 공개 CI는 Windows와 Ubuntu의 Python 3.12·3.13에서 잠금 런타임과 공개 회귀를 검증하고, Ubuntu Python 3.13에서 애플리케이션 line coverage 75% 하한을 별도 gate로 강제합니다. 72.0.102 코어는 실제 NessusClientData_v2 export에서 재현된 single-label `host-fqdn` 호환성 결함을 수정합니다. `kali`처럼 점이 없는 scanner host label은 `asset_name`으로 유지하되 canonical FQDN에는 넣지 않아, 유효한 IP-backed CVE finding이 FQDN validation으로 탈락하지 않게 합니다. 유효한 dotted FQDN은 기존대로 보존하며 72.0.101 Greenbone affected-software identity, 72.0.100 OCI image identity, 72.0.99 Nessus multi-CVE CVSS fail-safe와 기존 scanner/generic import 동작도 유지합니다. schema 46과 dependency package pins, 지원 scanner connector 범위도 변경하지 않습니다. Docker engine 또는 추가 실제 고객 스캐너 corpus가 없는 환경은 `unavailable`/`not-provided`로 구분하며 제품 PASS로 꾸미지 않습니다.
 
 ## 기술 구성
 
@@ -265,7 +266,7 @@ python scripts/run_quality_gates.py
 - SQLite·단일 호스트 중심이며 다중 서버 분산제품이 아닙니다. 프로젝트별 파일은 물리적으로 분리되지만 운영체제 관리자까지 격리하는 공개 SaaS 다중테넌시 경계는 아닙니다.
 - OIDC·SAML·MFA와 PostgreSQL을 지원하지 않습니다.
 - Windows 잠금 런타임과 핵심 라우터 회귀는 실제 Windows에서 검증했지만 24시간 endurance는 아직 수행하지 않았습니다.
-- exact version lock은 유지하지만 cross-platform `--require-hashes` lock은 없으며, 이 작업공간에서는 외부 패키지 인덱스 제한으로 clean wheelhouse 설치를 완료하지 못했습니다.
+- exact version lock은 유지하지만 cross-platform `--require-hashes` lock은 없습니다. 대신 공개 CI가 잠금 의존성을 wheel로 내려받아 새 가상환경에 index 없이 재설치하고 실제 import까지 확인하며, 해당 run의 wheel SHA-256 목록을 artifact로 보존합니다.
 - Chromium E2E 5개는 브라우저 실행 환경이 있는 CI/호스트에서 수행하는 별도 acceptance 항목입니다.
 - 공개 OSV·KEV·EPSS 운영 endpoint의 지속적 가용성을 보장하지 않습니다.
 - 합성 데이터 성능 수치는 운영 SLA가 아닙니다.

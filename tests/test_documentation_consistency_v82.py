@@ -174,3 +174,25 @@ def test_missing_ci_documentation_gate_fails_closed(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     assert "ci_documentation_gate" in consistency_issues(root)
+
+    coverage_root = _copy_contract_tree(tmp_path / "coverage")
+    coverage_workflow = coverage_root / ".github/workflows/public-ci.yml"
+    coverage_workflow.write_text(
+        coverage_workflow.read_text(encoding="utf-8").replace(
+            "python scripts/coverage_verification.py",
+            "python -c pass",
+        ),
+        encoding="utf-8",
+    )
+    assert "ci_coverage_gate" in consistency_issues(coverage_root)
+
+    coverage_name_root = _copy_contract_tree(tmp_path / "coverage-name")
+    coverage_name_workflow = coverage_name_root / ".github/workflows/public-ci.yml"
+    coverage_name_workflow.write_text(
+        coverage_name_workflow.read_text(encoding="utf-8").replace(
+            "name: coverage / Python 3.13",
+            "name: coverage",
+        ),
+        encoding="utf-8",
+    )
+    assert "ci_coverage_job_name" in consistency_issues(coverage_name_root)

@@ -52,6 +52,37 @@ jobs:
           VULNFLOW_PUBLIC_TEST_GROUP_TIMEOUT_SECONDS: "360"
         run: python scripts/run_public_tests.py
 
+
+  coverage-gate:
+    name: coverage / Python 3.13
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-dev.lock
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements-dev.lock
+      - name: Run application line coverage gate
+        run: python scripts/coverage_verification.py
+      - name: Retain coverage reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: coverage-report
+          path: |
+            reports/coverage_verification.txt
+            reports/coverage_verification_summary.txt
+            reports/coverage_verification_summary.json
+            reports/coverage.json
+            reports/coverage.xml
+            reports/coverage_pytest_group_*.txt
+            reports/coverage_smoke_*.txt
+          if-no-files-found: warn
+
   dependency-wheelhouse:
     name: dependency-wheelhouse / clean offline reinstall
     runs-on: ubuntu-latest
