@@ -193,7 +193,7 @@ python scripts/production_validation.py --docker auto --json-output reports/prod
 
 ## 공개 검증 범위
 
-공개 핵심 회귀시험 수집 계약은 **727개**이며 7개의 비중복 bounded pytest 그룹으로 실행합니다. 플랫폼별 skip은 실제 pass와 구분해 명시합니다. 별도로 Chromium 브라우저 E2E 5개가 기본 사용자 흐름을 검증합니다.
+공개 핵심 회귀시험 수집 계약은 **730개**이며 7개의 비중복 bounded pytest 그룹으로 실행합니다. 플랫폼별 skip은 실제 pass와 구분해 명시합니다. 별도로 Chromium 브라우저 E2E 5개가 기본 사용자 흐름을 검증합니다.
 
 ```bash
 python scripts/run_public_tests.py
