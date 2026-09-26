@@ -92,6 +92,54 @@ def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
 
 
 
+def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
+    version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+
+    readme_root = _copy_contract_tree(tmp_path / "readme")
+    readme = readme_root / "README.md"
+    readme.write_text(
+        readme.read_text(encoding="utf-8").replace(
+            f"Latest immutable release: [`v{version}`](",
+            "Latest immutable release: [`v0.0.0`](",
+        ),
+        encoding="utf-8",
+    )
+    assert "readme_release_identity_version" in consistency_issues(readme_root)
+
+    asset_root = _copy_contract_tree(tmp_path / "asset")
+    asset_readme = asset_root / "README.md"
+    asset_readme.write_text(
+        asset_readme.read_text(encoding="utf-8").replace(
+            f"not included in the `v{version}` release asset",
+            "not included in the `v0.0.0` release asset",
+        ),
+        encoding="utf-8",
+    )
+    assert "readme_release_identity_asset_version" in consistency_issues(asset_root)
+
+    verification_root = _copy_contract_tree(tmp_path / "verification-release")
+    verification = verification_root / "PUBLIC_VERIFICATION.txt"
+    verification.write_text(
+        verification.read_text(encoding="utf-8").replace(
+            f"annotated tag `v{version}`",
+            "annotated tag `v0.0.0`",
+        ),
+        encoding="utf-8",
+    )
+    assert "public_verification_published_tag" in consistency_issues(verification_root)
+
+    windows_asset_root = _copy_contract_tree(tmp_path / "windows-asset")
+    windows_verification = windows_asset_root / "PUBLIC_VERIFICATION.txt"
+    windows_verification.write_text(
+        windows_verification.read_text(encoding="utf-8").replace(
+            f"VulnFlow_Free_Public_Beta_Windows_Core_{version}.zip",
+            "VulnFlow_Free_Public_Beta_Windows_Core_0.0.0.zip",
+        ),
+        encoding="utf-8",
+    )
+    assert "public_verification_windows_asset" in consistency_issues(windows_asset_root)
+
+
 def test_stale_browser_e2e_count_fails_closed(tmp_path: Path) -> None:
     root = _copy_contract_tree(tmp_path)
     readme = root / "README.md"
