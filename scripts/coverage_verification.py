@@ -55,8 +55,15 @@ def _stop_group(process: subprocess.Popen[str]) -> None:
         process.wait(timeout=5)
 
 
+def _archive_group_output(index: int, captured: str) -> None:
+    REPORTS.mkdir(parents=True, exist_ok=True)
+    (REPORTS / f"coverage_pytest_group_{index}.txt").write_text(captured, encoding="utf-8")
+
+
 def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, object]:
-    output = REPORTS / f"coverage_pytest_group_{index}.txt"
+    # Keep the live capture outside reports/: repository tests are allowed to
+    # recreate that directory while this outer coverage harness is running.
+    output = runtime_root / f"coverage_pytest_group_{index}.txt"
     command = [
         sys.executable, "-m", "coverage", "run", "--parallel-mode",
         "--save-signal=USR1", "--source=app", "-m", "pytest", "-q",
@@ -78,6 +85,7 @@ def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, ob
             if process.poll() is None:
                 if os.name == "nt":
                     _stop_group(process)
+                    _archive_group_output(index, captured)
                     raise RuntimeError("pytest completed but coverage process did not exit on Windows")
                 os.kill(process.pid, signal.SIGUSR1)
                 time.sleep(1.0)
@@ -87,11 +95,15 @@ def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, ob
         code = process.poll()
         if code is not None:
             if code != 0:
+                _archive_group_output(index, captured)
                 raise RuntimeError(f"coverage group {index} failed ({code})\n{captured[-6000:]}")
+            _archive_group_output(index, captured)
             raise RuntimeError(f"coverage group {index} exited without a pytest pass summary\n{captured[-4000:]}")
     else:
         _stop_group(process)
+        _archive_group_output(index, captured)
         raise RuntimeError(f"coverage group {index} timed out\n{captured[-4000:]}")
+    _archive_group_output(index, captured)
     lines = [line for line in captured.splitlines() if line.strip()]
     return {"group": index, "files": len(files), "summary": lines[-1] if lines else "", "forced_cleanup": forced}
 
@@ -117,6 +129,7 @@ def main() -> None:
             result=_run_group(group,index,runtime)
             results.append(result)
             print(f"coverage group {index}/{GROUP_COUNT}: {result['summary']}", flush=True)
+    REPORTS.mkdir(parents=True, exist_ok=True)
     _capture([sys.executable,"-m","coverage","combine"])
     report=_capture([sys.executable,"-m","coverage","report","--show-missing",f"--fail-under={FAIL_UNDER}"])
     (REPORTS/"coverage_verification.txt").write_text(report,encoding="utf-8")
