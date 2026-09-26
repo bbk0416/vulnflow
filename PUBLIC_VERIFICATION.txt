@@ -15,7 +15,7 @@ Locally reproducible public checks required before release:
 - static security boundary audit: PASS
 - scanner fixture matrix: 9/9 PASS
 - scanner parser robustness: 6/6 PASS
-- public regression collection contract: 727/727 collected across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 141); platform-specific skips remain explicit
+- public regression collection contract: 730/730 collected across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 144); platform-specific skips remain explicit
 
 Release boundary:
 - The v72.0.102 tag and GitHub Release must only be created after Windows candidate validation and the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
