@@ -95,7 +95,7 @@ pip install -r requirements-dev.lock
 python scripts/coverage_verification.py
 ```
 
-The gate measures application line coverage for `app/` and fails below 75%. It retains text, JSON, XML, and per-group pytest logs as the `coverage-report` workflow artifact. Coverage is a regression-safety signal, not proof that every security or business path is correct.
+The gate measures application line coverage for `app/` and fails below 75%. It combines the full top-level pytest suite with the repository's existing integrity-proof, witness, revocation, transparency, and mirror smoke verifications so advanced public code is measured through its established executable checks rather than excluded from the denominator. It retains text, JSON, XML, per-group pytest logs, and per-smoke logs as the `coverage-report` workflow artifact. Coverage is a regression-safety signal, not proof that every security or business path is correct.
 
 The development test stack also pins `httpx2` so Starlette's `TestClient` uses its current supported client path instead of the deprecated `httpx` fallback. The legacy `httpx` development pin remains for compatibility with direct development tooling; neither client is part of the production runtime lock.
 
