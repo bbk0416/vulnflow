@@ -256,7 +256,7 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     public_runner = (ROOT / "scripts/run_public_tests.py").read_text(encoding="utf-8")
     assert "_cleanup_residual_process_group" in public_runner
     assert "os.killpg" in public_runner
-    assert "expected_counts = (78, 76, 168, 80, 117, 67, 144)" in public_runner
+    assert "expected_counts = (78, 76, 168, 80, 117, 67, 145)" in public_runner
     assert "--group" in public_runner
     assert 'env.pop("FORCE_COLOR", None)' in public_runner
     assert ".github/workflows/public-ci.yml" in dependency_lock
