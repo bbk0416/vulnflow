@@ -22,7 +22,7 @@ Published release evidence:
 - exact pull-request head `00fb149b76eb7337de9a3afd2f8b922b64b78127` passed all 9 required public-ci jobs; its Git tree `2199dd311156fd74ab986a19a14b83c8303a8da4` is identical to the squash-merged release commit tree
 - Windows asset: `VulnFlow_Free_Public_Beta_Windows_Core_72.0.103.zip`
 - Windows asset SHA-256: `ce167e3cb63a65a7b7690181ffe095db2c2b81ab24d4f1f2076b67515aba11f0`
-- extracted Windows bundle public manifest: 719/719 PASS
+- extracted Windows bundle manifest verification: 719/719 PASS
 - the official v72.0.102 predecessor baseline remains immutable
 
 Release boundary:
