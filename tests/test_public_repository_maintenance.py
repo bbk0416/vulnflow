@@ -270,6 +270,14 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert 'output = runtime_root / f"coverage_pytest_group_{index}.txt"' in coverage_runner
     assert "def _archive_group_output" in coverage_runner
     assert "REPORTS.mkdir(parents=True, exist_ok=True)" in coverage_runner
+    assert "COVERAGE_SMOKE_SCRIPTS" in coverage_runner
+    for coverage_smoke in (
+        "scripts/checkpoint_witness_smoke.py",
+        "scripts/proof_key_revocation_smoke.py",
+        "scripts/transparency_log_smoke.py",
+        "scripts/transparency_mirror_smoke.py",
+    ):
+        assert coverage_smoke in coverage_runner
     for package in ("ruff==", "bandit==", "pip-audit=="):
         assert package in requirements
     for marker in ("ruff-fatal", "bandit-high", "pip-audit"):
