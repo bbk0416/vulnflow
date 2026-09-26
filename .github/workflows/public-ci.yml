@@ -80,6 +80,7 @@ jobs:
             reports/coverage.json
             reports/coverage.xml
             reports/coverage_pytest_group_*.txt
+            reports/coverage_smoke_*.txt
           if-no-files-found: warn
 
   dependency-wheelhouse:
