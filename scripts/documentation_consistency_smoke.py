@@ -57,6 +57,16 @@ def _function_return_list_length(path: Path, function_name: str) -> int:
     return len(returns[0].value.elts)
 
 
+def _top_level_test_count(path: Path) -> int:
+    module = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    return sum(
+        1
+        for node in module.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        and node.name.startswith("test_")
+    )
+
+
 def _manifest_entry_count(path: Path) -> int:
     return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
 
@@ -77,6 +87,7 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
     group_text = " + ".join(str(item) for item in group_counts)
     manifest_count = _manifest_entry_count(root / "SHA256SUMS.txt")
     submission_count = _function_return_list_length(root / "scripts/submission_readiness_smoke.py", "_public_checks")
+    browser_e2e_count = _top_level_test_count(root / "tests/e2e/test_vm_workflows.py")
 
     settings = (root / "app/core/settings.py").read_text(encoding="utf-8")
     auth_window = int(_settings_default(settings, "VULNFLOW_AUTH_RATE_WINDOW_SECONDS"))
@@ -91,12 +102,25 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
     env_example = root / ".env.example"
     workflow = root / ".github/workflows/public-ci.yml"
     release_notes = root / f"RELEASE_NOTES_{version}.md"
+    maintenance_policy = root / "docs/95_REPOSITORY_MAINTENANCE_POLICY.md"
+    problem_scope = root / "docs/01_PROBLEM_AND_SCOPE.md"
 
     checks = [
         ("readme_version", _contains(readme, f"Core {version}")),
         ("readme_public_test_count", _contains(readme, f"**{public_total}개**")),
+        ("readme_browser_e2e_count", _contains(readme, f"Chromium 브라우저 E2E {browser_e2e_count}개")),
         ("public_scope_test_count", _contains(scope, f"{public_total}개 수집형 핵심 회귀시험")),
+        ("public_scope_browser_e2e_count", _contains(scope, f"Chromium 브라우저 E2E {browser_e2e_count}개")),
         ("public_scope_schema", _contains(scope, f"schema {schema}")),
+        ("maintenance_public_test_count", _contains(maintenance_policy, f"the {public_total}-test public regression suite;")),
+        (
+            "problem_scope_external_adapters",
+            _contains(problem_scope, "ServiceNow·GitHub·SIEM 등 현재 구현되지 않은 외부 시스템의 정식 adapter"),
+        ),
+        (
+            "problem_scope_stale_jira_exclusion_absent",
+            _absent(problem_scope, "Jira·ServiceNow·GitHub·SIEM 등 외부 시스템의 정식 adapter"),
+        ),
         (
             "public_verification_test_contract",
             _contains(
