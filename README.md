@@ -193,7 +193,7 @@ python scripts/production_validation.py --docker auto --json-output reports/prod
 
 ## 공개 검증 범위
 
-공개 핵심 회귀시험 수집 계약은 **727개**이며 7개의 비중복 bounded pytest 그룹으로 실행합니다. 플랫폼별 skip은 실제 pass와 구분해 명시합니다. 별도로 Chromium 브라우저 E2E 3개가 기본 사용자 흐름을 검증합니다.
+공개 핵심 회귀시험 수집 계약은 **730개**이며 7개의 비중복 bounded pytest 그룹으로 실행합니다. 플랫폼별 skip은 실제 pass와 구분해 명시합니다. 별도로 Chromium 브라우저 E2E 5개가 기본 사용자 흐름을 검증합니다.
 
 ```bash
 python scripts/run_public_tests.py
@@ -266,7 +266,7 @@ python scripts/run_quality_gates.py
 - OIDC·SAML·MFA와 PostgreSQL을 지원하지 않습니다.
 - Windows 잠금 런타임과 핵심 라우터 회귀는 실제 Windows에서 검증했지만 24시간 endurance는 아직 수행하지 않았습니다.
 - exact version lock은 유지하지만 cross-platform `--require-hashes` lock은 없으며, 이 작업공간에서는 외부 패키지 인덱스 제한으로 clean wheelhouse 설치를 완료하지 못했습니다.
-- Chromium E2E 3개는 브라우저 실행 환경이 있는 CI/호스트에서 수행하는 별도 acceptance 항목입니다.
+- Chromium E2E 5개는 브라우저 실행 환경이 있는 CI/호스트에서 수행하는 별도 acceptance 항목입니다.
 - 공개 OSV·KEV·EPSS 운영 endpoint의 지속적 가용성을 보장하지 않습니다.
 - 합성 데이터 성능 수치는 운영 SLA가 아닙니다.
 - 실제 사용자 파일럿과 업무시간 절감 효과는 아직 측정하지 않았습니다.

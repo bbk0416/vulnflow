@@ -34,4 +34,4 @@
 - 공격 발생 확률 예측
 - 다중 조직 tenancy
 - OIDC·SAML·MFA와 중앙 세션 폐기
-- Jira·ServiceNow·GitHub·SIEM 등 외부 시스템의 정식 adapter
+- ServiceNow·GitHub·SIEM 등 현재 구현되지 않은 외부 시스템의 정식 adapter
