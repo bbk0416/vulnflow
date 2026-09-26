@@ -15,11 +15,11 @@ Locally reproducible public checks required before release:
 - static security boundary audit: PASS
 - scanner fixture matrix: 9/9 PASS
 - scanner parser robustness: 6/6 PASS
-- public regression collection contract: 730/730 collected across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 144); platform-specific skips remain explicit
+- current main public regression collection contract: 731/731 collected across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 145); platform-specific skips remain explicit
 
 Published release evidence:
 - annotated tag `v72.0.103` resolves to commit `f87943c81747799134705d47fd354c79f3c24d69`
-- exact pull-request head `00fb149b76eb7337de9a3afd2f8b922b64b78127` passed all 9 required public-ci jobs; its Git tree `2199dd311156fd74ab986a19a14b83c8303a8da4` is identical to the squash-merged release commit tree
+- exact pull-request head `00fb149b76eb7337de9a3afd2f8b922b64b78127` passed all 9 required public-ci jobs with the release-time 730/730 collection contract (78 + 76 + 168 + 80 + 117 + 67 + 144); its Git tree `2199dd311156fd74ab986a19a14b83c8303a8da4` is identical to the squash-merged release commit tree
 - Windows asset: `VulnFlow_Free_Public_Beta_Windows_Core_72.0.103.zip`
 - Windows asset SHA-256: `ce167e3cb63a65a7b7690181ffe095db2c2b81ab24d4f1f2076b67515aba11f0`
 - extracted Windows bundle manifest verification: 719/719 PASS
