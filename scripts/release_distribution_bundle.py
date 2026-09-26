@@ -591,7 +591,7 @@ def finalize_distribution(
     if verifier.returncode != 0:
         raise RuntimeError("standalone distribution verifier failed:\n" + verifier.stdout[-4000:])
 
-    kit_name = f"BBK_VULNFLOW_RELEASE_KIT_V{vtag}_20260726.zip"
+    kit_name = f"BBK_VULNFLOW_RELEASE_KIT_V{vtag}.zip"
     kit_path = output_dir / kit_name
     build_release_kit(staging, kit_path, version=version)
     index_path = output_dir / f"BBK_VULNFLOW_RELEASE_INDEX_V{vtag}.json"

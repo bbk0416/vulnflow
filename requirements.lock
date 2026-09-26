@@ -1,4 +1,4 @@
-# VulnFlow 72.0.102 runtime dependency lock.
+# VulnFlow 72.0.103 runtime dependency lock.
 # Public maintenance pins refreshed against the verified closure on 2026-07-29.
 # Every package is pinned exactly; distribution artifact hashes are not included
 # because the build environment did not have package-index access.
@@ -23,7 +23,7 @@ pycparser==3.0
 python-dotenv==1.2.3
 python-multipart==0.0.32
 PyYAML==6.0.3
-starlette==1.6.0
+starlette==1.7.0
 typing-inspection==0.4.4
 typing_extensions==4.16.0
 uvicorn==0.48.0

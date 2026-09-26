@@ -1,4 +1,4 @@
-> Historical per-iteration release notes from 72.0.11 through 72.0.99 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.102.md`.
+> Historical per-iteration release notes through 72.0.102 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.103.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -10,6 +10,13 @@
 
 
 
+
+## 72.0.103 — 2026-09-27
+
+- Upgrade Starlette from 1.6.0 to 1.7.0 while keeping FastAPI 0.141.1 and AnyIO 4.15.0.
+- Remove the upstream anyio.abc.BlockingPortal deprecation warning from Starlette TestClient by moving to the upstream-fixed Starlette release.
+- Keep SQLite schema 46, scanner normalization, remediation workflow behavior, and the 730-test public regression contract unchanged.
+- Require the existing 75% application line-coverage gate plus the full 9-job public CI acceptance set.
 
 ## 72.0.102 — 2026-08-22
 

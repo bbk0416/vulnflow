@@ -1,13 +1,13 @@
-VulnFlow 72.0.102 public verification summary
+VulnFlow 72.0.103 public verification summary
 
 Release scope:
-- Nessus single-label host-fqdn import correctness patch on the 72.0.72 feature-frozen line
-- release notes: RELEASE_NOTES_72.0.102.md
+- Starlette 1.7.0 dependency-maintenance patch on the 72.0.72 feature-frozen line
+- release notes: RELEASE_NOTES_72.0.103.md
 - SQLite schema remains 46
-- Runtime/development dependency package pins remain unchanged
+- Starlette runtime dependency pin changes from 1.6.0 to 1.7.0; other runtime pins remain unchanged
 
 Locally reproducible public checks required before release:
-- public manifest: 718/718 PASS
+- public manifest: 719/719 PASS
 - documentation consistency: PASS
 - version consistency: 12/12 PASS
 - public submission readiness: 31/31 PASS
@@ -18,6 +18,6 @@ Locally reproducible public checks required before release:
 - public regression collection contract: 730/730 collected across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 144); platform-specific skips remain explicit
 
 Release boundary:
-- The v72.0.102 tag and GitHub Release must only be created after Windows candidate validation and the repository public-ci acceptance set reports all 8 expected jobs PASS on the exact pull-request head.
-- The official v72.0.101 predecessor baseline is immutable; previously released tags and release assets must not be modified.
+- The v72.0.103 tag and GitHub Release must only be created after Windows candidate validation and the repository public-ci acceptance set reports all 9 expected jobs PASS on the exact pull-request head.
+- The official v72.0.102 predecessor baseline is immutable; previously released tags and release assets must not be modified.
 - Real customer scanner corpus validation is not claimed unless separately provided and reproduced.
