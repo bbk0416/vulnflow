@@ -2,7 +2,7 @@
 
 ## Status
 
-VulnFlow is an early product-pilot codebase. Changes should prioritize a smaller customer-facing remediation workflow, reproducible defects, security hardening, deployment compatibility, and public-documentation accuracy. This repository does not yet represent a supported commercial service.
+VulnFlow is a public-beta local vulnerability-remediation codebase. Changes should prioritize a smaller operator-facing remediation workflow, reproducible defects, security hardening, deployment compatibility, and public-documentation accuracy. This repository does not yet represent a supported commercial service.
 
 ## Dependency updates
 
@@ -12,6 +12,10 @@ VulnFlow is an early product-pilot codebase. Changes should prioritize a smaller
 - A major runtime dependency update requires a separate compatibility review.
 - A change affecting FastAPI, Starlette, Uvicorn, cryptography, SQLite behavior, file upload parsing or Docker runtime behavior requires the relevant regression suite and, when applicable, a repeated Docker runtime validation.
 - Security updates are handled separately from ordinary version-update grouping and take priority.
+
+## Validation ownership
+
+External-user or customer pilot testing is intentionally out of scope for this repository. Repository acceptance is based on maintainer-operated, reproducible checks that can be executed directly in local, CI, browser, container, and target-host environments. Real-customer files, customer environments, WTP, PMF, or external-user feedback are not required to close repository work and must not be claimed unless independently provided and reproduced.
 
 ## Acceptance
 

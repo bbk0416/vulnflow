@@ -99,7 +99,7 @@ Current application/repository line: **72.0.103**.
 - [조치 검증 증거 저장소](24_VERIFICATION_EVIDENCE_STORE.md)
 - [Evidence quarantine and malware scanning](25_EVIDENCE_QUARANTINE_MALWARE_SCAN.md)
 - [Evidence Chain of Custody](26_EVIDENCE_CHAIN_OF_CUSTODY.md)
-- [제품 파일럿 전 운영 검증](46_PRODUCTION_VALIDATION.md)
+- [제품 운영 전 자체 검증](46_PRODUCTION_VALIDATION.md)
 - [Docker runtime 검증](94_DOCKER_RUNTIME_VALIDATION.md)
 
 ## Historical material

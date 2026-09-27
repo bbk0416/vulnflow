@@ -76,7 +76,7 @@ When Docker is unavailable, this rehearsal uses a non-root subprocess identity, 
 
 ## Target-host acceptance
 
-Before a customer pilot, repeat the following on the target host:
+Before treating a target host as internally verified, repeat the following on that target host:
 
 1. Build the exact image from the release source.
 2. Start the production Compose stack with authorized certificates.
@@ -86,4 +86,4 @@ Before a customer pilot, repeat the following on the target host:
 6. Exercise certificate renewal and rollback.
 7. Exercise external backup creation and isolated restoration.
 
-A source-level or host-process rehearsal must not be represented as completion of those target-host steps.
+A source-level or host-process rehearsal must not be represented as completion of those target-host steps. External-user/customer pilot validation is intentionally out of scope.

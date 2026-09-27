@@ -181,7 +181,7 @@ python -m scripts.manage_control_recovery --db ./data/control.db \
 관리자는 `관리자 메뉴 → 고객사·프로젝트`에서 로컬 또는 외부 번들을 선택해 `격리 복원 리허설`을 실행할 수 있습니다. 리허설은 임시 DB와 임시 증거 저장소에 실제 복원한 뒤 SQLite, 감사 체인, 증거파일을 재검사하며 라이브 프로젝트 데이터는 변경하지 않습니다. 자세한 설정과 한계는 [복구 리허설과 외부 백업](docs/44_RECOVERY_DRILLS_AND_EXTERNAL_BACKUPS.md)을 확인하세요.
 
 
-### 제품 파일럿 전 자체 검증
+### 제품 운영 전 자체 검증
 
 현재 schema 업그레이드, 9개 합성 스캐너 fixture, 6개 XML·포맷 강건성 계약, 익명화 수집 계약, Docker 가능 환경의 image 기동을 한 번에 확인할 수 있습니다.
 
@@ -189,7 +189,7 @@ python -m scripts.manage_control_recovery --db ./data/control.db \
 python scripts/production_validation.py --docker auto --json-output reports/production_validation.json
 ```
 
-실제 고객 파일은 반영하지 않고 호환성 보고서만 생성할 수 있고, 별도의 `scanner_parser_robustness.py`로 BOM·CPE 2.2·Greenbone ref 속성·중복·비정상 XML 차단 계약을 재실행할 수 있습니다. 고객 파일을 공유해야 할 때는 `결과 가져오기 → 공유용 익명화 진단 번들` 또는 `scripts/scanner_collection_bundle.py`로 원본 형식을 유지한 익명화 ZIP을 만들 수 있습니다. 저장된 SMTP·Jira 설정도 메일 발송·이슈 생성 없이 인증과 조회 권한만 점검할 수 있습니다. 자세한 명령과 판정 한계는 [제품 파일럿 전 운영 검증](docs/46_PRODUCTION_VALIDATION.md)을 확인하세요.
+실제 고객 파일은 반영하지 않고 호환성 보고서만 생성할 수 있고, 별도의 `scanner_parser_robustness.py`로 BOM·CPE 2.2·Greenbone ref 속성·중복·비정상 XML 차단 계약을 재실행할 수 있습니다. 고객 파일을 공유해야 할 때는 `결과 가져오기 → 공유용 익명화 진단 번들` 또는 `scripts/scanner_collection_bundle.py`로 원본 형식을 유지한 익명화 ZIP을 만들 수 있습니다. 저장된 SMTP·Jira 설정도 메일 발송·이슈 생성 없이 인증과 조회 권한만 점검할 수 있습니다. 자세한 명령과 판정 한계는 [제품 운영 전 자체 검증](docs/46_PRODUCTION_VALIDATION.md)을 확인하세요.
 
 ## 공개 검증 범위
 
@@ -227,7 +227,7 @@ python scripts/run_quality_gates.py
 5. [프로젝트 무결성·예약 운영](docs/43_PROJECT_INTEGRITY_AND_SCHEDULED_OPERATIONS.md)
 6. [복구 리허설과 외부 백업](docs/44_RECOVERY_DRILLS_AND_EXTERNAL_BACKUPS.md)
 7. [이메일·Jira 연동](docs/45_EMAIL_AND_JIRA_INTEGRATIONS.md)
-8. [제품 파일럿 전 운영 검증](docs/46_PRODUCTION_VALIDATION.md)
+8. [제품 운영 전 자체 검증](docs/46_PRODUCTION_VALIDATION.md)
 9. [파일럿 시작 센터](docs/47_PILOT_LAUNCH_CENTER.md)
 10. [제어 DB 분리와 프로젝트 복원 경계](docs/50_CONTROL_DATABASE_AND_RESTORE_BOUNDARY.md)
 11. [제어 DB 복구·로그인 제한](docs/51_CONTROL_RECOVERY_AND_AUTH_RATE_LIMIT.md)
@@ -270,7 +270,7 @@ python scripts/run_quality_gates.py
 - Chromium E2E 5개는 브라우저 실행 환경이 있는 CI/호스트에서 수행하는 별도 acceptance 항목입니다.
 - 공개 OSV·KEV·EPSS 운영 endpoint의 지속적 가용성을 보장하지 않습니다.
 - 합성 데이터 성능 수치는 운영 SLA가 아닙니다.
-- 실제 사용자 파일럿과 업무시간 절감 효과는 아직 측정하지 않았습니다.
+- 외부 사용자·고객 파일럿은 수행 범위에 포함하지 않습니다. 사용 흐름과 시간 절감은 저장소의 합성 데이터, 로컬 실행, CI와 운영자 직접 수행으로만 확인하며 이를 고객 검증·WTP·PMF 근거로 주장하지 않습니다.
 - 이메일·Jira 연동은 운영자 제공 자격증명과 외부 서비스 가용성에 의존하며, Teams·Slack·ServiceNow는 지원하지 않습니다.
 - 외부 백업은 mounted filesystem 복사이며 S3 object lock, WORM, 오프사이트 보관 또는 복구 SLA를 제공하지 않습니다.
 
