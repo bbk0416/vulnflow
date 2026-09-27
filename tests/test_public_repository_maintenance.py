@@ -251,6 +251,13 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "coverage-gate:" in workflow
     assert "name: coverage / Python 3.13" in workflow
     assert "python scripts/coverage_verification.py" in workflow
+    assert "runtime-resilience:" in workflow
+    assert "name: runtime-resilience / Windows Python 3.13" in workflow
+    assert "python scripts/runtime_fault_rehearsal.py" in workflow
+    assert "--workers 4" in workflow
+    assert "--writes-per-worker 8" in workflow
+    assert "python scripts/runtime_stability_soak.py" in workflow
+    assert "--iterations 12" in workflow
     assert "python scripts/release_metadata.py --check --public" in workflow
     assert 'VULNFLOW_PUBLIC_TEST_GROUP_TIMEOUT_SECONDS: "360"' in workflow
     public_runner = (ROOT / "scripts/run_public_tests.py").read_text(encoding="utf-8")
