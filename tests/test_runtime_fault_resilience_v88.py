@@ -78,11 +78,11 @@ def test_short_runtime_soak_passes_without_touching_repository_data(tmp_path: Pa
     assert after == before
 
 
-def test_runtime_fault_rehearsal_passes_bounded_profile(tmp_path: Path):
+def test_runtime_fault_rehearsal_passes_bounded_profile():
+    # Exercise the standalone disposable-root cleanup path as well as the checks.
     result = run_rehearsal(
         workers=2,
         writes_per_worker=2,
-        work_root=tmp_path / "fault",
     )
 
     assert result["passed"] is True
