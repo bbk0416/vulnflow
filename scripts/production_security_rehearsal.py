@@ -23,6 +23,16 @@ from app.core.auth import parse_api_tokens
 from app.services.security_profile import enforce_security_profile
 
 
+def _env_example_values(path: Path) -> dict[str, str]:
+    values: dict[str, str] = {}
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip()
+    return values
+
 
 def run_rehearsal(root: Path = ROOT) -> dict[str, Any]:
     compose = yaml.safe_load((root / "docker-compose.production.yml").read_text(encoding="utf-8"))
@@ -31,7 +41,8 @@ def run_rehearsal(root: Path = ROOT) -> dict[str, Any]:
     proxy = services.get("proxy") or {}
     app_env = app.get("environment") or {}
     nginx = (root / "deploy/nginx/vulnflow.conf").read_text(encoding="utf-8")
-    env_example = (root / ".env.production.example").read_text(encoding="utf-8")
+    env_values = _env_example_values(root / ".env.production.example")
+    outbound_hosts = {item.strip() for item in env_values.get("VULNFLOW_OUTBOUND_HOST_ALLOWLIST", "").split(",") if item.strip()}
 
     checks = {
         "app_not_directly_published": not app.get("ports") and "8000" in [str(item) for item in app.get("expose") or []],
@@ -41,10 +52,8 @@ def run_rehearsal(root: Path = ROOT) -> dict[str, Any]:
         "runtime_dependency_enforcement": str(app_env.get("VULNFLOW_RUNTIME_DEPENDENCY_POLICY")) == "enforce",
         "private_http_egress_disabled": str(app_env.get("VULNFLOW_OUTBOUND_ALLOW_PRIVATE_NETWORKS")) == "0",
         "outbound_response_bounded": "1048576" in str(app_env.get("VULNFLOW_OUTBOUND_MAX_RESPONSE_BYTES") or ""),
-        "outbound_allowlist_documented": "VULNFLOW_OUTBOUND_HOST_ALLOWLIST" in env_example,
-        "intelligence_hosts_allowlisted": all(
-            host in env_example for host in ("api.osv.dev", "www.cisa.gov", "api.first.org")
-        ),
+        "outbound_allowlist_documented": bool(env_values.get("VULNFLOW_OUTBOUND_HOST_ALLOWLIST", "")),
+        "intelligence_hosts_allowlisted": {"api.osv.dev", "www.cisa.gov", "api.first.org"} <= outbound_hosts,
         "intelligence_response_limits_configured": all(
             name in app_env for name in (
                 "VULNFLOW_INTEL_MAX_RESPONSE_BYTES", "VULNFLOW_OSV_MAX_RESPONSE_BYTES"
@@ -52,7 +61,7 @@ def run_rehearsal(root: Path = ROOT) -> dict[str, Any]:
         ),
         "private_smtp_default_disabled": str(app_env.get("VULNFLOW_SMTP_ALLOW_PRIVATE_NETWORKS")) in {"0", "${VULNFLOW_SMTP_ALLOW_PRIVATE_NETWORKS:-0}"},
         "plain_smtp_disabled": str(app_env.get("VULNFLOW_SMTP_ALLOW_PLAIN")) == "0",
-        "smtp_allowlist_documented": "VULNFLOW_SMTP_HOST_ALLOWLIST" in env_example,
+        "smtp_allowlist_documented": bool(env_values.get("VULNFLOW_SMTP_HOST_ALLOWLIST", "")),
         "signed_audit_and_backup_required": str(app_env.get("VULNFLOW_AUDIT_REQUIRE_SIGNATURE")) == "1" and str(app_env.get("VULNFLOW_BACKUP_REQUIRE_SIGNATURE")) == "1",
         "external_backup_mounted": any(str(item).endswith(":/app/external-backups") for item in app.get("volumes") or []),
         "proxy_publishes_tls": "443:443" in [str(item) for item in proxy.get("ports") or []],
@@ -67,7 +76,17 @@ def run_rehearsal(root: Path = ROOT) -> dict[str, Any]:
         "application_backend_only": set(app.get("networks") or []) == {"backend"},
         "edge_proxy_dual_homed": set(proxy.get("networks") or []) == {"frontend", "backend"},
         "frontend_network_not_internal": not bool(((compose.get("networks") or {}).get("frontend") or {}).get("internal")),
-        "production_env_has_no_real_secrets": "replace-with" in env_example and "vulnflow.example.com" in env_example,
+        "production_env_has_no_real_secrets": (
+            env_values.get("VULNFLOW_PUBLIC_BASE_URL") == "https://vulnflow.example.com"
+            and all(
+                env_values.get(name, "").startswith("replace-with")
+                for name in (
+                    "VULNFLOW_CURSOR_SIGNING_KEY",
+                    "VULNFLOW_AUDIT_SIGNING_KEY",
+                    "VULNFLOW_BACKUP_SIGNING_KEY",
+                )
+            )
+        ),
     }
 
     profile_values = {

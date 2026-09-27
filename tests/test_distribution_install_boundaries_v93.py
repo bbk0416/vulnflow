@@ -19,6 +19,7 @@ def test_runtime_dependency_surface_excludes_rehearsal_only_requests():
     assert "requests==" not in runtime.lower()
     assert "requests==" not in runtime_lock.lower()
     assert '"requests==' not in pyproject.lower()
+    assert 'requires = ["setuptools==83.0.0"]' in pyproject
     assert "requests==2.34.2" in development
     assert "requests==2.34.2" in development_lock
 

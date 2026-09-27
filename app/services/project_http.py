@@ -93,9 +93,9 @@ async def project_context_middleware(
                 if principal.auth_method == "bearer":
                     raise
                 row = resolve_project(control_db, principal, "")
-    except PermissionError as exc:
+    except PermissionError:
         return JSONResponse(
-            {"detail": str(exc)},
+            {"detail": "프로젝트 접근 권한이 없습니다."},
             status_code=403,
             headers={"Cache-Control": "no-store"},
         )

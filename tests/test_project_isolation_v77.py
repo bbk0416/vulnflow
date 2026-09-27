@@ -225,6 +225,8 @@ def test_bearer_project_scope_defaults_closed_and_can_be_explicit(tmp_path: Path
             headers={"Authorization": f"Bearer {token_default}", "X-VulnFlow-Project": project["project_id"]},
         )
         assert denied.status_code == 403
+        assert denied.json() == {"detail": "프로젝트 접근 권한이 없습니다."}
+        assert project["project_id"] not in denied.text
         allowed = client.get(
             "/api/v1/findings",
             headers={"Authorization": f"Bearer {token_all}", "X-VulnFlow-Project": project["project_id"]},
