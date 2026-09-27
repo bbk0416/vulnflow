@@ -259,7 +259,6 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "python scripts/runtime_stability_soak.py" in workflow
     assert "--iterations 12" in workflow
     assert "python scripts/uvicorn_smoke.py" in workflow
-    assert "python scripts/uvicorn_smoke.py" in workflow
     uvicorn_smoke = (ROOT / "scripts/uvicorn_smoke.py").read_text(encoding="utf-8")
     assert '"VULNFLOW_CONTROL_DB": str(data_dir / "control.sqlite3")' in uvicorn_smoke
     assert '"VULNFLOW_DEFAULT_PROJECT_DB": str(project_root / "vulnflow.sqlite3")' in uvicorn_smoke
