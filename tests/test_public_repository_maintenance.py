@@ -267,6 +267,12 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "httpcore2==2.13.1" in development_lock
     assert "truststore==0.10.4" in development_lock
     assert "FAIL_UNDER = 75.0" in coverage_runner
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    public_scope = (ROOT / "PUBLIC_SCOPE.md").read_text(encoding="utf-8")
+    maintenance_policy = (ROOT / "docs/95_REPOSITORY_MAINTENANCE_POLICY.md").read_text(encoding="utf-8")
+    assert "외부 사용자·고객 파일럿은 수행 범위에 포함하지 않습니다." in readme
+    assert "외부 사용자·고객 파일럿은 이 저장소의 acceptance 조건이나 향후 완료 과제로 두지 않습니다." in public_scope
+    assert "External-user or customer pilot testing is intentionally out of scope" in maintenance_policy
     release_verifier = (ROOT / "scripts/verify_release.py").read_text(encoding="utf-8")
     release_bundle = (ROOT / "scripts/release_distribution_bundle.py").read_text(encoding="utf-8")
     assert 'VerificationStep.create("public-manifest", [python, "scripts/verify_public_manifest.py"]' in release_verifier
