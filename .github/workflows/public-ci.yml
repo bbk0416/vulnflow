@@ -137,6 +137,45 @@ jobs:
       - name: Run production Compose TLS topology rehearsal
         run: python scripts/production_compose_rehearsal.py --require-docker --json-output reports/production_compose_rehearsal.json
 
+
+  runtime-resilience:
+    name: runtime-resilience / Windows Python 3.13
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-dev.lock
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements-dev.lock
+      - name: Run bounded SQLite fault and recovery rehearsal
+        run: >-
+          python scripts/runtime_fault_rehearsal.py
+          --workers 4
+          --writes-per-worker 8
+          --json-output reports/runtime_fault_rehearsal_verification.json
+          --text-output reports/runtime_fault_rehearsal_verification.txt
+      - name: Run 12-cycle runtime stability soak
+        run: >-
+          python scripts/runtime_stability_soak.py
+          --iterations 12
+          --json-output reports/runtime_stability_soak_verification.json
+          --text-output reports/runtime_stability_soak_verification.txt
+      - name: Retain runtime resilience evidence
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: runtime-resilience-windows-py313
+          path: |
+            reports/runtime_fault_rehearsal_verification.json
+            reports/runtime_fault_rehearsal_verification.txt
+            reports/runtime_stability_soak_verification.json
+            reports/runtime_stability_soak_verification.txt
+          if-no-files-found: warn
+
   quality-gates:
     name: static-quality / Python 3.13
     runs-on: ubuntu-24.04

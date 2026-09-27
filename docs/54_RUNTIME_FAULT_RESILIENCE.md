@@ -56,6 +56,8 @@ The bounded rehearsal exercises disposable data only and verifies:
 - restore into a separate database;
 - final SQLite and audit-chain integrity.
 
+The protected public CI also runs this standalone rehearsal with the default 4 workers × 8 writes profile on Windows/Python 3.13. That required check verifies the disposable-root cleanup path as well as the bounded fault/recovery checks.
+
 ## Interpretation limits
 
 This is not a 24-hour soak, filesystem power-loss test, real disk-full test, multi-host cluster test, or production SLA. It does not simulate kernel panic, storage-controller failure, network filesystems, or corrupt sectors. The application remains a single-host SQLite product unless a different supported deployment architecture is introduced and validated.
