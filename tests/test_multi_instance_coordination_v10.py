@@ -131,6 +131,8 @@ def test_restore_lease_blocks_other_write_requests(tmp_path: Path, monkeypatch):
         response = client.post("/api/v1/jobs/queue/RESCORE_ALL", headers=headers)
         assert response.status_code == 503
         assert response.headers["Retry-After"] == "5"
+        assert response.json() == {"detail": "쓰기 작업이 일시적으로 차단되었습니다."}
+        assert "other-node" not in response.text
 
 
 def test_cluster_api_reports_instance_and_scheduler_lease(tmp_path: Path, monkeypatch):

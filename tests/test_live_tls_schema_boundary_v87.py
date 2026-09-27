@@ -118,5 +118,6 @@ def test_static_production_rehearsal_covers_proxy_trust_boundary() -> None:
     report = run_rehearsal(ROOT)
     assert report["passed"] is True
     assert report["checks"]["proxy_headers_trusted_only_on_internal_network"] is True
+    assert report["checks"]["production_env_has_no_real_secrets"] is True
     assert report["checks"]["forwarded_for_overwritten_at_edge"] is True
     assert report["checks"]["duplicate_edge_headers_hidden"] is True

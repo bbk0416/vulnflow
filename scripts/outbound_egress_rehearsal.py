@@ -72,6 +72,7 @@ def run_rehearsal() -> dict[str, Any]:
         cert, key = _certificate(work)
         server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         server_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        server_context.minimum_version = ssl.TLSVersion.TLSv1_2
         server_context.load_cert_chain(cert, key)
 
         def sni_callback(_socket, server_name, _context):
@@ -84,6 +85,7 @@ def run_rehearsal() -> dict[str, Any]:
         port = int(server.server_address[1])
 
         client_context = ssl.create_default_context(cafile=str(cert))
+        client_context.minimum_version = ssl.TLSVersion.TLSv1_2
         real_getaddrinfo = socket.getaddrinfo
 
         def pinned_dns(host, requested_port, *args, **kwargs):

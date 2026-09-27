@@ -151,9 +151,9 @@ async def local_security_scoped(
             method=request.method,
             path=request.url.path,
         )
-    except WriteBarrierActive as exc:
+    except WriteBarrierActive:
         response = JSONResponse(
-            {"detail": str(exc)},
+            {"detail": "쓰기 작업이 일시적으로 차단되었습니다."},
             status_code=503,
             headers={"Retry-After": "5", "X-Request-ID": request_id},
         )
