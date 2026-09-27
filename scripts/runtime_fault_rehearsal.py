@@ -9,6 +9,7 @@ uncommitted transaction.
 """
 
 import argparse
+from contextlib import closing
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import hashlib
 import json
@@ -56,12 +57,12 @@ def _finding(index: int, *, suffix: str = "") -> dict[str, Any]:
 
 
 def _integrity(db_path: Path) -> str:
-    with sqlite3.connect(db_path) as conn:
+    with closing(sqlite3.connect(db_path)) as conn:
         return str(conn.execute("PRAGMA integrity_check").fetchone()[0])
 
 
 def _finding_count(db_path: Path) -> int:
-    with sqlite3.connect(db_path) as conn:
+    with closing(sqlite3.connect(db_path)) as conn:
         return int(conn.execute("SELECT COUNT(*) FROM findings").fetchone()[0])
 
 
@@ -105,7 +106,7 @@ def _lock_contention(db_path: Path) -> dict[str, Any]:
     acquired = threading.Event()
 
     def holder() -> None:
-        with sqlite3.connect(db_path, timeout=5.0) as conn:
+        with closing(sqlite3.connect(db_path, timeout=5.0)) as conn:
             conn.execute("PRAGMA busy_timeout=5000")
             conn.execute("BEGIN IMMEDIATE")
             conn.execute(
@@ -221,7 +222,7 @@ os._exit(17)
         timeout=15,
         check=False,
     )
-    with sqlite3.connect(db_path) as conn:
+    with closing(sqlite3.connect(db_path)) as conn:
         row = conn.execute(
             "SELECT value FROM system_metadata WHERE key='runtime_crash_probe'"
         ).fetchone()
