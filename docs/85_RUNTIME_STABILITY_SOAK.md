@@ -19,4 +19,6 @@ reports/runtime_stability_soak_verification.txt
 reports/runtime_stability_soak_verification.json
 ```
 
+The protected public CI runs the full 12-cycle profile on Windows/Python 3.13 as a required runtime-resilience check and retains the JSON/TXT reports as workflow artifacts.
+
 This is a bounded release check rather than a long-duration production endurance test.
