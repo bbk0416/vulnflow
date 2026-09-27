@@ -27,4 +27,4 @@ Published release evidence:
 
 Release boundary:
 - previously released tags and release assets must not be modified or retargeted
-- real customer scanner corpus validation is not claimed unless separately provided and reproduced.
+- external-user/customer pilot validation and real-customer scanner corpus validation are not repository acceptance criteria and are not claimed as evidence; validation is limited to maintainer-operated reproducible local/CI/deployment checks unless explicitly stated otherwise.
