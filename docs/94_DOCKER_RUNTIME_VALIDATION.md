@@ -52,7 +52,7 @@ after restore to a new volume: 11
 
 - Windows Docker Desktop에서 한 차례 수행한 실기동 검증입니다.
 - Linux Docker host, rootless Docker, Kubernetes와 외부 reverse proxy 배포는 검증하지 않았습니다.
-- 24시간 endurance, 부하시험, 장애주입, 실제 고객 데이터 이관과 운영자 파일럿은 수행하지 않았습니다.
+- 24시간 endurance, 부하시험, 장애주입은 아직 수행하지 않았습니다. 실제 고객 데이터 이관과 외부 사용자·고객 파일럿은 의도적으로 검증 범위에서 제외합니다.
 - SQLite·단일 호스트 중심이라는 제품 범위는 바뀌지 않습니다.
 - 검증 중 사용한 임시 계정·token과 원본 백업은 공개 저장소에 포함하지 않습니다.
 
