@@ -164,6 +164,8 @@ jobs:
           --iterations 12
           --json-output reports/runtime_stability_soak_verification.json
           --text-output reports/runtime_stability_soak_verification.txt
+      - name: Run real Uvicorn HTTP smoke
+        run: python scripts/uvicorn_smoke.py
       - name: Retain runtime resilience evidence
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6

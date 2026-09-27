@@ -62,4 +62,4 @@ On 2026-09-27, a separate Windows host revalidation increased the write profile 
 
 ## Interpretation limits
 
-This is not a 24-hour soak, filesystem power-loss test, real disk-full test, multi-host cluster test, or production SLA. It does not simulate kernel panic, storage-controller failure, network filesystems, corrupt sectors, or sustained production HTTP traffic. The application remains a single-host SQLite product unless a different supported deployment architecture is introduced and validated.
+The required Windows runtime-resilience job also starts a real localhost Uvicorn process and completes a bounded 16-worker/320-request read-only HTTP concurrency check across health and authenticated API read endpoints. This is not a 24-hour soak, filesystem power-loss test, real disk-full test, multi-host cluster test, or production SLA. It does not simulate kernel panic, storage-controller failure, network filesystems, corrupt sectors, or sustained production HTTP traffic. The application remains a single-host SQLite product unless a different supported deployment architecture is introduced and validated.

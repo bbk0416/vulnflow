@@ -52,7 +52,7 @@ after restore to a new volume: 11
 
 - Windows Docker Desktop에서 한 차례 수행한 실기동 검증입니다.
 - Linux Docker host, rootless Docker, Kubernetes와 외부 reverse proxy 배포는 검증하지 않았습니다.
-- 이 Docker 실기동 기록 자체에서는 24시간 endurance, 운영 트래픽 수준 부하시험, host/filesystem 수준 장애주입을 수행하지 않았습니다. 별도의 required Windows CI에서는 bounded 동시쓰기·lock contention·쓰기 중 backup·crash rollback·restore fault rehearsal과 12-cycle runtime soak를 반복 실행합니다. 실제 고객 데이터 이관과 외부 사용자·고객 파일럿은 의도적으로 검증 범위에서 제외합니다.
+- 이 Docker 실기동 기록 자체에서는 24시간 endurance, 운영 트래픽 수준의 sustained load, host/filesystem 수준 장애주입을 수행하지 않았습니다. 별도의 required Windows CI에서는 bounded 동시쓰기·lock contention·쓰기 중 backup·crash rollback·restore fault rehearsal, 12-cycle runtime soak, 실제 localhost Uvicorn 기능 smoke, 16-worker/320-request bounded HTTP read concurrency를 반복 실행합니다. 실제 고객 데이터 이관과 외부 사용자·고객 파일럿은 의도적으로 검증 범위에서 제외합니다.
 - 2026-09-27 별도 Windows 호스트 자체 검증에서 400/400 concurrent SQLite writes와 50,000건 합성 query-performance를 실행해 통과했습니다. query latency는 호스트 상태에 따라 달라지므로 문서의 고정 capacity 수치나 SLA 근거로 사용하지 않습니다.
 - SQLite·단일 호스트 중심이라는 제품 범위는 바뀌지 않습니다.
 - 검증 중 사용한 임시 계정·token과 원본 백업은 공개 저장소에 포함하지 않습니다.
