@@ -21,4 +21,6 @@ reports/runtime_stability_soak_verification.json
 
 The protected public CI runs the full 12-cycle profile on Windows/Python 3.13 as a required runtime-resilience check and retains the JSON/TXT reports as workflow artifacts.
 
+On 2026-09-27, a separate Windows host revalidation completed 12/12 lifecycles with 28/28 durable jobs, 16 accepted HMAC webhooks, final WAL size 0, and 26,418 bytes of measured Python allocation growth against the 24 MiB limit. RSS reporting was unavailable on that host, so RSS was not used as evidence.
+
 This is a bounded release check rather than a long-duration production endurance test.

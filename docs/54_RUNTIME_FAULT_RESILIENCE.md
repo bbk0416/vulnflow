@@ -58,6 +58,8 @@ The bounded rehearsal exercises disposable data only and verifies:
 
 The protected public CI also runs this standalone rehearsal with the default 4 workers × 8 writes profile on Windows/Python 3.13. That required check verifies the disposable-root cleanup path as well as the bounded fault/recovery checks.
 
+On 2026-09-27, a separate Windows host revalidation increased the write profile to 8 workers × 50 writes. All 400/400 writes completed and all 15 fault/recovery checks passed, including lock contention, backup during active writes, atomic failed-publication preservation, crash rollback, restore validation, SQLite integrity, and audit-chain integrity.
+
 ## Interpretation limits
 
-This is not a 24-hour soak, filesystem power-loss test, real disk-full test, multi-host cluster test, or production SLA. It does not simulate kernel panic, storage-controller failure, network filesystems, or corrupt sectors. The application remains a single-host SQLite product unless a different supported deployment architecture is introduced and validated.
+This is not a 24-hour soak, filesystem power-loss test, real disk-full test, multi-host cluster test, or production SLA. It does not simulate kernel panic, storage-controller failure, network filesystems, corrupt sectors, or sustained production HTTP traffic. The application remains a single-host SQLite product unless a different supported deployment architecture is introduced and validated.

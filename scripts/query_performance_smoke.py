@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import closing
 import json
 import sqlite3
 import statistics
@@ -47,7 +48,7 @@ def _rows():
 def _seed(db: Path) -> float:
     init_db(db)
     started = perf_counter()
-    with sqlite3.connect(db) as conn:
+    with closing(sqlite3.connect(db)) as conn:
         # Bulk-load the synthetic fixture without paying per-row FTS trigger cost;
         # trigger synchronization is covered independently by the v25 regression tests.
         conn.executescript(
@@ -112,7 +113,7 @@ def main() -> None:
             fts_result = query_findings(db, query="component 199", record_state="ALL", page_size=100)
             fts_runs.append(float(fts_result["query_ms"]))
         assert fts_result is not None and fts_result["count"] > 0
-        with sqlite3.connect(db) as conn:
+        with closing(sqlite3.connect(db)) as conn:
             started = perf_counter()
             legacy_search_count = int(conn.execute(
                 "SELECT COUNT(*) FROM findings WHERE LOWER(COALESCE(finding_id,'')||' '||COALESCE(product,'')||' '||COALESCE(asset_name,'')||' '||COALESCE(cve_id,'')||' '||COALESCE(component,'')||' '||COALESCE(owner,'')) LIKE ?",

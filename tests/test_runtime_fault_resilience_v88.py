@@ -90,3 +90,9 @@ def test_runtime_fault_rehearsal_passes_bounded_profile():
     assert result["atomic_failure"]["destination_preserved"] is True
     assert result["crash"]["returncode"] == 17
     assert result["crash"]["uncommitted_row_present"] is False
+
+    query_perf_source = (
+        Path(__file__).resolve().parents[1] / "scripts/query_performance_smoke.py"
+    ).read_text(encoding="utf-8")
+    assert "with closing(sqlite3.connect(db)) as conn:" in query_perf_source
+    assert "with sqlite3.connect(db) as conn:" not in query_perf_source
