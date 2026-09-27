@@ -269,6 +269,9 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "FAIL_UNDER = 75.0" in coverage_runner
     release_verifier = (ROOT / "scripts/verify_release.py").read_text(encoding="utf-8")
     release_bundle = (ROOT / "scripts/release_distribution_bundle.py").read_text(encoding="utf-8")
+    assert 'VerificationStep.create("public-manifest", [python, "scripts/verify_public_manifest.py"]' in release_verifier
+    assert ".github/workflows/full-release.yml" not in release_verifier
+    assert '"runtime-dependency-snapshot" in completed_steps' in release_verifier
     assert 'version != "72.0.54"' not in release_verifier
     assert "20260726" not in release_bundle
     assert 'kit_name = f"BBK_VULNFLOW_RELEASE_KIT_V{vtag}.zip"' in release_bundle
