@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from pathlib import Path
 
 from scripts.dependency_lock import consistency_issues
@@ -65,7 +66,17 @@ def test_public_ci_requires_clean_wheelhouse_reinstall():
     assert "dependency-wheelhouse" in workflow
     assert "scripts/dependency_wheelhouse_rehearsal.py" in workflow
     assert "--json-output reports/dependency_wheelhouse_rehearsal.json" in workflow
-    assert "actions/upload-artifact@v6" in workflow
+    pinned_actions = re.findall(
+        r"uses:\s+(actions/(?:checkout|setup-python|upload-artifact))@([0-9a-f]{40})\s+#\s+(v\d+)",
+        workflow,
+    )
+    assert len(pinned_actions) == 14
+    assert sum(name == "actions/checkout" for name, _, _ in pinned_actions) == 6
+    assert sum(name == "actions/setup-python" for name, _, _ in pinned_actions) == 6
+    assert sum(name == "actions/upload-artifact" for name, _, _ in pinned_actions) == 2
+    assert "actions/checkout@v" not in workflow
+    assert "actions/setup-python@v" not in workflow
+    assert "actions/upload-artifact@v" not in workflow
     assert "name: dependency-wheelhouse-report" in workflow
     assert "path: reports/dependency_wheelhouse_rehearsal.json" in workflow
     assert "--allow-index-unavailable" not in workflow
