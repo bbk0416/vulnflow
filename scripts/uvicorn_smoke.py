@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import os
 from pathlib import Path
@@ -30,11 +31,19 @@ def main() -> None:
     base = f"http://127.0.0.1:{port}"
     with tempfile.TemporaryDirectory(prefix="vulnflow_uvicorn_") as temp_dir:
         env = os.environ.copy()
+        data_dir = Path(temp_dir) / "data"
+        project_root = data_dir / "projects" / "default"
         env.update({
             "PYTHONDONTWRITEBYTECODE": "1",
-            "VULNFLOW_DB": str(Path(temp_dir) / "uvicorn.sqlite3"),
-            "VULNFLOW_EVIDENCE_DIR": str(Path(temp_dir) / "evidence"),
-            "VULNFLOW_RECOVERY_DIR": str(Path(temp_dir) / "recovery"),
+            "VULNFLOW_DATA_DIR": str(data_dir),
+            "VULNFLOW_DB": str(data_dir / "legacy.sqlite3"),
+            "VULNFLOW_CONTROL_DB": str(data_dir / "control.sqlite3"),
+            "VULNFLOW_PROJECTS_DIR": str(data_dir / "projects"),
+            "VULNFLOW_DEFAULT_PROJECT_ROOT": str(project_root),
+            "VULNFLOW_DEFAULT_PROJECT_DB": str(project_root / "vulnflow.sqlite3"),
+            "VULNFLOW_COORDINATION_DB": str(data_dir / "coordination.sqlite3"),
+            "VULNFLOW_EVIDENCE_DIR": str(project_root / "evidence"),
+            "VULNFLOW_RECOVERY_DIR": str(project_root / "recovery"),
             "VULNFLOW_BACKUP_SIGNING_KEY": "uvicorn-backup-signing-key",
             "VULNFLOW_BACKUP_REQUIRE_SIGNATURE": "1",
             "VULNFLOW_AUDIT_SIGNING_KEY": "uvicorn-audit-signing-key",
@@ -46,17 +55,21 @@ def main() -> None:
                 "admin-api": {"token": "uvicorn-admin-token-123456", "role": "admin", "projects": "*"},
             }),
         })
+        stdout_log_path = Path(temp_dir) / "uvicorn.stdout.log"
+        stderr_log_path = Path(temp_dir) / "uvicorn.stderr.log"
+        stdout_log = stdout_log_path.open("w+", encoding="utf-8")
+        stderr_log = stderr_log_path.open("w+", encoding="utf-8")
         process = subprocess.Popen(
             [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", str(port), "--log-level", "warning"],
             cwd=ROOT,
             env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stdout=stdout_log,
+            stderr=stderr_log,
             text=True,
         )
         results: list[str] = []
         try:
-            deadline = time.time() + 15
+            deadline = time.time() + 30
             while time.time() < deadline:
                 try:
                     response = requests.get(base + "/health/ready", timeout=1)
@@ -148,6 +161,31 @@ def main() -> None:
             results.append(f"api detail: {item.status_code}")
             if item.status_code != 200 or item.json().get("scanner_source") != "uvicorn-smoke":
                 raise SystemExit("uvicorn API detail failed")
+
+            load_targets = [
+                ("/health/live", None),
+                ("/health/ready", None),
+                ("/api/v1/summary", bearer("uvicorn-operator-token-12345")),
+                ("/api/v1/assets", bearer("uvicorn-operator-token-12345")),
+            ]
+
+            def load_request(index: int) -> tuple[int, str, int]:
+                path, headers = load_targets[index % len(load_targets)]
+                response = requests.get(base + path, headers=headers, timeout=5)
+                return index, path, response.status_code
+
+            load_started = time.perf_counter()
+            load_failures: list[tuple[int, str, int]] = []
+            with ThreadPoolExecutor(max_workers=16) as pool:
+                futures = [pool.submit(load_request, index) for index in range(320)]
+                for future in as_completed(futures):
+                    index, path, status = future.result()
+                    if status != 200:
+                        load_failures.append((index, path, status))
+            load_elapsed = time.perf_counter() - load_started
+            results.append(f"bounded http reads: {320 - len(load_failures)}/320 in {load_elapsed:.3f}s")
+            if load_failures:
+                raise SystemExit(f"bounded HTTP read load failed: {load_failures[:10]}")
             policy = yaml.safe_load((ROOT / "rules" / "prioritization_policy.yml").read_text(encoding="utf-8"))
             policy["version"] = "2.2.0-uvicorn"
             policy["name"] = "Uvicorn smoke candidate"
@@ -177,15 +215,31 @@ def main() -> None:
             if approved.status_code != 200:
                 raise SystemExit(f"policy approval failed: {approved.text}")
         finally:
-            process.terminate()
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=5)
-            stdout, stderr = process.communicate()
-            if process.returncode not in {0, -15}:
-                raise SystemExit(f"uvicorn exited unexpectedly: {process.returncode}\n{stdout}\n{stderr}")
+            had_exception = sys.exc_info()[0] is not None
+            pre_shutdown_returncode = process.poll()
+            if pre_shutdown_returncode is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
+            stdout_log.flush()
+            stderr_log.flush()
+            stdout_log.close()
+            stderr_log.close()
+            stdout = stdout_log_path.read_text(encoding="utf-8", errors="replace")
+            stderr = stderr_log_path.read_text(encoding="utf-8", errors="replace")
+            if had_exception:
+                if stdout.strip():
+                    print("uvicorn stdout:\n" + stdout[-12000:], file=sys.stderr)
+                if stderr.strip():
+                    print("uvicorn stderr:\n" + stderr[-12000:], file=sys.stderr)
+            elif pre_shutdown_returncode is not None:
+                raise SystemExit(
+                    f"uvicorn exited unexpectedly before smoke cleanup: "
+                    f"{pre_shutdown_returncode}\n{stdout}\n{stderr}"
+                )
 
         for line in results:
             print(line)

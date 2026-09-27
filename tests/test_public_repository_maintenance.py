@@ -258,6 +258,21 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "--writes-per-worker 8" in workflow
     assert "python scripts/runtime_stability_soak.py" in workflow
     assert "--iterations 12" in workflow
+    assert "python scripts/uvicorn_smoke.py" in workflow
+    assert "python scripts/uvicorn_smoke.py" in workflow
+    uvicorn_smoke = (ROOT / "scripts/uvicorn_smoke.py").read_text(encoding="utf-8")
+    assert '"VULNFLOW_CONTROL_DB": str(data_dir / "control.sqlite3")' in uvicorn_smoke
+    assert '"VULNFLOW_DEFAULT_PROJECT_DB": str(project_root / "vulnflow.sqlite3")' in uvicorn_smoke
+    assert '"VULNFLOW_COORDINATION_DB": str(data_dir / "coordination.sqlite3")' in uvicorn_smoke
+    assert "stdout=subprocess.PIPE" not in uvicorn_smoke
+    assert "stderr=subprocess.PIPE" not in uvicorn_smoke
+    assert 'stdout=stdout_log' in uvicorn_smoke
+    assert 'stderr=stderr_log' in uvicorn_smoke
+    assert "pre_shutdown_returncode = process.poll()" in uvicorn_smoke
+    assert "process.returncode not in {0, -15}" not in uvicorn_smoke
+    assert "ThreadPoolExecutor(max_workers=16)" in uvicorn_smoke
+    assert "for index in range(320)" in uvicorn_smoke
+    assert 'results.append(f"bounded http reads: {320 - len(load_failures)}/320' in uvicorn_smoke
     assert "python scripts/release_metadata.py --check --public" in workflow
     assert 'VULNFLOW_PUBLIC_TEST_GROUP_TIMEOUT_SECONDS: "360"' in workflow
     public_runner = (ROOT / "scripts/run_public_tests.py").read_text(encoding="utf-8")
