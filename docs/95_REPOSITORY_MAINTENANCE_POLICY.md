@@ -28,7 +28,9 @@ A repository maintenance change must pass:
 - public submission readiness;
 - Chromium workflow E2E through GitHub Actions;
 - application line coverage at or above 75% on Ubuntu/Python 3.13;
-- Ruff fatal checks, Bandit high/high and pip-audit.
+- Ruff fatal checks, Bandit high/high and pip-audit;
+- the bounded SQLite fault/recovery rehearsal on Windows/Python 3.13;
+- the 12-cycle runtime stability soak on Windows/Python 3.13.
 
 The exact reviewed pull-request HEAD is squash-merged only after all required checks pass. The protected `main` branch requires pull requests and the named public CI status checks; force-push and deletion are disabled.
 
