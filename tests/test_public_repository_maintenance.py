@@ -291,6 +291,11 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
     public_scope = (ROOT / "PUBLIC_SCOPE.md").read_text(encoding="utf-8")
     maintenance_policy = (ROOT / "docs/95_REPOSITORY_MAINTENANCE_POLICY.md").read_text(encoding="utf-8")
+    docker_runtime_doc = (ROOT / "docs/94_DOCKER_RUNTIME_VALIDATION.md").read_text(encoding="utf-8")
+    assert "Linux Docker host, rootless Docker, Kubernetes와 외부 reverse proxy 배포는 검증하지 않았습니다." not in docker_runtime_doc
+    assert "production-validation / Docker upgrade and production Compose" in docker_runtime_doc
+    assert "ubuntu-24.04 Linux runner" in docker_runtime_doc
+    assert "rootless Docker, Kubernetes" in docker_runtime_doc
     assert "외부 사용자·고객 파일럿은 수행 범위에 포함하지 않습니다." in readme
     assert "외부 사용자·고객 파일럿은 이 저장소의 acceptance 조건이나 향후 완료 과제로 두지 않습니다." in public_scope
     assert "External-user or customer pilot testing is intentionally out of scope" in maintenance_policy
