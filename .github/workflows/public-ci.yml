@@ -253,21 +253,11 @@ jobs:
       - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.13"
-      - name: Check whether this version is already published
+      - name: Resolve release publication state
         id: release
-        shell: bash
-        run: |
-          version="$(cat VERSION)"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          if git ls-remote --exit-code origin "refs/tags/v$version" >/dev/null 2>&1; then
-            echo "publish=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if git diff --quiet "${GITHUB_SHA}^" "${GITHUB_SHA}" -- VERSION; then
-            echo "::error::Unpublished version $version may only be published from the main commit that changes VERSION."
-            exit 1
-          fi
-          echo "publish=true" >> "$GITHUB_OUTPUT"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/release_publication_state.py --github-output "$GITHUB_OUTPUT"
       - name: Wait for required CodeQL analyses
         if: steps.release.outputs.publish == 'true'
         env:
@@ -316,7 +306,7 @@ jobs:
           python scripts/build_public_release_archive.py
           --json-output reports/release_candidate_archive.json
       - name: Create annotated release tag
-        if: steps.release.outputs.publish == 'true'
+        if: steps.release.outputs.publish == 'true' && steps.release.outputs.create_tag == 'true'
         env:
           VERSION: ${{ steps.release.outputs.version }}
         run: |
@@ -324,24 +314,32 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "v$VERSION" "${GITHUB_SHA}" -m "VulnFlow Free Public Beta $VERSION"
           git push origin "refs/tags/v$VERSION"
-      - name: Publish GitHub Release
+      - name: Publish or repair GitHub Release
         if: steps.release.outputs.publish == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_MODE: ${{ steps.release.outputs.release_mode }}
         run: |
           asset="dist/VulnFlow_Free_Public_Beta_Windows_Core_$VERSION.zip"
           notes="RELEASE_NOTES_$VERSION.md"
           test -f "$asset"
           test -f "$notes"
-          gh release create "v$VERSION" "$asset" --verify-tag \
-            --title "VulnFlow Free - Public Beta (Core $VERSION)" \
-            --notes-file "$notes"
+          if [ "$RELEASE_MODE" = "upload" ]; then
+            gh release upload "v$VERSION" "$asset"
+          elif [ "$RELEASE_MODE" = "create" ]; then
+            gh release create "v$VERSION" "$asset" --verify-tag \
+              --title "VulnFlow Free - Public Beta (Core $VERSION)" \
+              --notes-file "$notes"
+          else
+            echo "::error::Unsupported release mode: $RELEASE_MODE"
+            exit 1
+          fi
       - name: Verify published release
         if: steps.release.outputs.publish == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.release.outputs.version }}
         run: |
-          gh release view "v$VERSION" --json tagName,isDraft,isPrerelease,url
+          python scripts/release_publication_state.py --require-complete
           sha256sum "dist/VulnFlow_Free_Public_Beta_Windows_Core_$VERSION.zip"
