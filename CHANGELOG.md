@@ -1,4 +1,4 @@
-> Historical per-iteration release notes through 72.0.102 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.103.md`.
+> Historical per-iteration release notes through 72.0.103 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.104.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -10,6 +10,13 @@
 
 
 
+
+## 72.0.104 — 2026-09-28
+
+- Harden project-scope 403 and restore/write-barrier 503 responses so internal exception detail is not reflected to clients while preserving status semantics and authorization/write-barrier behavior.
+- Keep the build backend on setuptools 83.0.0, the patched baseline for GHSA-h35f-9h28-mq5c; runtime dependency pins and SQLite schema 46 remain unchanged.
+- Publish the 731-test public regression contract together with the required Windows runtime-resilience path: bounded SQLite fault/recovery, 12-cycle soak, real Uvicorn smoke, and 16-worker/320-request bounded HTTP reads.
+- Build the Windows source bundle from exact Git HEAD blobs covered by SHA256SUMS.txt and verify the archive before publication.
 
 ## 72.0.103 — 2026-09-27
 
