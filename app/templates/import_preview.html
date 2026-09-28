@@ -82,7 +82,7 @@
   </section>
 
   <section class="panel import-result-panel">
-    <div class="page-heading"><div><h2>반영 예정 항목</h2><p>최대 10건만 미리 표시합니다. 실제 반영 건수는 {{ valid_count }}건입니다.</p></div><span class="step-badge success">{{ valid_count }}건</span></div>
+    <div class="page-heading"><div><h2>반영 예정 항목</h2><p>최대 10건만 미리 표시합니다. 실제 반영 건수는 {{ valid_count }}건입니다.</p><p class="meta">우선순위는 CVSS 등급만으로 정하지 않습니다. 입력된 KEV·EPSS·인터넷 노출·자산 중요도 등의 맥락을 함께 반영하므로, 관련 정보가 없으면 높은 CVSS 항목도 낮은 우선순위로 표시될 수 있습니다.</p></div><span class="step-badge success">{{ valid_count }}건</span></div>
     {% if preview_rows %}
     <div class="table-wrap"><table class="import-preview-table"><thead><tr><th>제품·취약점</th><th>CVE</th><th>자산</th><th>CVSS</th><th>우선순위</th></tr></thead><tbody>
       {% for row in preview_rows %}<tr><td>{{ row.product }}</td><td><code>{{ row.cve_id }}</code></td><td>{{ row.asset_name or '-' }}</td><td>{{ row.cvss }}</td><td>{{ row.decision }}</td></tr>{% endfor %}

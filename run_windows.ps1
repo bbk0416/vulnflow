@@ -133,7 +133,7 @@ if ($env:VULNFLOW_DEMO_MODE -ne "1") {
     $activeUsers = & $venvPython -c "from app.core.database_schema import init_db; from app.services.accounts import count_active_users; from pathlib import Path; p=Path(r'$env:VULNFLOW_CONTROL_DB'); init_db(p); print(count_active_users(p))"
     if ([int]$activeUsers -eq 0 -and -not $env:VULNFLOW_API_TOKENS_JSON) {
         Write-Host ""
-        Write-Host (Get-VulnFlowUiText "최초 관리자 계정을 만듭니다." "Creating the first administrator account.") -ForegroundColor Cyan
+        Write-Host (Get-VulnFlowUiText "최초 관리자 계정(admin)을 만듭니다." "Creating the first administrator account (username: admin).") -ForegroundColor Cyan
         & $venvPython -m scripts.manage_users --db "$env:VULNFLOW_CONTROL_DB" create --username admin --role admin
         if ($LASTEXITCODE -ne 0) { throw (Get-VulnFlowUiText "관리자 계정을 만들지 못했습니다." "Failed to create the administrator account.") }
     }

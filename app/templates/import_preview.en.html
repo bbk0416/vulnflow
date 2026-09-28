@@ -82,7 +82,7 @@
   </section>
 
   <section class="panel import-result-panel">
-    <div class="page-heading"><div><h2>Findings to import</h2><p>Up to 10 findings are shown here. {{ valid_count }} findings will actually be imported.</p></div><span class="step-badge success">{{ valid_count|ui_items }}</span></div>
+    <div class="page-heading"><div><h2>Findings to import</h2><p>Up to 10 findings are shown here. {{ valid_count }} findings will actually be imported.</p><p class="meta">Priority is not based on CVSS alone. VulnFlow also uses available KEV, EPSS, internet exposure, and asset criticality context, so a high-CVSS item can appear at a lower priority when that context is absent.</p></div><span class="step-badge success">{{ valid_count|ui_items }}</span></div>
     {% if preview_rows %}
     <div class="table-wrap"><table class="import-preview-table"><thead><tr><th>Product / vulnerability</th><th>CVE</th><th>Assets</th><th>CVSS</th><th>Priority</th></tr></thead><tbody>
       {% for row in preview_rows %}<tr><td>{{ row.product }}</td><td><code>{{ row.cve_id }}</code></td><td>{{ row.asset_name or '-' }}</td><td>{{ row.cvss }}</td><td>{{ row.decision }}</td></tr>{% endfor %}

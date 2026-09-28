@@ -90,7 +90,7 @@ fi
 if [ "$VULNFLOW_DEMO_MODE" != "1" ] && [ -z "${VULNFLOW_API_TOKENS_JSON:-}" ]; then
   active_users="$("$VENV_PYTHON" -c 'from app.core.database_schema import init_db; from app.services.accounts import count_active_users; from pathlib import Path; import os; p=Path(os.environ["VULNFLOW_CONTROL_DB"]); init_db(p); print(count_active_users(p))')"
   if [ "$active_users" -eq 0 ]; then
-    printf '\n%s\n' "$(vulnflow_ui_text '최초 관리자 계정을 만듭니다.' 'Creating the first administrator account.')"
+    printf '\n%s\n' "$(vulnflow_ui_text '최초 관리자 계정(admin)을 만듭니다.' 'Creating the first administrator account (username: admin).')"
     "$VENV_PYTHON" -m scripts.manage_users --db "$VULNFLOW_CONTROL_DB" create --username admin --role admin
   fi
 fi

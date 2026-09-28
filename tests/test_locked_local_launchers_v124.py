@@ -41,6 +41,8 @@ def test_powershell_launcher_installs_the_exact_runtime_lock_with_venv_python() 
     assert "pip install --upgrade" not in launcher.lower()
     assert "Activate.ps1" not in launcher
     assert "& $venvPython -m uvicorn" in launcher
+    assert "최초 관리자 계정(admin)을 만듭니다." in launcher
+    assert "username: admin" in launcher
 
 
 def test_linux_launcher_installs_the_exact_runtime_lock_with_venv_python() -> None:
@@ -61,6 +63,8 @@ def test_linux_launcher_installs_the_exact_runtime_lock_with_venv_python() -> No
     assert 'LOCKED_RUNTIME_INSTALLATION=PASS' in launcher
     assert 'enforce_runtime_dependencies(policy="enforce")' in launcher
     assert 'exec "$VENV_PYTHON" -m uvicorn' in launcher
+    assert "최초 관리자 계정(admin)을 만듭니다." in launcher
+    assert "username: admin" in launcher
 
 
 def test_dependency_lock_static_contract_covers_local_launchers(tmp_path: Path) -> None:

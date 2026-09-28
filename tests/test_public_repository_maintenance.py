@@ -152,6 +152,11 @@ def test_dashboard_uses_simple_primary_navigation_with_advanced_menu(client) -> 
     assert upload_html.index("파일 분석하고 미리보기") < upload_html.index("가져오기 문제 신고용 익명화 도구")
     assert "파일럿 호환성 수집" not in upload_html
 
+    preview_template = (ROOT / "app/templates/import_preview.html").read_text(encoding="utf-8")
+    preview_template_en = (ROOT / "app/templates/import_preview.en.html").read_text(encoding="utf-8")
+    assert "우선순위는 CVSS 등급만으로 정하지 않습니다." in preview_template
+    assert "Priority is not based on CVSS alone." in preview_template_en
+
 
 def test_dashboard_prioritizes_four_step_workflow_and_progressive_filters(client) -> None:
     response = client.get("/")
