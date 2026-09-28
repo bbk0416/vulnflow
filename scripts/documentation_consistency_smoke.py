@@ -105,10 +105,26 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
     maintenance_policy = root / "docs/95_REPOSITORY_MAINTENANCE_POLICY.md"
     problem_scope = root / "docs/01_PROBLEM_AND_SCOPE.md"
 
+    release_candidate = (
+        _contains(verification, "Release candidate boundary:")
+        and _contains(
+            verification,
+            f"annotated tag `v{version}` must be created only from the exact squash-merged release commit",
+        )
+        and _contains(readme, "Latest immutable release:")
+        and _contains(readme, "`main` is the post-release Public Beta development line")
+    )
+
     checks = [
         ("readme_version", _contains(readme, f"Core {version}")),
-        ("readme_release_identity_version", _contains(readme, f"Latest immutable release: [`v{version}`](")),
-        ("readme_release_identity_asset_version", _contains(readme, f"not included in the `v{version}` release asset")),
+        (
+            "readme_release_identity_version",
+            _contains(readme, f"Latest immutable release: [`v{version}`](") or release_candidate,
+        ),
+        (
+            "readme_release_identity_asset_version",
+            _contains(readme, f"not included in the `v{version}` release asset") or release_candidate,
+        ),
         ("readme_public_test_count", _contains(readme, f"**{public_total}개**")),
         ("readme_browser_e2e_count", _contains(readme, f"Chromium 브라우저 E2E {browser_e2e_count}개")),
         ("public_scope_test_count", _contains(scope, f"{public_total}개 수집형 핵심 회귀시험")),
