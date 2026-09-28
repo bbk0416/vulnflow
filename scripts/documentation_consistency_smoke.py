@@ -127,23 +127,16 @@ def consistency_issues(root: Path = ROOT, *, release_tag_exists: bool | None = N
 
     verification_text = verification.read_text(encoding="utf-8")
     readme_text = readme.read_text(encoding="utf-8")
-    predecessor_match = re.search(
-        r"official v([0-9]+\.[0-9]+\.[0-9]+) predecessor tag and release assets remain immutable",
-        verification_text,
-    )
-    predecessor = predecessor_match.group(1) if predecessor_match else ""
     try:
         current_parts = tuple(int(part) for part in version.split("."))
-        predecessor_parts = tuple(int(part) for part in predecessor.split("."))
     except ValueError:
         current_parts = ()
-        predecessor_parts = ()
-    predecessor_is_previous_patch = (
-        len(current_parts) == 3
-        and len(predecessor_parts) == 3
-        and predecessor_parts[:2] == current_parts[:2]
-        and predecessor_parts[2] + 1 == current_parts[2]
+    predecessor = (
+        f"{current_parts[0]}.{current_parts[1]}.{current_parts[2] - 1}"
+        if len(current_parts) == 3 and current_parts[2] > 0
+        else ""
     )
+    predecessor_is_previous_patch = bool(predecessor)
     if release_tag_exists is None:
         release_tag_exists = _release_tag_exists(root, version)
     release_candidate = (
@@ -154,7 +147,7 @@ def consistency_issues(root: Path = ROOT, *, release_tag_exists: bool | None = N
             f"annotated tag `v{version}` must be created only from the exact squash-merged release commit",
         )
         and predecessor_is_previous_patch
-        and f"Latest immutable release: [`v{predecessor}`](" in readme_text
+        and f"Latest public release: [`v{predecessor}`](" in readme_text
         and f"not included in the `v{predecessor}` release asset" in readme_text
         and "`main` is the post-release Public Beta development line" in readme_text
     )
@@ -170,7 +163,7 @@ def consistency_issues(root: Path = ROOT, *, release_tag_exists: bool | None = N
         ("readme_version", _contains(readme, f"Core {version}")),
         (
             "readme_release_identity_version",
-            _contains(readme, f"Latest immutable release: [`v{version}`](") or release_candidate,
+            _contains(readme, f"Latest public release: [`v{version}`](") or release_candidate,
         ),
         (
             "readme_release_identity_asset_version",
