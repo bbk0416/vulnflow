@@ -28,6 +28,9 @@ Published release evidence:
 - exact-tree release builder verification: 721 manifest entries, 722 ZIP files, 3,116,084 bytes, PASS
 - release published 2026-09-28T07:45:39Z; draft=false and prerelease=false
 - the official v72.0.103 predecessor tag and release assets remain immutable
+- GitHub repository Immutable Releases setting was enabled on 2026-09-28 for future releases
+- v72.0.104 predates that setting and remains GitHub API `immutable=false`; its tag is still protected by the active `refs/tags/v*` update/deletion ruleset and the Windows asset digest above remains the recorded release evidence
+- release publication state requires GitHub API `immutable=true` starting with version 72.0.105
 
 Release boundary:
 - previously released tags and release assets must not be modified or retargeted

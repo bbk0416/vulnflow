@@ -290,7 +290,21 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "GitHub Release exists without the immutable version tag" in release_state
     assert "unpublished version may only be published from the main commit that changes VERSION" in release_state
 
-    from scripts.release_publication_state import ReleaseStateError, decide_publication
+    from scripts.release_publication_state import (
+        ReleaseStateError,
+        decide_publication,
+        requires_native_immutability,
+    )
+
+    assert requires_native_immutability("72.0.104") is False
+    assert requires_native_immutability("72.0.105") is True
+    assert requires_native_immutability("73.0.0") is True
+
+    release_state = (ROOT / "scripts/release_publication_state.py").read_text(encoding="utf-8")
+    assert '"X-GitHub-Api-Version": "2026-03-10"' in release_state
+    assert 'release.get("immutable") is True' in release_state
+    assert '"immutable_required": immutable_required' in release_state
+    assert '"release_immutable": release_immutable' in release_state
 
     fresh = decide_publication(
         tag_exists=False,
