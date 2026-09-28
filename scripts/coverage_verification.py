@@ -18,6 +18,7 @@ FAIL_UNDER = 75.0
 GROUP_COUNT = 6
 GROUP_TIMEOUT_SECONDS = 900
 SMOKE_TIMEOUT_SECONDS = 180
+PROCESS_EXIT_GRACE_SECONDS = 10
 COVERAGE_SMOKE_SCRIPTS = (
     "scripts/checkpoint_witness_smoke.py",
     "scripts/integrity_proof_smoke.py",
@@ -74,6 +75,50 @@ def _archive_group_output(index: int, captured: str) -> None:
     (REPORTS / f"coverage_pytest_group_{index}.txt").write_text(captured, encoding="utf-8")
 
 
+def _parallel_coverage_files() -> dict[Path, int]:
+    files: dict[Path, int] = {}
+    for path in ROOT.glob(".coverage.*"):
+        if not path.is_file():
+            continue
+        try:
+            files[path] = path.stat().st_size
+        except OSError:
+            continue
+    return files
+
+
+def _wait_for_parallel_coverage_flush(
+    before: dict[Path, int],
+    *,
+    timeout_seconds: float = 15.0,
+    stable_checks: int = 3,
+    interval_seconds: float = 0.25,
+) -> dict[Path, int]:
+    deadline = time.monotonic() + timeout_seconds
+    previous: dict[Path, int] = {}
+    stable = 0
+    while time.monotonic() < deadline:
+        current = _parallel_coverage_files()
+        changed = {
+            path: size
+            for path, size in current.items()
+            if path not in before or before[path] != size
+        }
+        if changed and all(size > 0 for size in changed.values()):
+            if changed == previous:
+                stable += 1
+                if stable >= stable_checks:
+                    return changed
+            else:
+                previous = changed
+                stable = 1
+        else:
+            previous = {}
+            stable = 0
+        time.sleep(interval_seconds)
+    raise RuntimeError("coverage data flush not confirmed after save signal")
+
+
 def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, object]:
     # Keep the live capture outside reports/: repository tests are allowed to
     # recreate that directory while this outer coverage harness is running.
@@ -83,6 +128,7 @@ def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, ob
         "--save-signal=USR1", "--source=app", "-m", "pytest", "-q",
         "-p", "no:cacheprovider", *files,
     ]
+    coverage_before = _parallel_coverage_files()
     with output.open("w", encoding="utf-8") as handle:
         process = subprocess.Popen(
             command, cwd=ROOT, env=_env(runtime_root), text=True,
@@ -96,15 +142,29 @@ def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, ob
         time.sleep(1.0)
         captured = output.read_text(encoding="utf-8")
         if _completed(captured):
-            if process.poll() is None:
-                if os.name == "nt":
+            code = process.poll()
+            if code is None:
+                try:
+                    code = process.wait(timeout=PROCESS_EXIT_GRACE_SECONDS)
+                except subprocess.TimeoutExpired:
+                    if os.name == "nt":
+                        _stop_group(process)
+                        _archive_group_output(index, captured)
+                        raise RuntimeError(
+                            "pytest completed but coverage process did not exit on Windows"
+                        )
+                    os.kill(process.pid, signal.SIGUSR1)
+                    _wait_for_parallel_coverage_flush(coverage_before)
                     _stop_group(process)
-                    _archive_group_output(index, captured)
-                    raise RuntimeError("pytest completed but coverage process did not exit on Windows")
-                os.kill(process.pid, signal.SIGUSR1)
-                time.sleep(1.0)
-                _stop_group(process)
-                forced = True
+                    forced = True
+                    code = process.returncode
+            if code not in (0, -signal.SIGTERM):
+                _archive_group_output(index, captured)
+                raise RuntimeError(
+                    f"coverage group {index} exited unexpectedly after pytest completion ({code})"
+                )
+            if not forced:
+                _wait_for_parallel_coverage_flush(coverage_before)
             break
         code = process.poll()
         if code is not None:

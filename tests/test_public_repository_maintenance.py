@@ -226,7 +226,9 @@ def test_readme_presents_four_step_flow_with_five_screenshots() -> None:
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.96.md").is_file()
 
 
-def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
+def test_public_ci_runs_static_quality_and_dependency_gate(
+    tmp_path: Path, monkeypatch
+) -> None:
     # local launchers must provide the global coordination DB default
     repo_root = __import__("pathlib").Path(__file__).resolve().parents[1]
     windows_launcher = (repo_root / "run_windows.ps1").read_text(encoding="utf-8")
@@ -251,6 +253,34 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "coverage-gate:" in workflow
     assert "name: coverage / Python 3.13" in workflow
     assert "python scripts/coverage_verification.py" in workflow
+    assert "PROCESS_EXIT_GRACE_SECONDS = 10" in coverage_runner
+    assert "process.wait(timeout=PROCESS_EXIT_GRACE_SECONDS)" in coverage_runner
+    assert "_wait_for_parallel_coverage_flush(coverage_before)" in coverage_runner
+    assert "coverage data flush not confirmed after save signal" in coverage_runner
+
+    from scripts import coverage_verification
+
+    coverage_root = tmp_path / "coverage-flush"
+    coverage_root.mkdir()
+    monkeypatch.setattr(coverage_verification, "ROOT", coverage_root)
+    data_file = coverage_root / ".coverage.synthetic"
+    data_file.write_bytes(b"coverage-data")
+    flushed = coverage_verification._wait_for_parallel_coverage_flush(
+        {},
+        timeout_seconds=0.2,
+        stable_checks=1,
+        interval_seconds=0.01,
+    )
+    assert flushed == {data_file: len(b"coverage-data")}
+    data_file.unlink()
+    with pytest.raises(RuntimeError, match="coverage data flush not confirmed"):
+        coverage_verification._wait_for_parallel_coverage_flush(
+            {},
+            timeout_seconds=0.03,
+            stable_checks=1,
+            interval_seconds=0.01,
+        )
+
     assert "runtime-resilience:" in workflow
     assert "name: runtime-resilience / Windows Python 3.13" in workflow
     assert "python scripts/runtime_fault_rehearsal.py" in workflow
