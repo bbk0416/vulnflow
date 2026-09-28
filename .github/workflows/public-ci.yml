@@ -62,6 +62,20 @@ jobs:
         env:
           VULNFLOW_PUBLIC_TEST_GROUP_TIMEOUT_SECONDS: "360"
         run: python scripts/run_public_tests.py
+      - name: Build exact-tree Windows release candidate
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.13'
+        run: >-
+          python scripts/build_public_release_archive.py
+          --json-output reports/release_candidate_archive.json
+      - name: Retain exact-tree Windows release candidate
+        if: matrix.os == 'windows-latest' && matrix.python-version == '3.13'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: release-candidate-windows-${{ github.sha }}
+          path: |
+            dist/VulnFlow_Free_Public_Beta_Windows_Core_*.zip
+            reports/release_candidate_archive.json
+          if-no-files-found: error
 
 
   coverage-gate:
@@ -211,3 +225,116 @@ jobs:
         run: python -m playwright install --with-deps chromium
       - name: Run browser workflow E2E
         run: python scripts/run_browser_e2e.py
+
+
+  publish-release:
+    name: publish-release / exact main candidate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs:
+      - core-tests
+      - coverage-gate
+      - dependency-wheelhouse
+      - production-validation
+      - runtime-resilience
+      - quality-gates
+      - browser-e2e
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      checks: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13"
+      - name: Check whether this version is already published
+        id: release
+        shell: bash
+        run: |
+          version="$(cat VERSION)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git ls-remote --exit-code origin "refs/tags/v$version" >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Wait for required CodeQL analyses
+        if: steps.release.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          import time
+
+          wanted = {"Analyze (actions)", "Analyze (python)"}
+          repo = os.environ["GH_REPO"]
+          sha = os.environ["TARGET_SHA"]
+          deadline = time.time() + 600
+          while time.time() < deadline:
+              raw = subprocess.check_output(
+                  ["gh", "api", f"repos/{repo}/commits/{sha}/check-runs?per_page=100"],
+                  text=True,
+              )
+              payload = json.loads(raw)
+              checks = {
+                  item.get("name"): (item.get("status"), item.get("conclusion"))
+                  for item in payload.get("check_runs", [])
+                  if item.get("name") in wanted
+              }
+              failed = {
+                  name: state
+                  for name, state in checks.items()
+                  if state[0] == "completed" and state[1] != "success"
+              }
+              if failed:
+                  raise SystemExit(f"CodeQL required check failed: {failed}")
+              if all(checks.get(name) == ("completed", "success") for name in wanted):
+                  print("required CodeQL analyses: PASS")
+                  break
+              time.sleep(15)
+          else:
+              raise SystemExit(f"timed out waiting for CodeQL: {checks}")
+          PY
+      - name: Build and verify release asset
+        if: steps.release.outputs.publish == 'true'
+        run: >-
+          python scripts/build_public_release_archive.py
+          --json-output reports/release_candidate_archive.json
+      - name: Create annotated release tag
+        if: steps.release.outputs.publish == 'true'
+        env:
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$VERSION" "${GITHUB_SHA}" -m "VulnFlow Free Public Beta $VERSION"
+          git push origin "refs/tags/v$VERSION"
+      - name: Publish GitHub Release
+        if: steps.release.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          asset="dist/VulnFlow_Free_Public_Beta_Windows_Core_$VERSION.zip"
+          notes="RELEASE_NOTES_$VERSION.md"
+          test -f "$asset"
+          test -f "$notes"
+          gh release create "v$VERSION" "$asset" --verify-tag \
+            --title "VulnFlow Free - Public Beta (Core $VERSION)" \
+            --notes-file "$notes"
+      - name: Verify published release
+        if: steps.release.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          gh release view "v$VERSION" --json tagName,isDraft,isPrerelease,url
+          sha256sum "dist/VulnFlow_Free_Public_Beta_Windows_Core_$VERSION.zip"
