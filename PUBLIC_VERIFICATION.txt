@@ -29,7 +29,8 @@ Published release evidence:
 - release published 2026-09-28T07:45:39Z; draft=false and prerelease=false
 - v72.0.103 also predates repository native Immutable Releases; its `v*` tag remains protected against update/deletion, while its GitHub Release API reports `immutable=false`
 - GitHub repository Immutable Releases setting was enabled on 2026-09-28 for future releases
-- v72.0.104 predates that setting and remains GitHub API `immutable=false`; its tag is still protected by the active `refs/tags/v*` update/deletion ruleset, and release-state pins the Windows asset API digest to the recorded SHA-256 above
+- all 36 releases that existed at the 2026-09-28 capture, including v72.0.104, predate native release immutability and report `immutable=false`; their `v*` tags remain protected by the active update/deletion ruleset
+- release-state snapshots 36 legacy releases / 40 assets by asset name, size, and GitHub API SHA-256 digest and fails closed on later drift; this is forward change detection from the capture point, not proof of pre-capture history
 - release publication state requires GitHub API `immutable=true` starting with version 72.0.105
 
 Release boundary:

@@ -321,23 +321,68 @@ def test_public_ci_runs_static_quality_and_dependency_gate(
     assert "unpublished version may only be published from the main commit that changes VERSION" in release_state
 
     from scripts.release_publication_state import (
-        LEGACY_MUTABLE_RELEASE_ASSET_DIGESTS,
+        LEGACY_RELEASE_ASSET_EVIDENCE,
         ReleaseStateError,
         decide_publication,
         legacy_asset_digest_valid,
         requires_native_immutability,
+        validate_legacy_release_asset_evidence,
     )
 
     assert requires_native_immutability("72.0.104") is False
     assert requires_native_immutability("72.0.105") is True
     assert requires_native_immutability("73.0.0") is True
     legacy_digest = "sha256:7c06253a2fec0e808482af317638c26e324be90eda0f4ff8b65404018b11bd4e"
-    assert LEGACY_MUTABLE_RELEASE_ASSET_DIGESTS["72.0.104"] == legacy_digest
+    assert len(LEGACY_RELEASE_ASSET_EVIDENCE) == 36
+    assert sum(len(assets) for assets in LEGACY_RELEASE_ASSET_EVIDENCE.values()) == 40
+    assert (
+        "VulnFlow_Free_Public_Beta_Windows_Core_72.0.104.zip",
+        legacy_digest,
+        3116084,
+    ) in LEGACY_RELEASE_ASSET_EVIDENCE["v72.0.104"]
     assert legacy_asset_digest_valid("72.0.104", legacy_digest) is True
     assert legacy_asset_digest_valid("72.0.104", "sha256:" + "0" * 64) is False
     assert legacy_asset_digest_valid("72.0.105", None) is True
     assert "release_asset_digest" in release_state
     assert "published release asset digest mismatch" in release_state
+    assert "legacy_release_evidence_valid" in release_state
+
+    synthetic_expected = {
+        "v1.0.0": (("artifact.zip", "sha256:" + "a" * 64, 123),),
+    }
+    validate_legacy_release_asset_evidence(
+        [
+            {
+                "tag_name": "v1.0.0",
+                "assets": [
+                    {
+                        "name": "artifact.zip",
+                        "digest": "sha256:" + "a" * 64,
+                        "size": 123,
+                    }
+                ],
+            }
+        ],
+        expected=synthetic_expected,
+    )
+    with pytest.raises(ReleaseStateError, match="evidence drift"):
+        validate_legacy_release_asset_evidence(
+            [
+                {
+                    "tag_name": "v1.0.0",
+                    "assets": [
+                        {
+                            "name": "artifact.zip",
+                            "digest": "sha256:" + "b" * 64,
+                            "size": 123,
+                        }
+                    ],
+                }
+            ],
+            expected=synthetic_expected,
+        )
+    with pytest.raises(ReleaseStateError, match="Release missing"):
+        validate_legacy_release_asset_evidence([], expected=synthetic_expected)
 
     release_state = (ROOT / "scripts/release_publication_state.py").read_text(encoding="utf-8")
     assert '"X-GitHub-Api-Version": "2026-03-10"' in release_state
