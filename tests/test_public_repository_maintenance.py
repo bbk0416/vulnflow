@@ -253,7 +253,9 @@ def test_public_ci_runs_static_quality_and_dependency_gate(
     assert "coverage-gate:" in workflow
     assert "name: coverage / Python 3.13" in workflow
     assert "python scripts/coverage_verification.py" in workflow
-    assert "_wait_for_parallel_coverage_flush(before)" in coverage_runner
+    assert "PROCESS_EXIT_GRACE_SECONDS = 10" in coverage_runner
+    assert "process.wait(timeout=PROCESS_EXIT_GRACE_SECONDS)" in coverage_runner
+    assert "_wait_for_parallel_coverage_flush(coverage_before)" in coverage_runner
     assert "coverage data flush not confirmed after save signal" in coverage_runner
 
     from scripts import coverage_verification
