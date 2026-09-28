@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.103 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.104 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -211,3 +211,7 @@
 ## 72.0.103 Starlette dependency maintenance
 
 72.0.103은 기능 동결 정책을 유지하면서 Starlette runtime pin을 1.6.0에서 1.7.0으로 갱신합니다. AnyIO 4.15에서 deprecated된 anyio.abc.BlockingPortal alias를 Starlette TestClient가 사용하던 upstream 경고를 제거하기 위한 유지보수 변경이며, FastAPI 0.141.1, SQLite schema 46, scanner normalization, remediation 상태 모델과 제품 기능 범위는 유지됩니다. 기존 v72.0.102 tag와 release asset은 수정하지 않습니다.
+
+## 72.0.104 security maintenance
+
+72.0.104는 기능 동결 정책을 유지하면서 72.0.103 이후 `main`에서 완료된 보안 유지보수를 공개 릴리스에 반영합니다. 프로젝트 범위 권한 거부의 403 응답과 restore/write-barrier의 503 응답은 내부 예외 문자열을 반사하지 않고 일반화된 오류문구를 반환합니다. HTTP status semantics, 권한 판정, write-barrier 동작과 SQLite schema 46은 변경하지 않습니다. build backend는 setuptools 83.0.0을 사용해 GHSA-h35f-9h28-mq5c의 수정 기준을 반영하며 이는 runtime dependency 변경이 아닙니다. 기존 v72.0.103 tag와 release asset은 수정하지 않습니다.

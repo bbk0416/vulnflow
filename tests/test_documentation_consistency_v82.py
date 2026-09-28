@@ -83,7 +83,7 @@ def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
     verification = release_root / "PUBLIC_VERIFICATION.txt"
     verification.write_text(
         verification.read_text(encoding="utf-8").replace(
-            "release notes: RELEASE_NOTES_72.0.103.md",
+            "release notes: RELEASE_NOTES_72.0.104.md",
             "release notes: RELEASE_NOTES_72.0.86.md",
         ),
         encoding="utf-8",
@@ -95,27 +95,40 @@ def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
 def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 
-    readme_root = _copy_contract_tree(tmp_path / "readme")
-    readme = readme_root / "README.md"
-    readme.write_text(
-        readme.read_text(encoding="utf-8").replace(
-            f"Latest immutable release: [`v{version}`](",
-            "Latest immutable release: [`v0.0.0`](",
-        ),
-        encoding="utf-8",
+    candidate_root = _copy_contract_tree(tmp_path / "candidate-stale-readme")
+    candidate_readme = candidate_root / "README.md"
+    candidate_text = candidate_readme.read_text(encoding="utf-8")
+    candidate_text = re.sub(
+        r"Latest immutable release: \[`v[0-9]+\.[0-9]+\.[0-9]+`\]\(",
+        "Latest immutable release: [`v0.0.0`](",
+        candidate_text,
+        count=1,
     )
-    assert "readme_release_identity_version" in consistency_issues(readme_root)
+    candidate_readme.write_text(candidate_text, encoding="utf-8")
+    assert "readme_release_identity_version" in consistency_issues(candidate_root)
 
-    asset_root = _copy_contract_tree(tmp_path / "asset")
-    asset_readme = asset_root / "README.md"
-    asset_readme.write_text(
-        asset_readme.read_text(encoding="utf-8").replace(
-            f"not included in the `v{version}` release asset",
-            "not included in the `v0.0.0` release asset",
-        ),
-        encoding="utf-8",
-    )
-    assert "readme_release_identity_asset_version" in consistency_issues(asset_root)
+    identity_root = _copy_contract_tree(tmp_path / "identity")
+    identity_readme = identity_root / "README.md"
+    identity_verification = identity_root / "PUBLIC_VERIFICATION.txt"
+    if "Release candidate boundary:" in identity_verification.read_text(encoding="utf-8"):
+        identity_verification.write_text(
+            identity_verification.read_text(encoding="utf-8").replace(
+                "Release candidate boundary:",
+                "Unrecognized candidate boundary:",
+            ),
+            encoding="utf-8",
+        )
+    else:
+        identity_readme.write_text(
+            identity_readme.read_text(encoding="utf-8").replace(
+                f"Latest immutable release: [`v{version}`](",
+                "Latest immutable release: [`v0.0.0`](",
+            ),
+            encoding="utf-8",
+        )
+    identity_issues = consistency_issues(identity_root)
+    assert "readme_release_identity_version" in identity_issues
+    assert "readme_release_identity_asset_version" in identity_issues
 
     verification_root = _copy_contract_tree(tmp_path / "verification-release")
     verification = verification_root / "PUBLIC_VERIFICATION.txt"
@@ -138,7 +151,6 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     assert "public_verification_windows_asset" in consistency_issues(windows_asset_root)
-
 
 def test_stale_browser_e2e_count_fails_closed(tmp_path: Path) -> None:
     root = _copy_contract_tree(tmp_path)

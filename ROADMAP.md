@@ -1,6 +1,6 @@
 # VulnFlow productization roadmap
 
-Core 72.0.103 is the current Starlette dependency-maintenance patch on the 72.0.72 feature-frozen line; it retains the 72.0.102 Nessus single-label host-fqdn correctness fix. The project is **not abandoned**: development has moved from feature-building to free-product validation and, later, evidence-driven commercialization.
+Core 72.0.104 is the current security-maintenance patch on the 72.0.72 feature-frozen line; it publishes the post-72.0.103 response-hardening and build-backend security baseline while retaining the earlier scanner and dependency fixes. The project is **not abandoned**: development has moved from feature-building to free-product validation and, later, evidence-driven commercialization.
 
 ## Phase 1 — Free Public Beta (current)
 
@@ -75,7 +75,7 @@ Do not add product analytics or hidden telemetry merely to run this roadmap. Pre
 ## Current product state
 
 ```text
-CORE_VERSION=72.0.103
+CORE_VERSION=72.0.104
 CURRENT_EDITION=VulnFlow Free — Public Beta
 CURRENT_PRICE=FREE
 PAID_SUBSCRIPTION=NOT_OFFERED

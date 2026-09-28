@@ -70,10 +70,10 @@ def test_public_ci_requires_clean_wheelhouse_reinstall():
         r"uses:\s+(actions/(?:checkout|setup-python|upload-artifact))@([0-9a-f]{40})\s+#\s+(v\d+)",
         workflow,
     )
-    assert len(pinned_actions) == 17
-    assert sum(name == "actions/checkout" for name, _, _ in pinned_actions) == 7
-    assert sum(name == "actions/setup-python" for name, _, _ in pinned_actions) == 7
-    assert sum(name == "actions/upload-artifact" for name, _, _ in pinned_actions) == 3
+    assert len(pinned_actions) == 20
+    assert sum(name == "actions/checkout" for name, _, _ in pinned_actions) == 8
+    assert sum(name == "actions/setup-python" for name, _, _ in pinned_actions) == 8
+    assert sum(name == "actions/upload-artifact" for name, _, _ in pinned_actions) == 4
     assert "actions/checkout@v" not in workflow
     assert "actions/setup-python@v" not in workflow
     assert "actions/upload-artifact@v" not in workflow

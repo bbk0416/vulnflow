@@ -59,8 +59,8 @@ def main() -> None:
 
     passed = sum(ok for _, ok in checks)
     payload = {
-        "title": "VulnFlow 72.0.103 durable retry policy verification",
-        "version": "72.0.103",
+        "title": "VulnFlow 72.0.104 durable retry policy verification",
+        "version": "72.0.104",
         "checks": [{"name": name, "passed": ok} for name, ok in checks],
         "passed": passed,
         "total": len(checks),
