@@ -74,6 +74,50 @@ def _archive_group_output(index: int, captured: str) -> None:
     (REPORTS / f"coverage_pytest_group_{index}.txt").write_text(captured, encoding="utf-8")
 
 
+def _parallel_coverage_files() -> dict[Path, int]:
+    files: dict[Path, int] = {}
+    for path in ROOT.glob(".coverage.*"):
+        if not path.is_file():
+            continue
+        try:
+            files[path] = path.stat().st_size
+        except OSError:
+            continue
+    return files
+
+
+def _wait_for_parallel_coverage_flush(
+    before: dict[Path, int],
+    *,
+    timeout_seconds: float = 15.0,
+    stable_checks: int = 3,
+    interval_seconds: float = 0.25,
+) -> dict[Path, int]:
+    deadline = time.monotonic() + timeout_seconds
+    previous: dict[Path, int] = {}
+    stable = 0
+    while time.monotonic() < deadline:
+        current = _parallel_coverage_files()
+        changed = {
+            path: size
+            for path, size in current.items()
+            if path not in before or before[path] != size
+        }
+        if changed and all(size > 0 for size in changed.values()):
+            if changed == previous:
+                stable += 1
+                if stable >= stable_checks:
+                    return changed
+            else:
+                previous = changed
+                stable = 1
+        else:
+            previous = {}
+            stable = 0
+        time.sleep(interval_seconds)
+    raise RuntimeError("coverage data flush not confirmed after save signal")
+
+
 def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, object]:
     # Keep the live capture outside reports/: repository tests are allowed to
     # recreate that directory while this outer coverage harness is running.
@@ -101,8 +145,9 @@ def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, ob
                     _stop_group(process)
                     _archive_group_output(index, captured)
                     raise RuntimeError("pytest completed but coverage process did not exit on Windows")
+                before = _parallel_coverage_files()
                 os.kill(process.pid, signal.SIGUSR1)
-                time.sleep(1.0)
+                _wait_for_parallel_coverage_flush(before)
                 _stop_group(process)
                 forced = True
             break
