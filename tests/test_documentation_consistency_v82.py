@@ -106,17 +106,13 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
     candidate_readme.write_text(
         candidate_readme.read_text(encoding="utf-8")
         .replace(
-            "Latest immutable release: [`v72.0.104`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.104) at commit `52837dfdb61c151aeefb91ca66bf4edcad0ddaef`.",
-            "Latest immutable release: [`v72.0.103`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.103) at commit `f87943c81747799134705d47fd354c79f3c24d69`.",
+            "Latest public release: [`v72.0.104`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.104) at commit `52837dfdb61c151aeefb91ca66bf4edcad0ddaef`.",
+            "Latest public release: [`v72.0.103`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.103) at commit `f87943c81747799134705d47fd354c79f3c24d69`.",
         )
         .replace(
             "not included in the `v72.0.104` release asset",
             "not included in the `v72.0.103` release asset",
         )
-        .replace(
-            "The existing `v72.0.104` tag and GitHub Release assets are immutable",
-            "The existing `v72.0.103` tag and GitHub Release assets are immutable",
-        ),
         encoding="utf-8",
     )
     candidate_verification = candidate_root / "PUBLIC_VERIFICATION.txt"
@@ -128,7 +124,7 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
 - Windows asset: `VulnFlow_Free_Public_Beta_Windows_Core_72.0.104.zip`
 - the asset must be built only from exact Git HEAD blobs covered by `SHA256SUMS.txt` and must re-verify every archived manifest entry
 - CodeQL `Analyze (actions)` and `Analyze (python)` must both succeed on the release commit before publication
-- the official v72.0.103 predecessor tag and release assets remain immutable
+- the official v72.0.103 predecessor tag remains protected against update/deletion; its legacy GitHub Release is not claimed natively immutable
 """
     candidate_verification.write_text(
         candidate_text[:published_start] + candidate_block + candidate_text[boundary_start:],
@@ -145,8 +141,8 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
     candidate_readme = candidate_root / "README.md"
     candidate_text = candidate_readme.read_text(encoding="utf-8")
     candidate_text = re.sub(
-        r"Latest immutable release: \[`v[0-9]+\.[0-9]+\.[0-9]+`\]\(",
-        "Latest immutable release: [`v0.0.0`](",
+        r"Latest public release: \[`v[0-9]+\.[0-9]+\.[0-9]+`\]\(",
+        "Latest public release: [`v0.0.0`](",
         candidate_text,
         count=1,
     )
@@ -168,8 +164,8 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
         identity_readme.write_text(
             identity_readme.read_text(encoding="utf-8")
             .replace(
-                f"Latest immutable release: [`v{version}`](",
-                "Latest immutable release: [`v0.0.0`](",
+                f"Latest public release: [`v{version}`](",
+                "Latest public release: [`v0.0.0`](",
             )
             .replace(
                 f"not included in the `v{version}` release asset",
