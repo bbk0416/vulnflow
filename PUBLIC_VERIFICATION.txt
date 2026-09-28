@@ -1,10 +1,11 @@
-VulnFlow 72.0.103 public verification summary
+VulnFlow 72.0.104 public verification summary
 
 Release scope:
-- Starlette 1.7.0 dependency-maintenance patch on the 72.0.72 feature-frozen line
-- release notes: RELEASE_NOTES_72.0.103.md
+- security-maintenance patch on the 72.0.72 feature-frozen line
+- release notes: RELEASE_NOTES_72.0.104.md
 - SQLite schema remains 46
-- Starlette runtime dependency pin changes from 1.6.0 to 1.7.0; other runtime pins remain unchanged
+- project-scope 403 and restore/write-barrier 503 responses no longer reflect internal exception detail
+- build backend uses setuptools 83.0.0; runtime dependency pins remain unchanged
 
 Locally reproducible public checks required before release:
 - public manifest: 719/719 PASS
@@ -16,15 +17,17 @@ Locally reproducible public checks required before release:
 - scanner fixture matrix: 9/9 PASS
 - scanner parser robustness: 6/6 PASS
 - current main public regression collection contract: 731/731 collected across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 145); platform-specific skips remain explicit
+- protected public CI must pass all 12 required contexts on the exact pull-request head
+- Windows/Python 3.13 must build and re-verify the exact-tree Windows release candidate
 
-Published release evidence:
-- annotated tag `v72.0.103` resolves to commit `f87943c81747799134705d47fd354c79f3c24d69`
-- exact pull-request head `00fb149b76eb7337de9a3afd2f8b922b64b78127` passed all 9 required public-ci jobs with the release-time 730/730 collection contract (78 + 76 + 168 + 80 + 117 + 67 + 144); its Git tree `2199dd311156fd74ab986a19a14b83c8303a8da4` is identical to the squash-merged release commit tree
-- Windows asset: `VulnFlow_Free_Public_Beta_Windows_Core_72.0.103.zip`
-- Windows asset SHA-256: `ce167e3cb63a65a7b7690181ffe095db2c2b81ab24d4f1f2076b67515aba11f0`
-- extracted Windows bundle manifest verification: 719/719 PASS
-- the official v72.0.102 predecessor baseline remains immutable
+Release candidate boundary:
+- annotated tag `v72.0.104` must be created only from the exact squash-merged release commit after the required checks pass
+- Windows asset: `VulnFlow_Free_Public_Beta_Windows_Core_72.0.104.zip`
+- the asset must be built only from exact Git HEAD blobs covered by `SHA256SUMS.txt` and must re-verify every archived manifest entry
+- CodeQL `Analyze (actions)` and `Analyze (python)` must both succeed on the release commit before publication
+- the official v72.0.103 predecessor tag and release assets remain immutable
 
 Release boundary:
 - previously released tags and release assets must not be modified or retargeted
+- 24-hour endurance, sustained production-scale load capacity, rootless Docker, Kubernetes, and a real external proxy/NAS/firewall/ACL target environment are not claimed
 - external-user/customer pilot validation and real-customer scanner corpus validation are not repository acceptance criteria and are not claimed as evidence; validation is limited to maintainer-operated reproducible local/CI/deployment checks unless explicitly stated otherwise.
