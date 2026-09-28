@@ -42,13 +42,33 @@ VENV_PYTHON="$PWD/.venv/bin/python"
   exit 1
 }
 
-if [ -n "${VULNFLOW_WHEELHOUSE:-}" ]; then
-  "$VENV_PYTHON" -m pip --disable-pip-version-check install \
-    --requirement "$PWD/requirements.lock" \
-    --no-index --find-links "$VULNFLOW_WHEELHOUSE"
+LOCK_PATH="$PWD/requirements.lock"
+LOCK_MARKER_PATH="$PWD/.venv/.vulnflow-requirements-lock.sha256"
+LOCK_HASH="$("$VENV_PYTHON" -c 'import hashlib, pathlib, sys; print(hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest())' "$LOCK_PATH")"
+runtime_ready=0
+if [ -f "$LOCK_MARKER_PATH" ]; then
+  recorded_hash="$(cat "$LOCK_MARKER_PATH" 2>/dev/null || true)"
+  if [ "$recorded_hash" = "$LOCK_HASH" ]; then
+    if "$VENV_PYTHON" -c 'from app.services.runtime_dependency_policy import enforce_runtime_dependencies; enforce_runtime_dependencies(policy="enforce")' >/dev/null 2>&1; then
+      runtime_ready=1
+    fi
+  fi
+fi
+
+if [ "$runtime_ready" -eq 1 ]; then
+  printf '%s\n' 'LOCKED_RUNTIME_REUSED=PASS'
 else
-  "$VENV_PYTHON" -m pip --disable-pip-version-check install \
-    --requirement "$PWD/requirements.lock"
+  if [ -n "${VULNFLOW_WHEELHOUSE:-}" ]; then
+    "$VENV_PYTHON" -m pip --disable-pip-version-check install \
+      --requirement "$LOCK_PATH" \
+      --no-index --find-links "$VULNFLOW_WHEELHOUSE"
+  else
+    "$VENV_PYTHON" -m pip --disable-pip-version-check install \
+      --requirement "$LOCK_PATH"
+  fi
+  "$VENV_PYTHON" -c 'from app.services.runtime_dependency_policy import enforce_runtime_dependencies; enforce_runtime_dependencies(policy="enforce")'
+  printf '%s' "$LOCK_HASH" > "$LOCK_MARKER_PATH"
+  printf '%s\n' 'LOCKED_RUNTIME_INSTALLATION=PASS'
 fi
 
 : "${VULNFLOW_RUNTIME_DEPENDENCY_POLICY:=enforce}"
@@ -61,8 +81,6 @@ export VULNFLOW_CONTROL_DB VULNFLOW_DEFAULT_PROJECT_DB
 
 if [ "${VULNFLOW_INSTALL_ONLY:-0}" = "1" ]; then
   "$VENV_PYTHON" -c 'from app.services.runtime_dependency_policy import enforce_runtime_dependencies; report=enforce_runtime_dependencies(policy="enforce"); print(f"LOCKED_RUNTIME_PACKAGES={report.expected_packages}")'
-  printf '%s
-' 'LOCKED_RUNTIME_INSTALLATION=PASS'
   printf '%s
 ' "LOCKED_RUNTIME_PYTHON=$VENV_PYTHON"
   exit 0
