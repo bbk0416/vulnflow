@@ -304,6 +304,9 @@ def test_public_ci_runs_static_quality_and_dependency_gate(
     assert 'results.append(f"bounded http reads: {320 - len(load_failures)}/320' in uvicorn_smoke
     assert "python scripts/release_metadata.py --check --public" in workflow
     assert "python scripts/build_public_release_archive.py" in workflow
+    assert "release-integrity:" in workflow
+    assert "name: release-integrity / legacy release evidence" in workflow
+    assert "python scripts/release_publication_state.py --legacy-evidence-only" in workflow
     assert "publish-release / exact main candidate" in workflow
     assert "group: vulnflow-public-release" in workflow
     assert "cancel-in-progress: false" in workflow
@@ -346,6 +349,7 @@ def test_public_ci_runs_static_quality_and_dependency_gate(
     assert "release_asset_digest" in release_state
     assert "published release asset digest mismatch" in release_state
     assert "legacy_release_evidence_valid" in release_state
+    assert '"--legacy-evidence-only"' in release_state
 
     synthetic_expected = {
         "v1.0.0": (("artifact.zip", "sha256:" + "a" * 64, 123),),

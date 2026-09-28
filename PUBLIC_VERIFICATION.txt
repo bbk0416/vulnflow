@@ -17,7 +17,7 @@ Locally reproducible public checks required before release:
 - scanner fixture matrix: 9/9 PASS
 - scanner parser robustness: 6/6 PASS
 - current main public regression collection contract: 731/731 collected across seven bounded groups (78 + 76 + 168 + 80 + 117 + 67 + 145); platform-specific skips remain explicit
-- protected public CI must pass all 12 required contexts on the exact pull-request head
+- protected public CI must pass all 13 required contexts on the exact pull-request head, including the read-only legacy GitHub Release evidence check
 - Windows/Python 3.13 must build and re-verify the exact-tree Windows release candidate
 
 Published release evidence:
