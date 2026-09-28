@@ -24,8 +24,8 @@ chmod +x run_linux.sh
 ./run_linux.sh
 ```
 
-On the first normal-auth run, if no active user exists, the launcher guides you
-through creating the first administrator. Enter the new password when prompted,
+On the first normal-auth run, if no active user exists, the launcher creates the
+first administrator with username `admin`. Enter the new password when prompted,
 then enter it again for confirmation.
 
 ## 3. Open the login page
