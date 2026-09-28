@@ -304,8 +304,8 @@ def test_public_ci_runs_static_quality_and_dependency_gate(
     assert 'results.append(f"bounded http reads: {320 - len(load_failures)}/320' in uvicorn_smoke
     assert "python scripts/release_metadata.py --check --public" in workflow
     assert "python scripts/build_public_release_archive.py" in workflow
-    assert "release-integrity:" in workflow
-    assert "name: release-integrity / legacy release evidence" in workflow
+    assert "release-integrity:" not in workflow
+    assert "name: Verify captured legacy GitHub Release evidence" in workflow
     assert "python scripts/release_publication_state.py --legacy-evidence-only" in workflow
     assert "publish-release / exact main candidate" in workflow
     assert "group: vulnflow-public-release" in workflow

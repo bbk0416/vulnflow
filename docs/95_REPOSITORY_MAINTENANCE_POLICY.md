@@ -37,7 +37,7 @@ A repository maintenance change must pass:
 - GitHub CodeQL default-setup analyses for Actions and Python;
 - the read-only GitHub Release evidence check that compares the captured 36-release / 40-asset legacy snapshot before merge.
 
-The exact reviewed pull-request HEAD is squash-merged only after all required checks pass. The protected `main` branch requires pull requests and the named public CI status checks, including the legacy release-evidence check; force-push and deletion are disabled.
+The exact reviewed pull-request HEAD is squash-merged only after all required checks pass. The protected `main` branch requires pull requests and the named public CI status checks; the required `static-quality / Python 3.13` job includes the read-only legacy release-evidence check. Force-push and deletion are disabled.
 
 ## Support boundary
 
