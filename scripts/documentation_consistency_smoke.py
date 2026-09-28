@@ -105,14 +105,35 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
     maintenance_policy = root / "docs/95_REPOSITORY_MAINTENANCE_POLICY.md"
     problem_scope = root / "docs/01_PROBLEM_AND_SCOPE.md"
 
+    verification_text = verification.read_text(encoding="utf-8")
+    readme_text = readme.read_text(encoding="utf-8")
+    predecessor_match = re.search(
+        r"official v([0-9]+\.[0-9]+\.[0-9]+) predecessor tag and release assets remain immutable",
+        verification_text,
+    )
+    predecessor = predecessor_match.group(1) if predecessor_match else ""
+    try:
+        current_parts = tuple(int(part) for part in version.split("."))
+        predecessor_parts = tuple(int(part) for part in predecessor.split("."))
+    except ValueError:
+        current_parts = ()
+        predecessor_parts = ()
+    predecessor_is_previous_patch = (
+        len(current_parts) == 3
+        and len(predecessor_parts) == 3
+        and predecessor_parts[:2] == current_parts[:2]
+        and predecessor_parts[2] + 1 == current_parts[2]
+    )
     release_candidate = (
         _contains(verification, "Release candidate boundary:")
         and _contains(
             verification,
             f"annotated tag `v{version}` must be created only from the exact squash-merged release commit",
         )
-        and _contains(readme, "Latest immutable release:")
-        and _contains(readme, "`main` is the post-release Public Beta development line")
+        and predecessor_is_previous_patch
+        and f"Latest immutable release: [`v{predecessor}`](" in readme_text
+        and f"not included in the `v{predecessor}` release asset" in readme_text
+        and "`main` is the post-release Public Beta development line" in readme_text
     )
 
     checks = [
