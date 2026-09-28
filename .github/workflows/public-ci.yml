@@ -230,6 +230,9 @@ jobs:
   publish-release:
     name: publish-release / exact main candidate
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: vulnflow-public-release
+      cancel-in-progress: false
     needs:
       - core-tests
       - coverage-gate
@@ -258,9 +261,13 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           if git ls-remote --exit-code origin "refs/tags/v$version" >/dev/null 2>&1; then
             echo "publish=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "publish=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          if git diff --quiet "${GITHUB_SHA}^" "${GITHUB_SHA}" -- VERSION; then
+            echo "::error::Unpublished version $version may only be published from the main commit that changes VERSION."
+            exit 1
+          fi
+          echo "publish=true" >> "$GITHUB_OUTPUT"
       - name: Wait for required CodeQL analyses
         if: steps.release.outputs.publish == 'true'
         env:
