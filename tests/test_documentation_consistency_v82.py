@@ -112,7 +112,7 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
         .replace(
             "not included in the `v72.0.104` release asset",
             "not included in the `v72.0.103` release asset",
-        )
+        ),
         encoding="utf-8",
     )
     candidate_verification = candidate_root / "PUBLIC_VERIFICATION.txt"
