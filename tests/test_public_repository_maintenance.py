@@ -277,9 +277,79 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "publish-release / exact main candidate" in workflow
     assert "group: vulnflow-public-release" in workflow
     assert "cancel-in-progress: false" in workflow
-    assert 'git diff --quiet "${GITHUB_SHA}^" "${GITHUB_SHA}" -- VERSION' in workflow
-    assert "may only be published from the main commit that changes VERSION" in workflow
+    assert "python scripts/release_publication_state.py --github-output" in workflow
+    assert "steps.release.outputs.create_tag == 'true'" in workflow
     assert "gh release create" in workflow
+    assert "gh release upload" in workflow
+    assert "python scripts/release_publication_state.py --require-complete" in workflow
+    release_state = (ROOT / "scripts/release_publication_state.py").read_text(encoding="utf-8")
+    assert 'git", "diff", "--quiet", f"{sha}^", sha, "--", "VERSION"' not in release_state
+    assert '"diff", "--quiet", f"{sha}^", sha, "--", "VERSION"' in release_state
+    assert "incomplete release may only be repaired from its exact tagged commit" in release_state
+    assert "orphan release tag may only be repaired from its exact tagged commit" in release_state
+    assert "GitHub Release exists without the immutable version tag" in release_state
+    assert "unpublished version may only be published from the main commit that changes VERSION" in release_state
+
+    from scripts.release_publication_state import ReleaseStateError, decide_publication
+
+    fresh = decide_publication(
+        tag_exists=False,
+        release_exists=False,
+        asset_exists=False,
+        tag_targets_sha=False,
+        version_changed=True,
+        release_metadata_valid=False,
+    )
+    assert (fresh.publish, fresh.create_tag, fresh.mode) == (True, True, "create")
+
+    complete = decide_publication(
+        tag_exists=True,
+        release_exists=True,
+        asset_exists=True,
+        tag_targets_sha=True,
+        version_changed=False,
+        release_metadata_valid=True,
+    )
+    assert (complete.publish, complete.create_tag, complete.mode) == (False, False, "complete")
+
+    orphan_recovery = decide_publication(
+        tag_exists=True,
+        release_exists=False,
+        asset_exists=False,
+        tag_targets_sha=True,
+        version_changed=False,
+        release_metadata_valid=False,
+    )
+    assert (orphan_recovery.publish, orphan_recovery.create_tag, orphan_recovery.mode) == (True, False, "create")
+
+    asset_recovery = decide_publication(
+        tag_exists=True,
+        release_exists=True,
+        asset_exists=False,
+        tag_targets_sha=True,
+        version_changed=False,
+        release_metadata_valid=True,
+    )
+    assert (asset_recovery.publish, asset_recovery.create_tag, asset_recovery.mode) == (True, False, "upload")
+
+    with pytest.raises(ReleaseStateError):
+        decide_publication(
+            tag_exists=True,
+            release_exists=False,
+            asset_exists=False,
+            tag_targets_sha=False,
+            version_changed=False,
+            release_metadata_valid=False,
+        )
+    with pytest.raises(ReleaseStateError):
+        decide_publication(
+            tag_exists=False,
+            release_exists=False,
+            asset_exists=False,
+            tag_targets_sha=False,
+            version_changed=False,
+            release_metadata_valid=False,
+        )
     archive_builder = (ROOT / "scripts/build_public_release_archive.py").read_text(encoding="utf-8")
     assert 'git", "show", f"HEAD:{relative}"' in archive_builder
     assert "manifest mismatch before packaging" in archive_builder
