@@ -28,9 +28,13 @@ A repository maintenance change must pass:
 - public submission readiness;
 - Chromium workflow E2E through GitHub Actions;
 - application line coverage at or above 75% on Ubuntu/Python 3.13;
+- clean offline wheelhouse reinstall from the pinned dependency locks;
+- Docker schema-upgrade and production Compose validation on Ubuntu 24.04;
 - Ruff fatal checks, Bandit high/high and pip-audit;
 - the bounded SQLite fault/recovery rehearsal on Windows/Python 3.13;
-- the 12-cycle runtime stability soak on Windows/Python 3.13.
+- the 12-cycle runtime stability soak on Windows/Python 3.13;
+- the real localhost Uvicorn functional smoke plus 16-worker/320-request bounded HTTP read concurrency on Windows/Python 3.13;
+- GitHub CodeQL default-setup analyses for Actions and Python.
 
 The exact reviewed pull-request HEAD is squash-merged only after all required checks pass. The protected `main` branch requires pull requests and the named public CI status checks; force-push and deletion are disabled.
 
