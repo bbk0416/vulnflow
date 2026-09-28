@@ -166,9 +166,14 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
         )
     else:
         identity_readme.write_text(
-            identity_readme.read_text(encoding="utf-8").replace(
+            identity_readme.read_text(encoding="utf-8")
+            .replace(
                 f"Latest immutable release: [`v{version}`](",
                 "Latest immutable release: [`v0.0.0`](",
+            )
+            .replace(
+                f"not included in the `v{version}` release asset",
+                "not included in the `v0.0.0` release asset",
             ),
             encoding="utf-8",
         )
