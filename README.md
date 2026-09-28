@@ -6,11 +6,11 @@
 <!-- VULNFLOW_RELEASE_IDENTITY_BEGIN -->
 > **Release identity / 릴리스 식별**
 >
-> - Latest immutable release: [`v72.0.103`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.103) at commit `f87943c81747799134705d47fd354c79f3c24d69`.
-> - `main` is the post-release Public Beta development line and can contain validated changes not included in the `v72.0.103` release asset.
+> - Latest immutable release: [`v72.0.104`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.104) at commit `52837dfdb61c151aeefb91ca66bf4edcad0ddaef`.
+> - `main` is the post-release Public Beta development line and can contain validated changes not included in the `v72.0.104` release asset.
 > - For bug reports, include `git rev-parse HEAD` (or the exact release tag/asset name) so the build can be reproduced.
 >
-> The existing `v72.0.103` tag and GitHub Release assets are immutable and are not retargeted to `main`. Earlier release tags and assets remain immutable as well.
+> The existing `v72.0.104` tag and GitHub Release assets are immutable and are not retargeted to `main`. Earlier release tags and assets remain immutable as well.
 <!-- VULNFLOW_RELEASE_IDENTITY_END -->
 
 > **스캐너는 이미 있는 팀을 위한 local-first 취약점 조치 closeout 도구** — 결과를 가져온 뒤 담당자 지정, 조치, 재검증, 승인, 증거와 보고까지 닫습니다.

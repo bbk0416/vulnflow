@@ -10,6 +10,7 @@ version/schema, database layout, and browser-login rate-limit semantics.
 
 import ast
 import re
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,7 +80,26 @@ def _absent(path: Path, needle: str) -> bool:
     return needle not in path.read_text(encoding="utf-8")
 
 
-def consistency_issues(root: Path = ROOT) -> list[str]:
+def _release_tag_exists(root: Path, version: str) -> bool | None:
+    try:
+        result = subprocess.run(
+            ["git", "ls-remote", "--exit-code", "origin", f"refs/tags/v{version}"],
+            cwd=root,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode == 0:
+        return True
+    if result.returncode == 2:
+        return False
+    return None
+
+
+def consistency_issues(root: Path = ROOT, *, release_tag_exists: bool | None = None) -> list[str]:
     version = (root / "VERSION").read_text(encoding="utf-8").strip()
     schema = int(_single_assignment_literal(root / "app/core/schema_versions.py", "CURRENT_SCHEMA_VERSION"))
     group_counts = tuple(int(item) for item in _single_assignment_literal(root / "scripts/run_public_tests.py", "expected_counts"))
@@ -124,8 +144,11 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
         and predecessor_parts[:2] == current_parts[:2]
         and predecessor_parts[2] + 1 == current_parts[2]
     )
+    if release_tag_exists is None:
+        release_tag_exists = _release_tag_exists(root, version)
     release_candidate = (
-        _contains(verification, "Release candidate boundary:")
+        release_tag_exists is not True
+        and _contains(verification, "Release candidate boundary:")
         and _contains(
             verification,
             f"annotated tag `v{version}` must be created only from the exact squash-merged release commit",
@@ -135,6 +158,13 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
         and f"not included in the `v{predecessor}` release asset" in readme_text
         and "`main` is the post-release Public Beta development line" in readme_text
     )
+    published_evidence = _contains(verification, "Published release evidence:")
+    if release_tag_exists is True:
+        release_state_valid = published_evidence
+    elif release_tag_exists is False:
+        release_state_valid = release_candidate
+    else:
+        release_state_valid = published_evidence or release_candidate
 
     checks = [
         ("readme_version", _contains(readme, f"Core {version}")),
@@ -173,6 +203,7 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
             ),
         ),
         ("public_verification_version", _contains(verification, f"VulnFlow {version} public verification summary")),
+        ("public_verification_release_state", release_state_valid),
         ("public_verification_published_tag", _contains(verification, f"annotated tag `v{version}`")),
         ("public_verification_windows_asset", _contains(verification, f"VulnFlow_Free_Public_Beta_Windows_Core_{version}.zip")),
         ("current_release_notes_exists", release_notes.is_file()),

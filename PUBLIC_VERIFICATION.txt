@@ -20,11 +20,13 @@ Locally reproducible public checks required before release:
 - protected public CI must pass all 12 required contexts on the exact pull-request head
 - Windows/Python 3.13 must build and re-verify the exact-tree Windows release candidate
 
-Release candidate boundary:
-- annotated tag `v72.0.104` must be created only from the exact squash-merged release commit after the required checks pass
+Published release evidence:
+- annotated tag `v72.0.104` resolves to signed merge commit `52837dfdb61c151aeefb91ca66bf4edcad0ddaef`
+- the release commit passed all 12 required protected checks; CodeQL `Analyze (actions)` and `Analyze (python)` both succeeded
 - Windows asset: `VulnFlow_Free_Public_Beta_Windows_Core_72.0.104.zip`
-- the asset must be built only from exact Git HEAD blobs covered by `SHA256SUMS.txt` and must re-verify every archived manifest entry
-- CodeQL `Analyze (actions)` and `Analyze (python)` must both succeed on the release commit before publication
+- Windows asset SHA-256: `7c06253a2fec0e808482af317638c26e324be90eda0f4ff8b65404018b11bd4e`
+- exact-tree release builder verification: 721 manifest entries, 722 ZIP files, 3,116,084 bytes, PASS
+- release published 2026-09-28T07:45:39Z; draft=false and prerelease=false
 - the official v72.0.103 predecessor tag and release assets remain immutable
 
 Release boundary:
