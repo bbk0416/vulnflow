@@ -27,9 +27,9 @@ Published release evidence:
 - Windows asset SHA-256: `7c06253a2fec0e808482af317638c26e324be90eda0f4ff8b65404018b11bd4e`
 - exact-tree release builder verification: 721 manifest entries, 722 ZIP files, 3,116,084 bytes, PASS
 - release published 2026-09-28T07:45:39Z; draft=false and prerelease=false
-- the official v72.0.103 predecessor tag and release assets remain immutable
+- v72.0.103 also predates repository native Immutable Releases; its `v*` tag remains protected against update/deletion, while its GitHub Release API reports `immutable=false`
 - GitHub repository Immutable Releases setting was enabled on 2026-09-28 for future releases
-- v72.0.104 predates that setting and remains GitHub API `immutable=false`; its tag is still protected by the active `refs/tags/v*` update/deletion ruleset and the Windows asset digest above remains the recorded release evidence
+- v72.0.104 predates that setting and remains GitHub API `immutable=false`; its tag is still protected by the active `refs/tags/v*` update/deletion ruleset, and release-state pins the Windows asset API digest to the recorded SHA-256 above
 - release publication state requires GitHub API `immutable=true` starting with version 72.0.105
 
 Release boundary:

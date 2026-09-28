@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -13,6 +14,9 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 NATIVE_IMMUTABLE_RELEASE_FLOOR = (72, 0, 105)
+LEGACY_MUTABLE_RELEASE_ASSET_DIGESTS = {
+    "72.0.104": "sha256:7c06253a2fec0e808482af317638c26e324be90eda0f4ff8b65404018b11bd4e",
+}
 
 
 class ReleaseStateError(RuntimeError):
@@ -34,11 +38,14 @@ def decide_publication(
     tag_targets_sha: bool,
     version_changed: bool,
     release_metadata_valid: bool,
+    asset_integrity_valid: bool = True,
 ) -> PublicationDecision:
     if tag_exists:
         if release_exists:
             if not release_metadata_valid:
                 raise ReleaseStateError("existing release metadata does not match the canonical release identity")
+            if asset_exists and not asset_integrity_valid:
+                raise ReleaseStateError("existing release asset digest does not match the recorded release evidence")
             if asset_exists:
                 return PublicationDecision(publish=False, create_tag=False, mode="complete")
             if not tag_targets_sha:
@@ -58,6 +65,19 @@ def decide_publication(
         )
 
     return PublicationDecision(publish=True, create_tag=True, mode="create")
+
+
+def legacy_asset_digest_valid(version: str, actual_digest: str | None) -> bool:
+    expected = LEGACY_MUTABLE_RELEASE_ASSET_DIGESTS.get(version)
+    return expected is None or actual_digest == expected
+
+
+def _sha256_digest(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return f"sha256:{digest.hexdigest()}"
 
 
 def requires_native_immutability(version: str) -> bool:
@@ -158,15 +178,23 @@ def main() -> None:
     release = _release(repo, tag, token)
     release_exists = release is not None
     asset_exists = False
+    release_asset_digest: str | None = None
     release_immutable = False
     metadata_valid = False
 
     if release is not None:
-        asset_exists = any(
-            isinstance(asset, dict) and asset.get("name") == asset_name
-            for asset in release.get("assets", [])
-            if isinstance(release.get("assets"), list)
-        )
+        assets = release.get("assets", [])
+        matching_asset = next(
+            (
+                asset
+                for asset in assets
+                if isinstance(asset, dict) and asset.get("name") == asset_name
+            ),
+            None,
+        ) if isinstance(assets, list) else None
+        asset_exists = matching_asset is not None
+        if matching_asset is not None and isinstance(matching_asset.get("digest"), str):
+            release_asset_digest = matching_asset["digest"]
         release_immutable = release.get("immutable") is True
         metadata_valid = (
             release.get("tag_name") == tag
@@ -178,6 +206,9 @@ def main() -> None:
 
     tag_targets_sha = _tag_targets_sha(tag, sha) if tag_exists else False
     version_changed = _version_changed(sha) if not tag_exists else False
+    asset_integrity_valid = (
+        not asset_exists or legacy_asset_digest_valid(version, release_asset_digest)
+    )
     decision = decide_publication(
         tag_exists=tag_exists,
         release_exists=release_exists,
@@ -185,6 +216,7 @@ def main() -> None:
         tag_targets_sha=tag_targets_sha,
         version_changed=version_changed,
         release_metadata_valid=metadata_valid,
+        asset_integrity_valid=asset_integrity_valid,
     )
 
     payload = {
@@ -193,6 +225,8 @@ def main() -> None:
         "tag_exists": tag_exists,
         "release_exists": release_exists,
         "asset_exists": asset_exists,
+        "release_asset_digest": release_asset_digest,
+        "asset_integrity_valid": asset_integrity_valid,
         "tag_targets_sha": tag_targets_sha,
         "version_changed": version_changed,
         "release_metadata_valid": metadata_valid,
@@ -204,8 +238,17 @@ def main() -> None:
     }
     print(json.dumps(payload, sort_keys=True))
 
-    if args.require_complete and decision.mode != "complete":
-        raise ReleaseStateError(f"release is not complete: {json.dumps(payload, sort_keys=True)}")
+    if args.require_complete:
+        if decision.mode != "complete":
+            raise ReleaseStateError(f"release is not complete: {json.dumps(payload, sort_keys=True)}")
+        local_asset = ROOT / "dist" / asset_name
+        if not local_asset.is_file():
+            raise ReleaseStateError(f"local release asset is missing: {local_asset}")
+        local_digest = _sha256_digest(local_asset)
+        if release_asset_digest != local_digest:
+            raise ReleaseStateError(
+                f"published release asset digest mismatch: API={release_asset_digest} local={local_digest}"
+            )
     if args.github_output:
         _write_outputs(Path(args.github_output), version=version, decision=decision)
 

@@ -321,14 +321,23 @@ def test_public_ci_runs_static_quality_and_dependency_gate(
     assert "unpublished version may only be published from the main commit that changes VERSION" in release_state
 
     from scripts.release_publication_state import (
+        LEGACY_MUTABLE_RELEASE_ASSET_DIGESTS,
         ReleaseStateError,
         decide_publication,
+        legacy_asset_digest_valid,
         requires_native_immutability,
     )
 
     assert requires_native_immutability("72.0.104") is False
     assert requires_native_immutability("72.0.105") is True
     assert requires_native_immutability("73.0.0") is True
+    legacy_digest = "sha256:7c06253a2fec0e808482af317638c26e324be90eda0f4ff8b65404018b11bd4e"
+    assert LEGACY_MUTABLE_RELEASE_ASSET_DIGESTS["72.0.104"] == legacy_digest
+    assert legacy_asset_digest_valid("72.0.104", legacy_digest) is True
+    assert legacy_asset_digest_valid("72.0.104", "sha256:" + "0" * 64) is False
+    assert legacy_asset_digest_valid("72.0.105", None) is True
+    assert "release_asset_digest" in release_state
+    assert "published release asset digest mismatch" in release_state
 
     release_state = (ROOT / "scripts/release_publication_state.py").read_text(encoding="utf-8")
     assert '"X-GitHub-Api-Version": "2026-03-10"' in release_state
@@ -384,6 +393,16 @@ def test_public_ci_runs_static_quality_and_dependency_gate(
             tag_targets_sha=False,
             version_changed=False,
             release_metadata_valid=False,
+        )
+    with pytest.raises(ReleaseStateError, match="asset digest"):
+        decide_publication(
+            tag_exists=True,
+            release_exists=True,
+            asset_exists=True,
+            tag_targets_sha=True,
+            version_changed=False,
+            release_metadata_valid=True,
+            asset_integrity_valid=False,
         )
     with pytest.raises(ReleaseStateError):
         decide_publication(
