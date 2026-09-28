@@ -95,6 +95,18 @@ def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
 def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 
+    candidate_root = _copy_contract_tree(tmp_path / "candidate-stale-readme")
+    candidate_readme = candidate_root / "README.md"
+    candidate_text = candidate_readme.read_text(encoding="utf-8")
+    candidate_text = re.sub(
+        r"Latest immutable release: \[`v[0-9]+\.[0-9]+\.[0-9]+`\]\(",
+        "Latest immutable release: [`v0.0.0`](",
+        candidate_text,
+        count=1,
+    )
+    candidate_readme.write_text(candidate_text, encoding="utf-8")
+    assert "readme_release_identity_version" in consistency_issues(candidate_root)
+
     identity_root = _copy_contract_tree(tmp_path / "identity")
     identity_readme = identity_root / "README.md"
     identity_verification = identity_root / "PUBLIC_VERIFICATION.txt"
