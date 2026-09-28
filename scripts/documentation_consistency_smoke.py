@@ -115,6 +115,11 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
         ("public_scope_browser_e2e_count", _contains(scope, f"Chromium 브라우저 E2E {browser_e2e_count}개")),
         ("public_scope_schema", _contains(scope, f"schema {schema}")),
         ("maintenance_public_test_count", _contains(maintenance_policy, f"the {public_total}-test public regression suite;")),
+        ("maintenance_wheelhouse_gate", _contains(maintenance_policy, "clean offline wheelhouse reinstall")),
+        ("maintenance_production_validation_gate", _contains(maintenance_policy, "Docker schema-upgrade and production Compose validation")),
+        ("maintenance_uvicorn_gate", _contains(maintenance_policy, "real localhost Uvicorn functional smoke")),
+        ("maintenance_bounded_http_gate", _contains(maintenance_policy, "16-worker/320-request bounded HTTP read concurrency")),
+        ("maintenance_codeql_gate", _contains(maintenance_policy, "CodeQL default-setup analyses for Actions and Python")),
         (
             "problem_scope_external_adapters",
             _contains(problem_scope, "ServiceNow·GitHub·SIEM 등 현재 구현되지 않은 외부 시스템의 정식 adapter"),
@@ -160,6 +165,10 @@ def consistency_issues(root: Path = ROOT) -> list[str]:
         ("ci_documentation_gate", _contains(workflow, "python scripts/documentation_consistency_smoke.py")),
         ("ci_coverage_gate", _contains(workflow, "python scripts/coverage_verification.py")),
         ("ci_coverage_job_name", _contains(workflow, "name: coverage / Python 3.13")),
+        ("ci_wheelhouse_gate", _contains(workflow, "name: dependency-wheelhouse / clean offline reinstall")),
+        ("ci_production_validation_gate", _contains(workflow, "name: production-validation / Docker upgrade and production Compose")),
+        ("ci_runtime_resilience_gate", _contains(workflow, "name: runtime-resilience / Windows Python 3.13")),
+        ("ci_uvicorn_smoke", _contains(workflow, "python scripts/uvicorn_smoke.py")),
     ]
     return [name for name, passed in checks if not passed]
 
