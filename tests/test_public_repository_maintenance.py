@@ -275,6 +275,10 @@ def test_public_ci_runs_static_quality_and_dependency_gate() -> None:
     assert "python scripts/release_metadata.py --check --public" in workflow
     assert "python scripts/build_public_release_archive.py" in workflow
     assert "publish-release / exact main candidate" in workflow
+    assert "group: vulnflow-public-release" in workflow
+    assert "cancel-in-progress: false" in workflow
+    assert 'git diff --quiet "${GITHUB_SHA}^" "${GITHUB_SHA}" -- VERSION' in workflow
+    assert "may only be published from the main commit that changes VERSION" in workflow
     assert "gh release create" in workflow
     archive_builder = (ROOT / "scripts/build_public_release_archive.py").read_text(encoding="utf-8")
     assert 'git", "show", f"HEAD:{relative}"' in archive_builder

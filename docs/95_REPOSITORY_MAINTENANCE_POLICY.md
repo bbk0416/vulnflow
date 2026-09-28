@@ -45,3 +45,5 @@ The repository does not provide a commercial support SLA. Public issue creation 
 ## Release boundary
 
 A documentation or repository-policy change does not require a new application release. A new tag is created only when application code, runtime dependencies, distributed artifacts or canonical release metadata change.
+
+Automated publication is serialized across `main` workflow runs. If `v<VERSION>` does not already exist, only the exact `main` commit that changes `VERSION` relative to its first parent may create that tag and GitHub Release. Later `main` commits with the same unpublished version must fail closed rather than silently publishing from a different commit. Once the tag exists, later `main` runs skip asset generation and publication. The active `refs/tags/v*` ruleset blocks update and deletion of existing release tags without bypass actors.
