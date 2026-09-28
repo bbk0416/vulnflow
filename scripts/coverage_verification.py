@@ -18,6 +18,7 @@ FAIL_UNDER = 75.0
 GROUP_COUNT = 6
 GROUP_TIMEOUT_SECONDS = 900
 SMOKE_TIMEOUT_SECONDS = 180
+PROCESS_EXIT_GRACE_SECONDS = 10
 COVERAGE_SMOKE_SCRIPTS = (
     "scripts/checkpoint_witness_smoke.py",
     "scripts/integrity_proof_smoke.py",
@@ -127,6 +128,7 @@ def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, ob
         "--save-signal=USR1", "--source=app", "-m", "pytest", "-q",
         "-p", "no:cacheprovider", *files,
     ]
+    coverage_before = _parallel_coverage_files()
     with output.open("w", encoding="utf-8") as handle:
         process = subprocess.Popen(
             command, cwd=ROOT, env=_env(runtime_root), text=True,
@@ -140,16 +142,29 @@ def _run_group(files: list[str], index: int, runtime_root: Path) -> dict[str, ob
         time.sleep(1.0)
         captured = output.read_text(encoding="utf-8")
         if _completed(captured):
-            if process.poll() is None:
-                if os.name == "nt":
+            code = process.poll()
+            if code is None:
+                try:
+                    code = process.wait(timeout=PROCESS_EXIT_GRACE_SECONDS)
+                except subprocess.TimeoutExpired:
+                    if os.name == "nt":
+                        _stop_group(process)
+                        _archive_group_output(index, captured)
+                        raise RuntimeError(
+                            "pytest completed but coverage process did not exit on Windows"
+                        )
+                    os.kill(process.pid, signal.SIGUSR1)
+                    _wait_for_parallel_coverage_flush(coverage_before)
                     _stop_group(process)
-                    _archive_group_output(index, captured)
-                    raise RuntimeError("pytest completed but coverage process did not exit on Windows")
-                before = _parallel_coverage_files()
-                os.kill(process.pid, signal.SIGUSR1)
-                _wait_for_parallel_coverage_flush(before)
-                _stop_group(process)
-                forced = True
+                    forced = True
+                    code = process.returncode
+            if code not in (0, -signal.SIGTERM):
+                _archive_group_output(index, captured)
+                raise RuntimeError(
+                    f"coverage group {index} exited unexpectedly after pytest completion ({code})"
+                )
+            if not forced:
+                _wait_for_parallel_coverage_flush(coverage_before)
             break
         code = process.poll()
         if code is not None:
