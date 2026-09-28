@@ -1,4 +1,4 @@
-> Historical per-iteration release notes through 72.0.103 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.104.md`.
+> Historical per-iteration release notes through 72.0.104 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.105.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -10,6 +10,13 @@
 
 
 
+
+## 72.0.105 — 2026-09-29
+
+- Package the validated post-72.0.104 release-integrity, deterministic-coverage, first-run, and usability maintenance already merged to `main`.
+- Require GitHub native immutable release state for 72.0.105 and later while preserving the captured 36-release / 40-asset legacy evidence boundary.
+- Reuse a healthy locked Linux/macOS virtual environment instead of reinstalling dependencies on every launch; keep reinstall/repair behavior on lock or runtime drift.
+- Clarify the first administrator username and the non-CVSS-only prioritization model without changing scoring thresholds, workflow behavior, runtime dependency pins, or SQLite schema 46.
 
 ## 72.0.104 — 2026-09-28
 

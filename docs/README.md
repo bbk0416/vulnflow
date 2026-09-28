@@ -1,6 +1,6 @@
 # VulnFlow documentation map
 
-Current application/repository line: **72.0.104**.
+Current application/repository line: **72.0.105**.
 
 이 문서는 현재 운영자가 먼저 읽어야 할 문서와 엔지니어링 검증 기록을 분리해 보여주는 문서 지도입니다.
 검증·증거 문서는 품질 추적용 엔지니어링 기록이며, 고객 검증·상용 준비 완료·엔터프라이즈 운영 승인 자체를 의미하지 않습니다.
