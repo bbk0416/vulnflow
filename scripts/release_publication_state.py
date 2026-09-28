@@ -12,6 +12,7 @@ import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
+NATIVE_IMMUTABLE_RELEASE_FLOOR = (72, 0, 105)
 
 
 class ReleaseStateError(RuntimeError):
@@ -59,6 +60,16 @@ def decide_publication(
     return PublicationDecision(publish=True, create_tag=True, mode="create")
 
 
+def requires_native_immutability(version: str) -> bool:
+    try:
+        parts = tuple(int(part) for part in version.split("."))
+    except ValueError as exc:
+        raise ReleaseStateError(f"invalid VERSION for immutable-release policy: {version}") from exc
+    if len(parts) != 3:
+        raise ReleaseStateError(f"invalid VERSION for immutable-release policy: {version}")
+    return parts >= NATIVE_IMMUTABLE_RELEASE_FLOOR
+
+
 def _run_git(*args: str) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["git", *args],
@@ -104,7 +115,7 @@ def _release(repo: str, tag: str, token: str) -> dict[str, object] | None:
         headers={
             "Accept": "application/vnd.github+json",
             "Authorization": f"Bearer {token}",
-            "X-GitHub-Api-Version": "2022-11-28",
+            "X-GitHub-Api-Version": "2026-03-10",
             "User-Agent": "vulnflow-release-state",
         },
     )
@@ -141,11 +152,13 @@ def main() -> None:
     tag = f"v{version}"
     asset_name = f"VulnFlow_Free_Public_Beta_Windows_Core_{version}.zip"
     expected_title = f"VulnFlow Free - Public Beta (Core {version})"
+    immutable_required = requires_native_immutability(version)
 
     tag_exists = _tag_exists(tag)
     release = _release(repo, tag, token)
     release_exists = release is not None
     asset_exists = False
+    release_immutable = False
     metadata_valid = False
 
     if release is not None:
@@ -154,11 +167,13 @@ def main() -> None:
             for asset in release.get("assets", [])
             if isinstance(release.get("assets"), list)
         )
+        release_immutable = release.get("immutable") is True
         metadata_valid = (
             release.get("tag_name") == tag
             and release.get("name") == expected_title
             and release.get("draft") is False
             and release.get("prerelease") is False
+            and (not immutable_required or release_immutable)
         )
 
     tag_targets_sha = _tag_targets_sha(tag, sha) if tag_exists else False
@@ -181,6 +196,8 @@ def main() -> None:
         "tag_targets_sha": tag_targets_sha,
         "version_changed": version_changed,
         "release_metadata_valid": metadata_valid,
+        "release_immutable": release_immutable,
+        "immutable_required": immutable_required,
         "publish": decision.publish,
         "create_tag": decision.create_tag,
         "release_mode": decision.mode,
