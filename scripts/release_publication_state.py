@@ -350,10 +350,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Resolve the exact release publication/recovery state.")
     parser.add_argument("--github-output", default="")
     parser.add_argument("--require-complete", action="store_true")
+    parser.add_argument("--legacy-evidence-only", action="store_true")
     args = parser.parse_args()
 
     repo = os.environ["GITHUB_REPOSITORY"]
-    sha = os.environ["GITHUB_SHA"]
     token = os.environ["GITHUB_TOKEN"]
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
     tag = f"v{version}"
@@ -364,7 +364,21 @@ def main() -> None:
     legacy_releases = _all_releases(repo, token)
     validate_legacy_release_asset_evidence(legacy_releases)
     legacy_release_evidence_valid = True
+    if args.legacy_evidence_only:
+        asset_count = sum(
+            len(release.get("assets", []))
+            for release in legacy_releases
+            if isinstance(release.get("assets"), list)
+        )
+        print(json.dumps({
+            "legacy_release_evidence_captured_at": LEGACY_RELEASE_ASSET_EVIDENCE_CAPTURED_AT,
+            "legacy_release_evidence_valid": True,
+            "legacy_release_count": len(LEGACY_RELEASE_ASSET_EVIDENCE),
+            "legacy_release_asset_count": asset_count,
+        }, sort_keys=True))
+        return
 
+    sha = os.environ["GITHUB_SHA"]
     tag_exists = _tag_exists(tag)
     release = _release(repo, tag, token)
     release_exists = release is not None

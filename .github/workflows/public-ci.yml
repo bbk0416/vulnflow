@@ -205,6 +205,10 @@ jobs:
           cache-dependency-path: requirements-quality.txt
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements-quality.txt
+      - name: Verify captured legacy GitHub Release evidence
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/release_publication_state.py --legacy-evidence-only
       - name: Run static quality and dependency gates
         run: python scripts/run_quality_gates.py
 
