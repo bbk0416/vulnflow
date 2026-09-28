@@ -44,6 +44,10 @@ After login, use the import flow for a supported scanner export. The goal of
 this quick start is to reach the first usable finding/project view with your own
 input, not to claim a customer-validated five-minute result.
 
+You do **not** need to configure the Admin menu, readiness checks, backup/recovery,
+SBOM/VEX, webhooks, integrity proofs, or other advanced operations before the
+first import and remediation workflow.
+
 ## Optional demo reset
 
 Only for the explicit demo workflow:

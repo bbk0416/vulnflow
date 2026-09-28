@@ -6,11 +6,11 @@
 <!-- VULNFLOW_RELEASE_IDENTITY_BEGIN -->
 > **Release identity / 릴리스 식별**
 >
-> - Latest immutable release: [`v72.0.104`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.104) at commit `52837dfdb61c151aeefb91ca66bf4edcad0ddaef`.
+> - Latest public release: [`v72.0.104`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.104) at commit `52837dfdb61c151aeefb91ca66bf4edcad0ddaef`.
 > - `main` is the post-release Public Beta development line and can contain validated changes not included in the `v72.0.104` release asset.
 > - For bug reports, include `git rev-parse HEAD` (or the exact release tag/asset name) so the build can be reproduced.
 >
-> The existing `v72.0.104` tag and GitHub Release assets are immutable and are not retargeted to `main`. Earlier release tags and assets remain immutable as well.
+> The `v72.0.104` tag is protected against update/deletion, but that GitHub Release predates repository-level native Immutable Releases and its API reports `immutable=false`. VulnFlow records the legacy Release asset name, size, and GitHub API SHA-256 digest on protected `main` and fails CI on later drift. Releases from `72.0.105` onward must be natively immutable before publication is accepted.
 <!-- VULNFLOW_RELEASE_IDENTITY_END -->
 
 > **스캐너는 이미 있는 팀을 위한 local-first 취약점 조치 closeout 도구** — 결과를 가져온 뒤 담당자 지정, 조치, 재검증, 승인, 증거와 보고까지 닫습니다.
@@ -109,22 +109,27 @@ Nessus·OpenVAS·CSV·XLSX 파일은 `파일 선택 → 자동 판별 → 미리
 
 ## 구현 범위
 
-- 고객사·프로젝트별 별도 SQLite DB와 증거·내보내기·가져오기·복구 저장소
-- 파일럿 시작 센터, 프로젝트 프로필, 필수·권장 준비도 점검과 고객용 경영진 보고서
-- 프로젝트별 시작 무결성 검사, 읽기 전용 격리, 예약 유지보수·웹훅·복구 백업 fan-out
-- 프로젝트별 외부 백업 복사본, SHA-256 sidecar 검증과 라이브 데이터를 바꾸지 않는 격리 복원 리허설
-- Nessus·OpenVAS·CSV·XLSX 가져오기, 자동 형식 판별, 미리보기, 열 매핑과 행별 오류 내보내기
-- 원본 형식을 유지하는 스캐너 익명화 수집 ZIP, 호환성·엄격 프로필과 잔존 식별자 차단
-- 다중 스캐너 결과의 full/incremental snapshot reconciliation
-- ACTIVE·STALE·ARCHIVED finding 생명주기
+### 기본 사용 흐름에 필요한 기능
+
+- Nessus·OpenVAS·CSV·XLSX 가져오기, 자동 형식 판별, 미리보기와 열 매핑
+- 다중 스캐너 결과의 full/incremental 반영과 ACTIVE·STALE·ARCHIVED finding 생명주기
 - CVSS·CISA KEV·EPSS·자산 중요도 기반 설명 가능한 우선순위
-- 담당자·목표일·캠페인·재시험·위험수용 승인
-- 자산 식별자, 병합 영향분석, 승인형 병합과 제한적 롤백
-- 증거파일 격리, baseline/ClamAV 검사 경계, custody chain
-- SQLite 작업 queue, lease, retry, idempotency, webhook outbox
-- 감사 hash chain, 백업·복구, restore write barrier
-- SBOM·VEX·OSV 기반 공급망 취약점 운영
-- 동일 호스트 다중 프로세스 coordination과 leader fencing
+- 담당자·목표일·조치 메모·재시험·위험수용 승인
+- 프로젝트별 취약점·증거·내보내기 데이터 분리
+- 결과 내보내기와 감사 가능한 closeout 기록
+
+### 고급 운영 기능
+
+아래 기능은 기본 4단계 흐름을 사용하는 데 필요하지 않습니다. 관리자 메뉴 또는 고급 기능 아래에서만 사용하며, 실제 요구가 확인되지 않는 한 Free Public Beta에서 더 확장하지 않습니다.
+
+- 운영 준비 점검, 프로젝트 프로필과 보고서
+- 외부 백업, 격리 복원 리허설, 읽기 전용 복구 모드와 restore write barrier
+- 스캐너 익명화 수집 ZIP과 호환성 진단
+- 자산 식별자 병합·영향분석·제한적 롤백
+- 증거파일 검사 경계와 custody chain
+- SQLite 작업 queue, retry/idempotency, webhook outbox
+- 감사 hash chain, SBOM·VEX·OSV
+- 동일 호스트 다중 프로세스 coordination, integrity proof·witness·transparency 관련 운영 기능
 
 ## 빠른 실행
 
