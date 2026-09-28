@@ -83,7 +83,7 @@ def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
     verification = release_root / "PUBLIC_VERIFICATION.txt"
     verification.write_text(
         verification.read_text(encoding="utf-8").replace(
-            "release notes: RELEASE_NOTES_72.0.103.md",
+            "release notes: RELEASE_NOTES_72.0.104.md",
             "release notes: RELEASE_NOTES_72.0.86.md",
         ),
         encoding="utf-8",
