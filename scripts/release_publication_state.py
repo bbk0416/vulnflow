@@ -130,7 +130,8 @@ def _write_outputs(path: Path, *, version: str, decision: PublicationDecision) -
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Resolve the exact release publication/recovery state.")
-    parser.add_argument("--github-output", required=True)
+    parser.add_argument("--github-output", default="")
+    parser.add_argument("--require-complete", action="store_true")
     args = parser.parse_args()
 
     repo = os.environ["GITHUB_REPOSITORY"]
@@ -171,25 +172,25 @@ def main() -> None:
         release_metadata_valid=metadata_valid,
     )
 
-    print(
-        json.dumps(
-            {
-                "version": version,
-                "tag": tag,
-                "tag_exists": tag_exists,
-                "release_exists": release_exists,
-                "asset_exists": asset_exists,
-                "tag_targets_sha": tag_targets_sha,
-                "version_changed": version_changed,
-                "release_metadata_valid": metadata_valid,
-                "publish": decision.publish,
-                "create_tag": decision.create_tag,
-                "release_mode": decision.mode,
-            },
-            sort_keys=True,
-        )
-    )
-    _write_outputs(Path(args.github_output), version=version, decision=decision)
+    payload = {
+        "version": version,
+        "tag": tag,
+        "tag_exists": tag_exists,
+        "release_exists": release_exists,
+        "asset_exists": asset_exists,
+        "tag_targets_sha": tag_targets_sha,
+        "version_changed": version_changed,
+        "release_metadata_valid": metadata_valid,
+        "publish": decision.publish,
+        "create_tag": decision.create_tag,
+        "release_mode": decision.mode,
+    }
+    print(json.dumps(payload, sort_keys=True))
+
+    if args.require_complete and decision.mode != "complete":
+        raise ReleaseStateError(f"release is not complete: {json.dumps(payload, sort_keys=True)}")
+    if args.github_output:
+        _write_outputs(Path(args.github_output), version=version, decision=decision)
 
 
 if __name__ == "__main__":
