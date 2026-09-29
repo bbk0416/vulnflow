@@ -83,7 +83,7 @@ def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
     verification = release_root / "PUBLIC_VERIFICATION.txt"
     verification.write_text(
         verification.read_text(encoding="utf-8").replace(
-            "release notes: RELEASE_NOTES_72.0.105.md",
+            "release notes: RELEASE_NOTES_72.0.106.md",
             "release notes: RELEASE_NOTES_72.0.86.md",
         ),
         encoding="utf-8",
@@ -98,37 +98,47 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
     assert len(parts) == 3 and parts[2] > 0
     predecessor = f"{parts[0]}.{parts[1]}.{parts[2] - 1}"
 
-    published_without_tag = _copy_contract_tree(tmp_path / "published-without-tag")
-    assert "public_verification_release_state" in consistency_issues(
-        published_without_tag,
-        release_tag_exists=False,
-    )
+    current_root = _copy_contract_tree(tmp_path / "current-state")
+    current_verification = (current_root / "PUBLIC_VERIFICATION.txt").read_text(encoding="utf-8")
+    current_is_candidate = "Release candidate boundary:" in current_verification
+    current_is_published = "Published release evidence:" in current_verification
+    assert current_is_candidate is not current_is_published
+
+    current_pre_publish = consistency_issues(current_root, release_tag_exists=False)
+    current_post_publish = consistency_issues(current_root, release_tag_exists=True)
+    if current_is_candidate:
+        assert "public_verification_release_state" not in current_pre_publish
+        assert "public_verification_release_state" in current_post_publish
+    else:
+        assert "public_verification_release_state" in current_pre_publish
+        assert "public_verification_release_state" not in current_post_publish
 
     candidate_root = _copy_contract_tree(tmp_path / "candidate-state")
-    candidate_readme = candidate_root / "README.md"
-    candidate_text = candidate_readme.read_text(encoding="utf-8")
-    candidate_text = re.sub(
-        r"Latest public release: \[`v[0-9]+\.[0-9]+\.[0-9]+`\]\([^)]+\) at commit `[0-9a-f]+`\.",
-        (
-            f"Latest public release: [`v{predecessor}`]"
-            f"(https://github.com/bbk0416/vulnflow/releases/tag/v{predecessor}) "
-            "at commit `0000000000000000000000000000000000000000`."
-        ),
-        candidate_text,
-        count=1,
-    )
-    candidate_text = candidate_text.replace(
-        f"not included in the `v{version}` release asset",
-        f"not included in the `v{predecessor}` release asset",
-        1,
-    )
-    candidate_readme.write_text(candidate_text, encoding="utf-8")
+    if current_is_published:
+        candidate_readme = candidate_root / "README.md"
+        candidate_text = candidate_readme.read_text(encoding="utf-8")
+        candidate_text = re.sub(
+            r"Latest public release: \[`v[0-9]+\.[0-9]+\.[0-9]+`\]\([^)]+\) at commit `[0-9a-f]+`\.",
+            (
+                f"Latest public release: [`v{predecessor}`]"
+                f"(https://github.com/bbk0416/vulnflow/releases/tag/v{predecessor}) "
+                "at commit `0000000000000000000000000000000000000000`."
+            ),
+            candidate_text,
+            count=1,
+        )
+        candidate_text = candidate_text.replace(
+            f"not included in the `v{version}` release asset",
+            f"not included in the `v{predecessor}` release asset",
+            1,
+        )
+        candidate_readme.write_text(candidate_text, encoding="utf-8")
 
-    candidate_verification = candidate_root / "PUBLIC_VERIFICATION.txt"
-    verification_text = candidate_verification.read_text(encoding="utf-8")
-    published_start = verification_text.index("Published release evidence:")
-    boundary_start = verification_text.index("\nRelease boundary:", published_start)
-    candidate_block = f"""Release candidate boundary:
+        candidate_verification = candidate_root / "PUBLIC_VERIFICATION.txt"
+        verification_text = candidate_verification.read_text(encoding="utf-8")
+        published_start = verification_text.index("Published release evidence:")
+        boundary_start = verification_text.index("\nRelease boundary:", published_start)
+        candidate_block = f"""Release candidate boundary:
 - annotated tag `v{version}` must be created only from the exact squash-merged release commit after the required checks pass
 - Windows asset: `VulnFlow_Free_Public_Beta_Windows_Core_{version}.zip`
 - the asset must be built only from exact Git HEAD blobs covered by `SHA256SUMS.txt` and must re-verify every archived manifest entry
@@ -136,10 +146,10 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
 - GitHub Release API must report `immutable=true` before {version} can be accepted as a complete published release
 - the official v{predecessor} predecessor tag remains protected against update/deletion
 """
-    candidate_verification.write_text(
-        verification_text[:published_start] + candidate_block + verification_text[boundary_start:],
-        encoding="utf-8",
-    )
+        candidate_verification.write_text(
+            verification_text[:published_start] + candidate_block + verification_text[boundary_start:],
+            encoding="utf-8",
+        )
 
     candidate_pre_publish = consistency_issues(candidate_root, release_tag_exists=False)
     assert "public_verification_release_state" not in candidate_pre_publish
@@ -149,7 +159,9 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
     candidate_post_publish = consistency_issues(candidate_root, release_tag_exists=True)
     assert "public_verification_release_state" in candidate_post_publish
 
-    stale_readme_root = _copy_contract_tree(tmp_path / "published-stale-readme")
+    active_tag_state = current_is_published
+
+    stale_readme_root = _copy_contract_tree(tmp_path / "stale-readme")
     stale_readme = stale_readme_root / "README.md"
     stale_text = stale_readme.read_text(encoding="utf-8")
     stale_text = re.sub(
@@ -161,7 +173,7 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
     stale_readme.write_text(stale_text, encoding="utf-8")
     assert "readme_release_identity_version" in consistency_issues(
         stale_readme_root,
-        release_tag_exists=True,
+        release_tag_exists=active_tag_state,
     )
 
     identity_root = _copy_contract_tree(tmp_path / "identity")
@@ -175,7 +187,7 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
     )
     assert "public_verification_published_tag" in consistency_issues(
         identity_root,
-        release_tag_exists=True,
+        release_tag_exists=active_tag_state,
     )
 
     windows_asset_root = _copy_contract_tree(tmp_path / "windows-asset")
@@ -189,9 +201,8 @@ def test_stale_release_identity_fails_closed(tmp_path: Path) -> None:
     )
     assert "public_verification_windows_asset" in consistency_issues(
         windows_asset_root,
-        release_tag_exists=True,
+        release_tag_exists=active_tag_state,
     )
-
 def test_stale_browser_e2e_count_fails_closed(tmp_path: Path) -> None:
     root = _copy_contract_tree(tmp_path)
     readme = root / "README.md"
