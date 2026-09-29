@@ -7,7 +7,7 @@
 > **Release identity / 릴리스 식별**
 >
 > - Latest public release: [`v72.0.106`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.106) at commit `2d7f40c4e37f527f3228e706c8ab307c383819f7`.
-> - `main` is the public MIT maintenance/documentation line for the 72.0.106 baseline. Future subscription-enforced product code is intended to be developed separately under separate terms.
+> - `main` is the post-release Public Beta development line and can contain validated maintenance/documentation changes not included in the `v72.0.106` release asset. Future subscription-enforced product code is intended to be developed separately under separate terms.
 > - For bug reports, include `git rev-parse HEAD` (or the exact release tag/asset name) so the build can be reproduced.
 >
 > The `v72.0.106` tag is protected against update/deletion and its GitHub Release API reports `immutable=true`. The `v72.0.105` predecessor is also natively immutable. The previously captured 36 legacy releases, including `v72.0.104`, predate native Immutable Releases; their 40 recorded assets remain fail-closed evidence by name, size, and GitHub API SHA-256 digest.
