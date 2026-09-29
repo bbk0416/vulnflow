@@ -1,4 +1,4 @@
-> Historical per-iteration release notes through 72.0.104 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.105.md`.
+> Historical per-iteration release notes through 72.0.105 are preserved under `docs/archive/releases/`. The current release note remains at `RELEASE_NOTES_72.0.106.md`.
 
 ## Unreleased — Free Public Beta productization (documentation/config only)
 
@@ -10,6 +10,13 @@
 
 
 
+
+## 72.0.106 — 2026-09-29
+
+- Package two scanner-import fixes discovered during the maintainer-operated Windows pilot.
+- Count supported CVE-less Nessus/OpenVAS findings consistently in compatibility reporting and clarify their CVE-specific feature limitations.
+- Reject Nmap and other unsupported XML during auto-detection while retaining supported Nessus/OpenVAS/Greenbone XML roots.
+- Keep the 731-test public regression contract, SQLite schema 46, scoring policy, workflow behavior, and runtime dependency pins unchanged.
 
 ## 72.0.105 — 2026-09-29
 

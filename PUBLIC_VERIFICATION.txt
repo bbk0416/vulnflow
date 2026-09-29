@@ -1,14 +1,14 @@
-VulnFlow 72.0.105 public verification summary
+VulnFlow 72.0.106 public verification summary
 
 Release scope:
 - maintenance patch on the 72.0.72 feature-frozen line
-- release notes: RELEASE_NOTES_72.0.105.md
+- release notes: RELEASE_NOTES_72.0.106.md
 - SQLite schema remains 46
-- package the validated post-72.0.104 release-integrity, deterministic-coverage, first-run and usability maintenance
-- runtime dependency pins remain unchanged
+- package the two scanner-import fixes discovered during the maintainer-operated Windows pilot after 72.0.105
+- runtime dependency pins, scoring thresholds, and workflow behavior remain unchanged
 
 Locally reproducible public checks required before release:
-- public manifest: 723/723 PASS
+- public manifest: 724/724 PASS
 - documentation consistency: PASS
 - version consistency: 12/12 PASS
 - public submission readiness: 31/31 PASS
@@ -20,17 +20,17 @@ Locally reproducible public checks required before release:
 - protected public CI must pass all 12 required contexts on the exact pull-request head; `static-quality / Python 3.13` includes the read-only legacy GitHub Release evidence check
 - Windows/Python 3.13 must build and re-verify the exact-tree Windows release candidate
 
-Published release evidence:
-- annotated tag `v72.0.105` resolves to GitHub-verified merge commit `94650c132e391ee75243e3d72ce6a7653f9b05b1`
-- the release commit passed all 12 required protected checks; CodeQL `Analyze (actions)` and `Analyze (python)` both succeeded
-- Windows asset: `VulnFlow_Free_Public_Beta_Windows_Core_72.0.105.zip`
-- Windows asset SHA-256: `23d9d2c137469cefcc123ba9181e33c74573bc452e816db05bc2128447bb81b6`
-- exact-tree release builder verification: 723 manifest entries, 724 ZIP files, 3,130,478 bytes, PASS
-- release published 2026-09-29T02:05:21Z; `immutable=true`, draft=false and prerelease=false
-- the official v72.0.104 predecessor tag remains protected against update/deletion; its legacy GitHub Release predates repository native Immutable Releases and reports `immutable=false`
+Release candidate boundary:
+- annotated tag `v72.0.106` must be created only from the exact squash-merged release commit after the required checks pass
+- Windows asset: `VulnFlow_Free_Public_Beta_Windows_Core_72.0.106.zip`
+- the asset must be built only from exact Git HEAD blobs covered by `SHA256SUMS.txt` and must re-verify every archived manifest entry
+- CodeQL `Analyze (actions)` and `Analyze (python)` must both succeed on the release commit before publication
+- GitHub Release API must report `immutable=true` before 72.0.106 can be accepted as a complete published release
+- the official v72.0.105 predecessor tag remains protected against update/deletion and its GitHub Release reports `immutable=true`
 - the captured 36 legacy releases / 40 legacy assets remain fail-closed evidence by asset name, size, and GitHub API SHA-256 digest
 
 Release boundary:
 - previously released tags and release assets must not be modified or retargeted
+- maintainer-operated pilot evidence is not external customer validation, WTP, or PMF evidence
+- no real organization Nessus/OpenVAS/Greenbone result file was available for this pilot; real-customer scanner-output validation remains NOT_TESTED
 - 24-hour endurance, sustained production-scale load capacity, rootless Docker, Kubernetes, and a real external proxy/NAS/firewall/ACL target environment are not claimed
-- external-user/customer pilot validation and real-customer scanner corpus validation are not repository acceptance criteria and are not claimed as evidence; validation is limited to maintainer-operated reproducible local/CI/deployment checks unless explicitly stated otherwise.
