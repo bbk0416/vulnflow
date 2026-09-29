@@ -44,7 +44,7 @@ The released `v72.0.102` tag and release asset are not modified by this evidence
 
 Nessus multi-CVE plugins whose representative CVSS value cannot be safely assigned to one CVE keep per-CVE CVSS blank rather than inventing attribution. CVE identity and endpoint values remain preserved.
 
-CVE-less Nessus/OpenVAS observations excluded by the current model are explicit exclusions rather than parser failures. This is a current product-model limitation.
+CVE-less Nessus/OpenVAS observations were explicit exclusions under the P0 closure model rather than parser failures. That limitation was later removed by `134_CVELESS_SCANNER_OBSERVATION_MODEL.md`; CVE-less scanner findings are now supported without a second observation model.
 
 `GBCSV_001` initially produced eleven duplicate automatic finding-ID preview errors. FIX2 proved that two source records differed only in scanner Result ID and carried the same eleven CVEs. Canonical finding identity intentionally excludes scanner Result ID, so the failure was reclassified as `VALIDATION_TOOLING_DEFECT_SOURCE_DUPLICATE`, not a Core defect.
 

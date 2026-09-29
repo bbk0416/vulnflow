@@ -27,7 +27,7 @@
   <div class="import-summary-grid compact">
     <article><span>원본 항목</span><strong>{{ compatibility.source_items }}건</strong></article>
     <article class="success"><span>반영 가능</span><strong>{{ compatibility.importable_rows }}건</strong></article>
-    <article class="{% if compatibility.unsupported_source_items %}danger{% endif %}"><span>CVE 없음·미지원</span><strong>{{ compatibility.unsupported_source_items }}건</strong></article>
+    <article class="{% if compatibility.unsupported_source_items %}danger{% endif %}"><span>파싱 제외·미지원</span><strong>{{ compatibility.unsupported_source_items }}건</strong></article>
     <article><span>고유 자산</span><strong>{{ compatibility.unique_assets }}개</strong></article>
     <article class="{% if compatibility.warning_count %}danger{% endif %}"><span>파서 경고</span><strong>{{ compatibility.warning_count }}건</strong></article>
   </div>
@@ -112,5 +112,5 @@
   </div>
 </form>
 
-<p class="meta safety-note">미리보기 파일은 기본 30분 후 자동 만료됩니다. Nessus·OpenVAS에서 CVE가 없는 플러그인 결과는 현재 취약점 모델에 반영되지 않습니다.</p>
+<p class="meta safety-note">미리보기 파일은 기본 30분 후 자동 만료됩니다. CVE가 없는 Nessus·OpenVAS 결과도 반영되며, CVE 전용 인텔리전스·VEX·OSV 기능은 적용되지 않습니다.</p>
 {% endblock %}

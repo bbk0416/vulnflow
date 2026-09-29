@@ -185,7 +185,9 @@ def test_nessus_compatibility_counts_non_cve_plugins_as_supported():
     evaluation = evaluate_scanner_file(payload, filename="scan.nessus")
     report = build_scanner_compatibility_report(evaluation, filename="scan.nessus")
     assert report["status"] == "READY"
+    assert report["importable_rows"] == 2
     assert report["unsupported_source_items"] == 0
+    assert any("CVE 전용 인텔리전스" in item for item in report["limitations"])
 
 
 def test_scanner_compatibility_cli_writes_json(tmp_path: Path):
