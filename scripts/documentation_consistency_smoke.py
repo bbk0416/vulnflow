@@ -4,7 +4,7 @@ from __future__ import annotations
 
 The gate intentionally derives values from executable/source-of-truth files rather
 than duplicating release numbers in another configuration file.  It covers the
-small set of facts whose drift can mislead operators: public regression counts,
+small set of facts whose drift can mislead operators: public regression-group policy,
 version/schema, database layout, and browser-login rate-limit semantics.
 """
 
@@ -102,9 +102,8 @@ def _release_tag_exists(root: Path, version: str) -> bool | None:
 def consistency_issues(root: Path = ROOT, *, release_tag_exists: bool | None = None) -> list[str]:
     version = (root / "VERSION").read_text(encoding="utf-8").strip()
     schema = int(_single_assignment_literal(root / "app/core/schema_versions.py", "CURRENT_SCHEMA_VERSION"))
-    group_counts = tuple(int(item) for item in _single_assignment_literal(root / "scripts/run_public_tests.py", "expected_counts"))
-    public_total = sum(group_counts)
-    group_text = " + ".join(str(item) for item in group_counts)
+    public_groups = _single_assignment_literal(root / "scripts/run_public_tests.py", "TEST_GROUPS")
+    public_group_count = len(public_groups)
     manifest_count = _manifest_entry_count(root / "SHA256SUMS.txt")
     submission_count = _function_return_list_length(root / "scripts/submission_readiness_smoke.py", "_public_checks")
     browser_e2e_count = _top_level_test_count(root / "tests/e2e/test_vm_workflows.py")
@@ -169,12 +168,30 @@ def consistency_issues(root: Path = ROOT, *, release_tag_exists: bool | None = N
             "readme_release_identity_asset_version",
             _contains(readme, f"not included in the `v{version}` release asset") or release_candidate,
         ),
-        ("readme_public_test_count", _contains(readme, f"**{public_total}개**")),
+        (
+            "readme_public_regression_policy",
+            _contains(
+                readme,
+                f"{public_group_count}개의 비중복 bounded pytest 그룹 전체가 수집·실행 성공해야 하며",
+            ),
+        ),
         ("readme_browser_e2e_count", _contains(readme, f"Chromium 브라우저 E2E {browser_e2e_count}개")),
-        ("public_scope_test_count", _contains(scope, f"{public_total}개 수집형 핵심 회귀시험")),
+        (
+            "public_scope_regression_policy",
+            _contains(
+                scope,
+                f"{public_group_count}개의 bounded pytest 그룹 전체 수집·실행 성공",
+            ),
+        ),
         ("public_scope_browser_e2e_count", _contains(scope, f"Chromium 브라우저 E2E {browser_e2e_count}개")),
         ("public_scope_schema", _contains(scope, f"schema {schema}")),
-        ("maintenance_public_test_count", _contains(maintenance_policy, f"the {public_total}-test public regression suite;")),
+        (
+            "maintenance_public_regression_policy",
+            _contains(
+                maintenance_policy,
+                f"all tests collected in the {public_group_count} bounded public regression groups;",
+            ),
+        ),
         ("maintenance_wheelhouse_gate", _contains(maintenance_policy, "clean offline wheelhouse reinstall")),
         ("maintenance_production_validation_gate", _contains(maintenance_policy, "Docker schema-upgrade and production Compose validation")),
         ("maintenance_uvicorn_gate", _contains(maintenance_policy, "real localhost Uvicorn functional smoke")),
@@ -189,10 +206,10 @@ def consistency_issues(root: Path = ROOT, *, release_tag_exists: bool | None = N
             _absent(problem_scope, "Jira·ServiceNow·GitHub·SIEM 등 외부 시스템의 정식 adapter"),
         ),
         (
-            "public_verification_test_contract",
+            "public_verification_test_policy",
             _contains(
                 verification,
-                f"current main public regression collection contract: {public_total}/{public_total} collected across seven bounded groups ({group_text}); platform-specific skips remain explicit",
+                f"current main public regression policy: all tests collected across {public_group_count} bounded groups must pass; the exact collected-test count is not fixed",
             ),
         ),
         ("public_verification_version", _contains(verification, f"VulnFlow {version} public verification summary")),
@@ -236,10 +253,13 @@ def consistency_issues(root: Path = ROOT, *, release_tag_exists: bool | None = N
 
 def main() -> None:
     version = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-    group_counts = tuple(int(item) for item in _single_assignment_literal(ROOT / "scripts/run_public_tests.py", "expected_counts"))
+    public_groups = _single_assignment_literal(ROOT / "scripts/run_public_tests.py", "TEST_GROUPS")
     issues = consistency_issues(ROOT)
     print(f"VulnFlow {version} documentation consistency")
-    print(f"public regression contract: {' + '.join(map(str, group_counts))} = {sum(group_counts)}")
+    print(
+        f"public regression policy: {len(public_groups)} bounded groups; "
+        "exact collected-test count is not fixed"
+    )
     if issues:
         for issue in issues:
             print(f"FAIL: {issue}")
