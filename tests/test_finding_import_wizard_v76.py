@@ -660,6 +660,14 @@ def test_extensionless_utf8_bom_openvas_xml_is_detected():
     assert parsed["detected_format"] == "openvas_xml"
     assert parsed["rows"][0]["cve_id"] == "CVE-2026-96002"
 
+    nmap_payload = b"""<?xml version="1.0"?>
+<nmaprun scanner="nmap" args="nmap -sV 10.10.10.80">
+  <host><status state="up"/><address addr="10.10.10.80" addrtype="ipv4"/></host>
+</nmaprun>
+"""
+    with pytest.raises(ValueError, match="지원하지 않는 XML 형식"):
+        parse_import_file(nmap_payload, filename="scan.xml")
+
 
 def test_openvas_semicolon_csv_uses_host_as_ip_address():
     payload = (Path(__file__).parent / "fixtures" / "scanners" / "openvas-semicolon.csv").read_bytes()

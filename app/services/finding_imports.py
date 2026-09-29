@@ -54,9 +54,14 @@ def detect_import_format(filename: str, content: bytes, format_hint: str = "auto
         or stripped.startswith(b"<get_reports_response")
     ):
         root = _safe_xml_root(content)
-        if _local_name(root.tag) == "nessusclientdata_v2":
+        root_name = _local_name(root.tag)
+        if root_name == "nessusclientdata_v2":
             return "nessus"
-        return "openvas_xml"
+        if root_name in {"report", "get_reports_response", "get_results_response"}:
+            return "openvas_xml"
+        raise ValueError(
+            "지원하지 않는 XML 형식입니다. OpenVAS/Greenbone XML 또는 Nessus .nessus 파일을 사용하세요."
+        )
     if suffix in {".csv", ".txt", ""}:
         parsed = _csv_rows(content)
         keys = {_header_key(header) for header in parsed["headers"]}
