@@ -7,7 +7,7 @@
 > **Release identity / 릴리스 식별**
 >
 > - Latest public release: [`v72.0.106`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.106) at commit `2d7f40c4e37f527f3228e706c8ab307c383819f7`.
-> - `main` is the post-release Public Beta development line and can contain validated changes not included in the `v72.0.106` release asset.
+> - `main` is the public MIT maintenance/documentation line for the 72.0.106 baseline. Future subscription-enforced product code is intended to be developed separately under separate terms.
 > - For bug reports, include `git rev-parse HEAD` (or the exact release tag/asset name) so the build can be reproduced.
 >
 > The `v72.0.106` tag is protected against update/deletion and its GitHub Release API reports `immutable=true`. The `v72.0.105` predecessor is also natively immutable. The previously captured 36 legacy releases, including `v72.0.104`, predate native Immutable Releases; their 40 recorded assets remain fail-closed evidence by name, size, and GitHub API SHA-256 digest.
@@ -39,9 +39,9 @@ Please do not include real vulnerability data, internal asset identifiers, crede
 VulnFlow는 현재 **무료 공개 베타(Free Public Beta)** 로 제공합니다. 코어 버전은 `72.0.106`이며, 신규 기능을 선제적으로 늘리기보다 실제 스캐너 호환성, 사용 흐름의 막힘, 보안·신뢰성 결함에서 확인된 문제만 수정합니다.
 
 - 현재 결제, 유료 구독, 상용 SLA 또는 유료 지원 상품은 제공하지 않습니다.
-- 현재 공개된 `72.0.106` 소스는 MIT License이며 해당 버전에 부여된 권리는 그대로 유지됩니다.
+- **`72.0.106`은 마지막 MIT 라이선스 Free Public Beta 기준선입니다.** 이미 공개된 MIT 버전의 권리는 이후 상용화로 소급해 제한하지 않습니다.
 - 기본 제품은 사용자가 직접 운영하는 로컬/self-hosted 방식입니다. 이메일·Jira·OSV 등 외부 연동을 직접 설정하면 해당 기능에 필요한 외부 통신이 발생할 수 있습니다.
-- 향후 사업 운영 기반이 마련되면 **구독형 유료 에디션(working name: VulnFlow Pro)** 을 별도로 도입할 수 있습니다. 기능·가격·라이선스는 아직 확정하지 않았으며, 현재 MIT 릴리스의 권리를 소급해 제한하지 않습니다.
+- 이후 구독형 제품을 진행할 경우 공개 MIT 기준선과 분리된 별도 라이선스 제품으로 개발합니다. 해당 제품의 Free Beta가 제공되더라도 영구 무료 라이선스를 의미하지 않으며, 기간제 entitlement와 만료 후 read-only/export 경계를 둘 수 있습니다. 가격·기간·상용 약관은 아직 확정하지 않았습니다.
 
 무료 베타의 목적은 다운로드 숫자를 꾸미는 것이 아니라 **실제 scanner export 호환성, 조치→재검증→승인 흐름의 마찰, 반복 사용 이유**를 확인하는 것입니다. 정책은 [PRODUCT_EDITION_POLICY.md](PRODUCT_EDITION_POLICY.md), 진행 기준은 [ROADMAP.md](ROADMAP.md)를 확인하세요.
 
