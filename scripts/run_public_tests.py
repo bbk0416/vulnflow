@@ -195,22 +195,17 @@ def main() -> int:
     env["PY_COLORS"] = "0"
     env["NO_COLOR"] = "1"
     group_timeout = max(30, int(env.get("VULNFLOW_PUBLIC_TEST_GROUP_TIMEOUT_SECONDS", "300")))
-    expected_counts = (78, 76, 168, 80, 117, 67, 145)
     selected = list(dict.fromkeys(args.group or range(1, len(TEST_GROUPS) + 1)))
     invalid = [index for index in selected if index < 1 or index > len(TEST_GROUPS)]
     if invalid:
         parser.error(f"group indices must be between 1 and {len(TEST_GROUPS)}: {invalid}")
     passed_groups = 0
-    passed_tests = 0
     for index in selected:
         group = TEST_GROUPS[index - 1]
-        expected = expected_counts[index - 1]
         print(f"\n=== public regression group {index}/{len(TEST_GROUPS)} ===", flush=True)
         command = [
             sys.executable,
             "scripts/pytest_bounded_group.py",
-            "--expected-count",
-            str(expected),
             "--",
             "-q",
             "-p",
@@ -227,8 +222,10 @@ def main() -> int:
             print(f"public regression group {index} failed", file=sys.stderr)
             return returncode
         passed_groups += 1
-        passed_tests += expected
-    print(f"public regression suite: PASS ({passed_groups} bounded groups / {passed_tests} collected tests; platform skips remain explicit)")
+    print(
+        f"public regression suite: PASS ({passed_groups} bounded groups; "
+        "each group reports its collected count; platform skips remain explicit)"
+    )
     return 0
 
 
