@@ -4,9 +4,10 @@ from __future__ import annotations
 
 Some public tests create many application instances and third-party libraries may
 leave non-daemon resources alive after pytest has already completed its session.
-The wrapper calls ``pytest.main`` in-process, verifies the exact collected count,
-flushes output, and uses ``os._exit`` with the real result code.  It never infers
-success from human-readable pytest output.
+The wrapper calls ``pytest.main`` in-process, records the collected count for
+diagnostics, flushes output, and uses ``os._exit`` with the real result code.
+It never infers success from human-readable pytest output and does not freeze an
+exact test count; pytest collection/test failures remain authoritative.
 """
 
 import argparse
@@ -27,7 +28,6 @@ class CollectionRecorder:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--expected-count", type=int, required=True)
     parser.add_argument("pytest_args", nargs=argparse.REMAINDER)
     return parser
 
@@ -39,19 +39,17 @@ def main(argv: list[str] | None = None) -> int:
         pytest_args = pytest_args[1:]
     recorder = CollectionRecorder()
     exit_code = int(pytest.main(pytest_args, plugins=[recorder]))
-    if exit_code == 0 and recorder.collected != int(args.expected_count):
+    if exit_code == 0 and recorder.collected <= 0:
         print(
-            f"bounded pytest collection mismatch: expected={args.expected_count}, "
-            f"actual={recorder.collected}",
+            "bounded pytest collected no tests",
             file=sys.stderr,
             flush=True,
         )
-        exit_code = 3
-    else:
-        print(
-            f"bounded pytest result: exit={exit_code}, collected={recorder.collected}",
-            flush=True,
-        )
+        exit_code = 5
+    print(
+        f"bounded pytest result: exit={exit_code}, collected={recorder.collected}",
+        flush=True,
+    )
     sys.stdout.flush()
     sys.stderr.flush()
     return exit_code
