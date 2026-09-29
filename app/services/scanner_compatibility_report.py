@@ -82,7 +82,10 @@ def build_scanner_compatibility_report(
         row
         for row in mapped_rows
         if str(row.get("product") or "").strip()
-        and CVE_RE.fullmatch(str(row.get("cve_id") or "").strip())
+        and (
+            not str(row.get("cve_id") or "").strip()
+            or CVE_RE.fullmatch(str(row.get("cve_id") or "").strip())
+        )
     ]
     source_items = _source_item_count(parsed)
     source_errors = list(parsed.get("source_errors") or [])
@@ -125,7 +128,7 @@ def build_scanner_compatibility_report(
 
     if not valid_rows:
         status = "BLOCKED"
-        conclusion = "현재 파일에서 반영 가능한 CVE 취약점을 찾지 못했습니다."
+        conclusion = "현재 파일에서 반영 가능한 취약점을 찾지 못했습니다."
     elif errors or unsupported_source_items:
         status = "REVIEW"
         conclusion = "일부 항목은 반영할 수 있지만 제외·오류 항목을 검토해야 합니다."
@@ -176,7 +179,7 @@ def build_scanner_compatibility_report(
             "max_expanded_rows": 5000,
         },
         "limitations": [
-            "CVE가 없는 스캐너 플러그인 결과는 현재 finding 모델에 반영되지 않습니다.",
+            "CVE가 없는 스캐너 플러그인 결과도 finding으로 반영되며, CVE 전용 인텔리전스·VEX·OSV 기능은 적용되지 않습니다.",
             "READY는 파일 구조 호환을 의미하며 스캐너 전체 버전 호환 보증은 아닙니다.",
             "snapshot 반영 전에는 오류가 0건인지 별도로 확인해야 합니다.",
         ],

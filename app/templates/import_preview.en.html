@@ -27,7 +27,7 @@
   <div class="import-summary-grid compact">
     <article><span>Source items</span><strong>{{ compatibility.source_items|ui_items }}</strong></article>
     <article class="success"><span>Importable</span><strong>{{ compatibility.importable_rows|ui_items }}</strong></article>
-    <article class="{% if compatibility.unsupported_source_items %}danger{% endif %}"><span>No CVE / unsupported</span><strong>{{ compatibility.unsupported_source_items|ui_items }}</strong></article>
+    <article class="{% if compatibility.unsupported_source_items %}danger{% endif %}"><span>Excluded / unsupported</span><strong>{{ compatibility.unsupported_source_items|ui_items }}</strong></article>
     <article><span>Unique assets</span><strong>{{ compatibility.unique_assets }}</strong></article>
     <article class="{% if compatibility.warning_count %}danger{% endif %}"><span>Parser warnings</span><strong>{{ compatibility.warning_count|ui_items }}</strong></article>
   </div>
@@ -112,5 +112,5 @@
   </div>
 </form>
 
-<p class="meta safety-note">Preview files expire after 30 minutes by default. Nessus/OpenVAS plugin results without a CVE are not imported into the current finding model.</p>
+<p class="meta safety-note">Preview files expire after 30 minutes by default. Nessus/OpenVAS results without a CVE are imported as findings, but CVE-specific intelligence, VEX, and OSV workflows do not apply.</p>
 {% endblock %}

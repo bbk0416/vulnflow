@@ -13,7 +13,7 @@
   },
   "nessus-basic.nessus": {
     "detected_format": "nessus",
-    "importable_rows": 1,
+    "importable_rows": 2,
     "status": "READY",
     "unsupported_source_items": 0
   },
@@ -31,7 +31,7 @@
   },
   "openvas-greenbone.csv": {
     "detected_format": "openvas_csv",
-    "importable_rows": 1,
+    "importable_rows": 2,
     "status": "READY",
     "unsupported_source_items": 0
   },

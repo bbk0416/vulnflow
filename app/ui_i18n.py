@@ -42,6 +42,7 @@ _DYNAMIC_EN = {
     "필수": "Required",
     '기본 프로젝트': 'Default project',
     '현재 파서와 매핑 기준으로 바로 반영 가능한 파일입니다.': 'This file is ready to import with the current parser and mapping.',
+    '현재 파일에서 반영 가능한 취약점을 찾지 못했습니다.': 'No importable findings were found in this file.',
     '제품·취약점명': 'Product / vulnerability',
     '자산·호스트명': 'Asset / hostname',
     'IP 주소': 'IP address',
