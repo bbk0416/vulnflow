@@ -202,7 +202,8 @@ def test_readme_presents_four_step_flow_with_five_screenshots() -> None:
     assert "## 4단계 기본 사용 흐름" in readme
     assert "Latest immutable release" not in readme
     assert "GitHub Release assets are immutable" not in readme
-    assert "predates repository-level native Immutable Releases" in readme
+    assert "GitHub Release API reports `immutable=true`" in readme
+    assert "previously captured 36 legacy releases" in readme
     assert "### 기본 사용 흐름에 필요한 기능" in readme
     assert "### 고급 운영 기능" in readme
     for label in ("처리 전", "조치 중", "확인 요청", "완료"):
