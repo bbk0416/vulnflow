@@ -41,23 +41,7 @@ def test_current_documentation_contract_passes() -> None:
     assert consistency_issues(ROOT) == []
 
 
-def test_stale_public_regression_count_fails_closed(tmp_path: Path) -> None:
-    root = _copy_contract_tree(tmp_path)
-    path = root / "README.md"
-    readme_text = path.read_text(encoding="utf-8")
-    count_matches = list(re.finditer(r"\*\*(\d+)개\*\*", readme_text))
-    assert len(count_matches) == 1
-    count_match = count_matches[0]
-    current_public_test_count = int(count_match.group(1))
-    stale_public_test_count = max(0, current_public_test_count - 1)
-    path.write_text(
-        readme_text[: count_match.start(1)]
-        + str(stale_public_test_count)
-        + readme_text[count_match.end(1) :],
-        encoding="utf-8",
-    )
-    assert "readme_public_test_count" in consistency_issues(root)
-
+def test_stale_public_verification_metadata_fails_closed(tmp_path: Path) -> None:
     verification_root = _copy_contract_tree(tmp_path / "verification")
     verification = verification_root / "PUBLIC_VERIFICATION.txt"
     verification_text = verification.read_text(encoding="utf-8")
@@ -229,18 +213,16 @@ def test_stale_browser_e2e_count_fails_closed(tmp_path: Path) -> None:
     assert "public_scope_browser_e2e_count" in consistency_issues(scope_root)
 
 
-def test_stale_maintenance_public_test_count_fails_closed(tmp_path: Path) -> None:
-    root = _copy_contract_tree(tmp_path)
-    path = root / "docs/95_REPOSITORY_MAINTENANCE_POLICY.md"
-    policy_text = path.read_text(encoding="utf-8")
-    match = re.search(r"the (\d+)-test public regression suite;", policy_text)
-    assert match is not None
-    current = int(match.group(1))
-    path.write_text(
-        policy_text[: match.start(1)] + str(max(0, current - 1)) + policy_text[match.end(1) :],
-        encoding="utf-8",
-    )
-    assert "maintenance_public_test_count" in consistency_issues(root)
+def test_public_regression_contract_allows_test_count_growth() -> None:
+    runner = (ROOT / "scripts/run_public_tests.py").read_text(encoding="utf-8")
+    wrapper = (ROOT / "scripts/pytest_bounded_group.py").read_text(encoding="utf-8")
+    policy = (ROOT / "docs/95_REPOSITORY_MAINTENANCE_POLICY.md").read_text(encoding="utf-8")
+
+    assert "expected_counts" not in runner
+    assert "--expected-count" not in runner
+    assert "--expected-count" not in wrapper
+    assert "collected no tests" in wrapper
+    assert "all tests collected in the 7 bounded public regression groups;" in policy
 
 
 def test_stale_jira_exclusion_fails_closed(tmp_path: Path) -> None:
