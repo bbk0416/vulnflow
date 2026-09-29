@@ -6,11 +6,11 @@
 <!-- VULNFLOW_RELEASE_IDENTITY_BEGIN -->
 > **Release identity / 릴리스 식별**
 >
-> - Latest public release: [`v72.0.104`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.104) at commit `52837dfdb61c151aeefb91ca66bf4edcad0ddaef`.
-> - `main` is the post-release Public Beta development line and can contain validated changes not included in the `v72.0.104` release asset.
+> - Latest public release: [`v72.0.105`](https://github.com/bbk0416/vulnflow/releases/tag/v72.0.105) at commit `94650c132e391ee75243e3d72ce6a7653f9b05b1`.
+> - `main` is the post-release Public Beta development line and can contain validated changes not included in the `v72.0.105` release asset.
 > - For bug reports, include `git rev-parse HEAD` (or the exact release tag/asset name) so the build can be reproduced.
 >
-> The `v72.0.104` tag is protected against update/deletion, but that GitHub Release predates repository-level native Immutable Releases and its API reports `immutable=false`. VulnFlow records the legacy Release asset name, size, and GitHub API SHA-256 digest on protected `main` and fails CI on later drift. Releases from `72.0.105` onward must be natively immutable before publication is accepted.
+> The `v72.0.105` tag is protected against update/deletion and its GitHub Release API reports `immutable=true`. The previously captured 36 legacy releases, including `v72.0.104`, predate native Immutable Releases; their 40 recorded assets remain fail-closed evidence by name, size, and GitHub API SHA-256 digest.
 <!-- VULNFLOW_RELEASE_IDENTITY_END -->
 
 > **스캐너는 이미 있는 팀을 위한 local-first 취약점 조치 closeout 도구** — 결과를 가져온 뒤 담당자 지정, 조치, 재검증, 승인, 증거와 보고까지 닫습니다.

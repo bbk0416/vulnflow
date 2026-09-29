@@ -20,12 +20,13 @@ Locally reproducible public checks required before release:
 - protected public CI must pass all 12 required contexts on the exact pull-request head; `static-quality / Python 3.13` includes the read-only legacy GitHub Release evidence check
 - Windows/Python 3.13 must build and re-verify the exact-tree Windows release candidate
 
-Release candidate boundary:
-- annotated tag `v72.0.105` must be created only from the exact squash-merged release commit after the required checks pass
+Published release evidence:
+- annotated tag `v72.0.105` resolves to GitHub-verified merge commit `94650c132e391ee75243e3d72ce6a7653f9b05b1`
+- the release commit passed all 12 required protected checks; CodeQL `Analyze (actions)` and `Analyze (python)` both succeeded
 - Windows asset: `VulnFlow_Free_Public_Beta_Windows_Core_72.0.105.zip`
-- the asset must be built only from exact Git HEAD blobs covered by `SHA256SUMS.txt` and must re-verify every archived manifest entry
-- CodeQL `Analyze (actions)` and `Analyze (python)` must both succeed on the release commit before publication
-- GitHub Release API must report `immutable=true` before 72.0.105 can be accepted as a complete published release
+- Windows asset SHA-256: `23d9d2c137469cefcc123ba9181e33c74573bc452e816db05bc2128447bb81b6`
+- exact-tree release builder verification: 723 manifest entries, 724 ZIP files, 3,130,478 bytes, PASS
+- release published 2026-09-29T02:05:21Z; `immutable=true`, draft=false and prerelease=false
 - the official v72.0.104 predecessor tag remains protected against update/deletion; its legacy GitHub Release predates repository native Immutable Releases and reports `immutable=false`
 - the captured 36 legacy releases / 40 legacy assets remain fail-closed evidence by asset name, size, and GitHub API SHA-256 digest
 
