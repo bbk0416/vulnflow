@@ -57,7 +57,7 @@ def detect_import_format(filename: str, content: bytes, format_hint: str = "auto
         root_name = _local_name(root.tag)
         if root_name == "nessusclientdata_v2":
             return "nessus"
-        if root_name in {"report", "get_reports_response"}:
+        if root_name in {"report", "get_reports_response", "get_results_response"}:
             return "openvas_xml"
         raise ValueError(
             "지원하지 않는 XML 형식입니다. OpenVAS/Greenbone XML 또는 Nessus .nessus 파일을 사용하세요."
