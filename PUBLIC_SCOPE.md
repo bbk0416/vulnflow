@@ -59,7 +59,7 @@
 
 ## 전체 기준본과의 관계
 
-공개본은 72.0.105 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
+공개본은 72.0.106 애플리케이션 소스를 유지하지만, 저장소 가독성과 용량을 위해 공급망·릴리스 검증 산출물을 제외했습니다. 전체 제출 기준본은 별도 보관하며 공개 저장소와 섞지 않습니다.
 
 ## Windows 외부 검증 경계
 
@@ -219,3 +219,6 @@
 ## 72.0.105 release-integrity and first-run maintenance
 
 72.0.105는 기능 동결 정책을 유지하면서 72.0.104 이후 `main`에서 완료된 릴리스 무결성, deterministic coverage, 정상 인증 first-run, launcher 반복 실행과 작은 UX 보완을 공개 릴리스에 반영합니다. Linux/macOS launcher는 `requirements.lock` SHA-256과 설치된 runtime이 그대로면 기존 `.venv`를 재사용하고 drift가 있을 때만 재설치·복구합니다. 최초 관리자 username은 `admin`으로 명확히 안내하고, import 미리보기는 우선순위가 CVSS 단독 등급이 아니라 사용 가능한 KEV·EPSS·인터넷 노출·자산 중요도 맥락을 함께 반영한다고 설명합니다. 점수 임계값, 조치→재검증→승인 흐름, runtime dependency pin과 SQLite schema 46은 변경하지 않습니다. 72.0.105부터 GitHub native Immutable Releases가 필수입니다.
+## 72.0.106 pilot-discovered scanner import maintenance
+
+72.0.106은 기능 동결 정책을 유지하면서 72.0.105 공개 패키지의 maintainer-operated Windows 파일럿에서 발견된 scanner import 표시·형식 판별 문제 두 건만 반영합니다. CVE가 없는 Nessus/OpenVAS finding은 이미 지원되는 현재 모델과 동일하게 compatibility 보고서에서도 반영 가능으로 계산하고, CVE 전용 intelligence·VEX·OSV 기능이 적용되지 않는다는 제한을 명확히 표시합니다. 자동 XML 판별은 NessusClientData_v2 및 지원되는 OpenVAS/Greenbone `report`·`get_reports_response`·`get_results_response` 루트만 허용하고 Nmap 등 다른 XML은 지원하지 않는 형식으로 명확히 거절합니다. SQLite schema 46, 점수 임계값, 조치→재검증→승인 흐름, runtime dependency pin은 변경하지 않습니다.

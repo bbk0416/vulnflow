@@ -222,9 +222,9 @@ def test_readme_presents_four_step_flow_with_five_screenshots() -> None:
     assert "TemporaryDirectory" in capture
 
     root_release_notes = sorted(path.name for path in ROOT.glob("RELEASE_NOTES_*.md"))
-    assert root_release_notes == ["RELEASE_NOTES_72.0.105.md"]
+    assert root_release_notes == ["RELEASE_NOTES_72.0.106.md"]
     archived_release_notes = sorted((ROOT / "docs/archive/releases").glob("RELEASE_NOTES_*.md"))
-    assert len(archived_release_notes) == 94
+    assert len(archived_release_notes) == 95
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.11.md").is_file()
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.71.md").is_file()
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.75.md").is_file()
@@ -236,6 +236,7 @@ def test_readme_presents_four_step_flow_with_five_screenshots() -> None:
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.83.md").is_file()
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.96.md").is_file()
     assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.104.md").is_file()
+    assert (ROOT / "docs/archive/releases/RELEASE_NOTES_72.0.105.md").is_file()
 
 
 def test_public_ci_runs_static_quality_and_dependency_gate(
