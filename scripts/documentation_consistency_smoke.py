@@ -4,7 +4,7 @@ from __future__ import annotations
 
 The gate intentionally derives values from executable/source-of-truth files rather
 than duplicating release numbers in another configuration file.  It covers the
-small set of facts whose drift can mislead operators: public regression counts,
+small set of facts whose drift can mislead operators: public regression-group policy,
 version/schema, database layout, and browser-login rate-limit semantics.
 """
 
