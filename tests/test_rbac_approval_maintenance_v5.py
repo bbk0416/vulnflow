@@ -154,6 +154,10 @@ def test_maintenance_reopens_exceptions_archives_stale_and_prunes(tmp_path: Path
         monkeypatch.setattr(main, "AUTO_ARCHIVE_STALE_DAYS", 30)
         with connect(main.DB_PATH) as conn:
             conn.execute(
+                """UPDATE findings SET exception_expiry='2099-12-31'
+                WHERE status='RISK_ACCEPTED'"""
+            )
+            conn.execute(
                 """UPDATE findings SET status='RISK_ACCEPTED', exception_expiry='2020-01-01',
                 risk_acceptance_reason='old risk', risk_acceptance_approver='legacy' WHERE finding_id='F-0001'"""
             )
